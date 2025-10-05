@@ -1,0 +1,534 @@
+/**
+ * SEARCH POPUP STYLES
+ * CSS für das Terminus Suchpopup mit SSH/SFTP Verbindungssuche
+ *
+ * STRUKTUR:
+ * 1. CSS Variablen - Zentrale Farbdefinitionen
+ * 2. Search Popup Styles - Popup Overlay und Container
+ * 3. Search Input Styles - Suchfeld und Buttons
+ * 4. Search Results Styles - Suchergebnisse und Items
+ * 5. Animations - Übergänge und Animationen
+ * 6. Scrollbar Styling
+ */
+
+/* ===========================
+   1. CSS VARIABLEN
+   =========================== */
+:root {
+    /* Popup Hintergrundfarben */
+    --popup-overlay-bg: rgba(0, 0, 0, 0.6);
+    --popup-bg: #ffffff;
+    --popup-border-color: #e9e8e7;
+
+    /* Suchfeld Farben */
+    --search-input-bg: #f9fafb;
+    --search-input-border: #e9e8e7;
+    --search-input-focus-border: #3b82f6;
+    --search-input-text: #1f2937;
+    --search-input-placeholder: #9ca3af;
+
+    /* Button Farben */
+    --action-btn-bg: #f3f4f6;
+    --action-btn-hover-bg: #e5e7eb;
+    --action-btn-active-bg: #ffffff;
+    --action-btn-active-text: #374151;
+    --action-btn-text: #6b7280;
+
+    /* Suchergebnis Farben */
+    --result-item-bg: #ffffff;
+    --result-item-hover-bg: #f9fafb;
+    --result-item-border: #e9e8e7;
+    --result-title-text: #1b1b1b;
+    --result-subtitle-text: #6b7280;
+    --result-category-bg: #eff6ff;
+    --result-category-text: #3b82f6;
+
+    /* Icon Farben */
+    --icon-color: #9ca3af;
+    --icon-hover-color: #6b7280;
+
+    /* Schatten */
+    --popup-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --result-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+
+    /* Abstände */
+    --popup-padding: 22px;
+    --popup-border-radius: 6px;
+    --input-padding: 0.5rem 1rem;
+    --result-item-padding: 0.5rem 1rem;
+
+    /* Animationen */
+    --transition-speed: 0.2s;
+    --expand-animation-speed: 0.3s;
+}
+
+/* ===========================
+   2. SEARCH POPUP STYLES
+   =========================== */
+/**
+ * Search Overlay
+ * Vollbild-Overlay das beim Öffnen des Popups angezeigt wird
+ */
+.search-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: var(--popup-overlay-bg);
+    backdrop-filter: blur(0px);
+    z-index: 1000;
+    justify-content: center;
+    align-items: flex-start;
+    padding-top: 10vh;
+    opacity: 0;
+    transition: opacity var(--transition-speed) ease, backdrop-filter var(--transition-speed) ease;
+}
+
+.search-overlay.active {
+    display: flex;
+    opacity: 1;
+    backdrop-filter: blur(4px);
+}
+
+/**
+ * Search Popup Container
+ * Hauptcontainer für das Suchpopup
+ * Passt sich dynamisch an basierend auf Inhalt (compact/expanded)
+ */
+.search-popup {
+    background-color: var(--popup-bg);
+    border-radius: var(--popup-border-radius);
+    border: 1px solid var(--popup-border-color);
+    box-shadow: var(--popup-shadow);
+    width: 90%;
+    max-width: 800px;
+    overflow: hidden;
+    transform: scale(0.95);
+    transition: all var(--expand-animation-speed) cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.search-overlay.active .search-popup {
+    transform: scale(1);
+}
+
+/**
+ * Expanded State
+ * Wird aktiviert wenn Suchergebnisse angezeigt werden
+ */
+.search-popup.expanded {
+    max-height: 80vh;
+    animation: expandPopup var(--expand-animation-speed) cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ===========================
+   3. SEARCH INPUT STYLES
+   =========================== */
+/**
+ * Search Input Container
+ * Enthält Suchfeld, Icon und Action Buttons
+ * Layout: Horizontal Flexbox mit zentrierten Items
+ */
+.search-input-container {
+    display: flex;
+    align-items: center;
+    padding: var(--popup-padding);
+    gap: 12px;
+    background-color: var(--popup-bg);
+    border-bottom: 2px solid var(--search-input-border);
+}
+
+/**
+ * Search Icon
+ * Lupe-Icon links im Suchfeld
+ * flex-shrink: 0 verhindert Verkleinerung bei wenig Platz
+ */
+.search-icon {
+    color: var(--icon-color);
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+/**
+ * Search Input Field
+ * Hauptsuchfeld für die Verbindungssuche
+ *
+ * Eigenschaften:
+ * - flex: 1 = nimmt gesamten verfügbaren Platz ein
+ * - transparent = Hintergrund wird vom Container gesteuert
+ * - outline: none = kein Browser-Standard-Fokus-Ring
+ */
+.search-input {
+    flex: 1;
+    border: none;
+    outline: none;
+    font-size: 1rem;
+    color: var(--search-input-text);
+    background-color: transparent;
+    padding: var(--input-padding);
+}
+
+/**
+ * Search Input Placeholder
+ * Platzhaltertext im leeren Suchfeld
+ */
+.search-input::placeholder {
+    color: var(--search-input-placeholder);
+}
+
+/**
+ * Action Buttons Container
+ * SSH/SFTP Toggle Buttons
+ *
+ * Design: Pill-Container mit abgerundeten Ecken
+ * Layout: Horizontale Gruppe ohne Abstände zwischen Buttons
+ * margin-left: auto = positioniert rechts im Flex-Container
+ */
+.search-actions {
+    display: flex;
+    gap: 0;
+    flex-shrink: 0;
+    align-items: center;
+    margin-left: auto;
+    background-color: var(--action-btn-bg);
+    border: 1px solid transparent;
+    border-radius: 0.375rem;
+    padding: 0.125rem;
+}
+
+/**
+ * Action Button
+ * Einzelner SSH/SFTP Toggle-Button
+ *
+ * States:
+ * - Default: transparent mit grauem Text
+ * - Hover: hellgrauer Hintergrund
+ * - Active: weißer Hintergrund mit Schatten
+ *
+ * Interaction: Klick wechselt Filter zwischen SSH und SFTP
+ */
+.action-btn {
+    padding: 3px 0.5rem;
+    border: none;
+    border-radius: 0.25rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--action-btn-text);
+    background-color: transparent;
+    cursor: pointer;
+    transition-property: all;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 300ms;
+    white-space: nowrap;
+    display: flex;
+    gap: 0.25rem;
+    justify-content: center;
+    align-items: center;
+    vertical-align: middle;
+}
+
+/**
+ * Action Button Icon
+ * SVG-Icons innerhalb der Toggle-Buttons
+ * Feste Größe um einheitliches Layout zu garantieren
+ */
+.action-btn svg {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+}
+
+/**
+ * Action Button Hover State
+ * Leichter Hintergrund beim Überfahren mit der Maus
+ */
+.action-btn:hover {
+    background-color: var(--action-btn-hover-bg);
+    border: 1px solid var(--popup-overlay-bg);
+}
+
+/**
+ * Action Button Active State
+ * Aktiver Filter (SSH oder SFTP ausgewählt)
+ * Weißer Hintergrund mit Schatten für "gedrücktes" Erscheinungsbild
+ */
+.action-btn.active {
+    background-color: var(--action-btn-active-bg);
+    color: var(--action-btn-active-text);
+    box-shadow: var(--result-shadow);
+}
+
+/* ===========================
+   4. SEARCH RESULTS STYLES
+   =========================== */
+/**
+ * Search Results Container
+ * Container für alle Suchergebnisse
+ *
+ * Default State (collapsed):
+ * - max-height: 0 = komplett versteckt
+ * - opacity: 0 = unsichtbar
+ *
+ * Visible State (expanded):
+ * - max-height: calc(80vh - 100px) = maximale Höhe relativ zum Viewport
+ * - overflow-y: auto = Scrollbar bei vielen Ergebnissen
+ * - Smooth Transition zwischen States
+ */
+.search-results {
+    max-height: 0;
+    overflow-y: auto;
+    opacity: 0;
+    transition: all var(--expand-animation-speed) cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/**
+ * Search Results Visible State
+ * Wird aktiviert wenn Ergebnisse angezeigt werden
+ */
+.search-results.visible {
+    max-height: calc(80vh - 100px);
+    opacity: 1;
+    padding: 12px;
+}
+
+/**
+ * Category Header
+ * Kategorieüberschrift für gruppierte Ergebnisse
+ */
+.result-category {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--result-subtitle-text);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 12px 16px 8px;
+}
+
+/**
+ * Result Item
+ * Einzelnes Suchergebnis
+ */
+.result-item {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    gap: 0.5rem;
+    padding: var(--result-item-padding);
+    background-color: var(--result-item-bg);
+    border: 1px solid var(--result-item-border);
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition-property: all;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 100ms;
+    margin-bottom: 0.25rem;
+    overflow: hidden;
+}
+
+.result-item:hover {
+    background-color: var(--result-item-hover-bg);
+}
+
+/**
+ * Result Icon
+ * Icon-Container links im Suchergebnis
+ *
+ * Eigenschaften:
+ * - Feste Größe (40x40px) für einheitliches Layout
+ * - flex-shrink: 0 = behält Größe auch bei wenig Platz
+ * - Zentriert SVG-Icon (SSH oder SFTP)
+ */
+.result-icon {
+    width: 40px;
+    height: 40px;
+    background-color: var(--result-item-border);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: var(--icon-color);
+}
+
+/**
+ * Result Content
+ * Textinhalt des Suchergebnisses (Name und Connection-String)
+ *
+ * Layout:
+ * - flex: 1 = nimmt verfügbaren Platz ein
+ * - min-width: 0 = ermöglicht text-overflow ellipsis
+ */
+.result-content {
+    flex: 1;
+    min-width: 0;
+}
+
+/**
+ * Result Title
+ * Verbindungsname (z.B. "Production Web Server")
+ * Primäre Textzeile im Ergebnis
+ */
+.result-title {
+    font-weight: 600;
+    color: var(--result-title-text);
+    font-size: 0.9375rem;
+    margin-bottom: 4px;
+}
+
+/**
+ * Result Subtitle
+ * Connection-String (z.B. "admin@web-prod-01.example.com:22")
+ * Sekundäre Textzeile mit Ellipsis bei Overflow
+ *
+ * text-overflow: ellipsis = zeigt "..." bei zu langem Text
+ */
+.result-subtitle {
+    font-size: 0.875rem;
+    color: var(--result-subtitle-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/**
+ * Result Badge
+ * Badge rechts im Suchergebnis (z.B. Kategorie)
+ */
+.result-badge {
+    display: flex;
+    align-items: center;
+    margin-left: 12px;
+    flex-shrink: 0;
+}
+
+.badge {
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    background-color: var(--result-category-bg);
+    color: var(--result-category-text);
+}
+
+/**
+ * Empty State
+ * Wird angezeigt wenn keine Ergebnisse gefunden wurden
+ */
+.empty-state {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: var(--result-subtitle-text);
+}
+
+.empty-state-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.empty-state-text {
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.empty-state-hint {
+    font-size: 0.875rem;
+    color: var(--icon-color);
+}
+
+/* ===========================
+   5. ANIMATIONS
+   =========================== */
+/**
+ * Expand Animation
+ * Animation beim Vergrößern des Popups
+ */
+@keyframes expandPopup {
+    from {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.02);
+    }
+    to {
+        transform: scale(1);
+    }
+}
+
+/**
+ * Fade In Animation
+ * Für Suchergebnisse
+ */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.result-item {
+    animation: fadeIn 0.2s ease forwards;
+}
+
+/**
+ * Staggered Animation Delays
+ * Gestaffelte Animation für mehrere Ergebnisse
+ * Erzeugt "Waterfall-Effekt" beim Erscheinen der Ergebnisse
+ * Jedes weitere Item erscheint mit 0.05s Verzögerung
+ */
+.result-item:nth-child(1) { animation-delay: 0s; }
+.result-item:nth-child(2) { animation-delay: 0.05s; }
+.result-item:nth-child(3) { animation-delay: 0.1s; }
+.result-item:nth-child(4) { animation-delay: 0.15s; }
+.result-item:nth-child(5) { animation-delay: 0.2s; }
+
+/* ===========================
+   6. RESPONSIVE DESIGN
+   =========================== */
+/**
+ * Mobile/Tablet Breakpoint
+ * Anpassungen für Bildschirme <= 768px (Tablets und Smartphones)
+ *
+ * Änderungen:
+ * - Popup nimmt 95% der Bildschirmbreite ein (statt 90%)
+ * - Kein max-width Limit mehr
+ * - Reduziertes Padding im Input-Container für mehr Platz
+ *
+ * WICHTIG: Dies ist KEIN Duplikat - responsive Anpassungen!
+ */
+@media (max-width: 768px) {
+    .search-popup {
+        width: 95%;
+        max-width: none;
+    }
+
+    .search-input-container {
+        padding: 16px;
+    }
+}
+
+/* ===========================
+   7. SCROLLBAR STYLING
+   =========================== */
+.search-results::-webkit-scrollbar {
+    width: 8px;
+}
+
+.search-results::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.search-results::-webkit-scrollbar-thumb {
+    background-color: var(--search-input-border);
+    border-radius: 4px;
+}
+
+.search-results::-webkit-scrollbar-thumb:hover {
+    background-color: var(--icon-color);
+}

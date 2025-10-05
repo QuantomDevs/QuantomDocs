@@ -1,0 +1,4 @@
+✓ QuantomDocs Server running on http://localhost:5005
+✓ Network access: http://192.168.178.52:5005
+✓ Health check: http://localhost:5005/api/health
+✓ User database loaded

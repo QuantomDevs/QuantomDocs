@@ -1,0 +1,12 @@
+{
+  "products": [
+    {
+      "id": "quantom",
+      "name": "Quantom Server",
+      "description": "High-performance Minecraft server software optimized for large networks",
+      "path": "quantom",
+      "icon": "🚀",
+      "showInDocs": true
+    }
+  ]
+}
