@@ -60,14 +60,14 @@
     padding: 8px 16px;
     background: var(--docs-search-btn-bg);
     border: 1px solid var(--docs-search-btn-border);
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-xl);
     color: var(--docs-search-btn-text);
     font-size: 0.9rem;
     cursor: pointer;
     transition: var(--transition-fast);
     min-height: 44px;
-    min-width: 150px;
-    width: clamp(150px, 20vw, 300px);
+    width: 400px;
+    max-width: 100%;
 }
 
 .docs-search-button:hover {
@@ -201,7 +201,7 @@
 }
 
 .docs-search-results.visible {
-    max-height: calc(80vh - 100px);
+    max-height: calc(50vh - 100px);
     opacity: 1;
     padding: 12px;
 }

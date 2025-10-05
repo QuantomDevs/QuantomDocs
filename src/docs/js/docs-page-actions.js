@@ -12,7 +12,8 @@ function initPageActions() {
 
     // Main copy button click handler
     if (mainCopyBtn) {
-        mainCopyBtn.addEventListener('click', async () => {
+        mainCopyBtn.addEventListener('click', async (e) => {
+            e.stopPropagation();
             await copyPageToClipboard();
         });
     }
@@ -27,7 +28,8 @@ function initPageActions() {
 
     // Dropdown option: Copy Page
     if (dropdownCopy) {
-        dropdownCopy.addEventListener('click', async () => {
+        dropdownCopy.addEventListener('click', async (e) => {
+            e.stopPropagation();
             await copyPageToClipboard();
             closeDropdown();
         });
@@ -35,7 +37,8 @@ function initPageActions() {
 
     // Dropdown option: View as Markdown
     if (dropdownView) {
-        dropdownView.addEventListener('click', async () => {
+        dropdownView.addEventListener('click', async (e) => {
+            e.stopPropagation();
             await viewAsMarkdown();
             closeDropdown();
         });
@@ -43,7 +46,8 @@ function initPageActions() {
 
     // Dropdown option: Download Page
     if (dropdownDownload) {
-        dropdownDownload.addEventListener('click', async () => {
+        dropdownDownload.addEventListener('click', async (e) => {
+            e.stopPropagation();
             await downloadPageAsMarkdown();
             closeDropdown();
         });
@@ -115,6 +119,13 @@ async function copyPageToClipboard() {
     const mainCopyBtn = document.getElementById('main-copy-btn');
 
     try {
+        // Check if currentFile is available
+        if (typeof currentFile === 'undefined' || !currentFile) {
+            console.error('No file is currently loaded');
+            showCopyError(mainCopyBtn, 'No file loaded');
+            return;
+        }
+
         const markdown = await fetchCurrentMarkdown();
 
         // Copy to clipboard
@@ -124,13 +135,14 @@ async function copyPageToClipboard() {
         showCopySuccess(mainCopyBtn);
     } catch (error) {
         console.error('Failed to copy to clipboard:', error);
-        showCopyError(mainCopyBtn);
+        showCopyError(mainCopyBtn, 'Copy failed');
     }
 }
 
 // Fetch current markdown content
 async function fetchCurrentMarkdown() {
-    if (!currentFile) {
+    // currentFile is defined in docs-products.js as a global variable
+    if (typeof currentFile === 'undefined' || !currentFile) {
         throw new Error('No file is currently loaded');
     }
 
@@ -158,16 +170,18 @@ function showCopySuccess(button) {
 }
 
 // Show copy error state
-function showCopyError(button) {
+function showCopyError(button, message = 'Failed') {
     if (!button) return;
 
     const originalHTML = button.innerHTML;
-    button.innerHTML = '<i class="fa-solid fa-xmark"></i><span>Failed</span>';
-    button.style.color = 'var(--warning-color)';
+    const originalColor = button.style.color;
+
+    button.innerHTML = `<i class="fa-solid fa-xmark"></i><span>${message}</span>`;
+    button.style.color = 'var(--text-error)';
 
     setTimeout(() => {
         button.innerHTML = originalHTML;
-        button.style.color = '';
+        button.style.color = originalColor;
     }, 3000);
 }
 
@@ -176,7 +190,10 @@ async function viewAsMarkdown() {
     const modal = document.getElementById('markdown-view-modal');
     const markdownText = document.getElementById('markdown-view-text');
 
-    if (!modal || !markdownText) return;
+    if (!modal || !markdownText) {
+        console.error('Modal elements not found');
+        return;
+    }
 
     try {
         const markdown = await fetchCurrentMarkdown();
@@ -189,8 +206,9 @@ async function viewAsMarkdown() {
         document.body.classList.add('no-scroll');
     } catch (error) {
         console.error('Failed to load markdown:', error);
-        markdownText.textContent = 'Failed to load markdown content.';
+        markdownText.textContent = 'Failed to load markdown content: ' + error.message;
         modal.style.display = 'block';
+        document.body.classList.add('no-scroll');
     }
 }
 
@@ -212,12 +230,18 @@ function initMarkdownViewModal() {
 
     // Close button
     if (closeBtn) {
-        closeBtn.addEventListener('click', closeMarkdownViewModal);
+        closeBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            closeMarkdownViewModal();
+        });
     }
 
     // Click outside to close
     if (overlay) {
-        overlay.addEventListener('click', closeMarkdownViewModal);
+        overlay.addEventListener('click', (e) => {
+            e.stopPropagation();
+            closeMarkdownViewModal();
+        });
     }
 }
 
@@ -228,12 +252,13 @@ async function downloadPageAsMarkdown() {
         const filename = getCurrentPageFilename();
 
         // Create blob and download
-        const blob = new Blob([markdown], { type: 'text/markdown' });
+        const blob = new Blob([markdown], { type: 'text/markdown;charset=utf-8' });
         const url = URL.createObjectURL(blob);
 
         const a = document.createElement('a');
         a.href = url;
         a.download = filename;
+        a.style.display = 'none';
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -248,7 +273,8 @@ async function downloadPageAsMarkdown() {
 
 // Get current page filename for download
 function getCurrentPageFilename() {
-    if (!currentFile) {
+    // currentFile is a global variable from docs-products.js
+    if (typeof currentFile === 'undefined' || !currentFile) {
         return 'document.md';
     }
 
@@ -264,7 +290,8 @@ function getCurrentPageFilename() {
 
 // Get current page title for display
 function getCurrentPageTitle() {
-    if (!currentFile) {
+    // currentFile is a global variable from docs-products.js
+    if (typeof currentFile === 'undefined' || !currentFile) {
         return 'Document';
     }
 
@@ -275,7 +302,11 @@ function getCurrentPageTitle() {
     return fileName.replace('.md', '').replace(/-/g, ' ');
 }
 
-// Initialize when DOM is ready
-document.addEventListener('DOMContentLoaded', () => {
+// Initialize when the module is loaded (lazy loaded by docs page)
+// Note: This will be called after DOMContentLoaded by the lazy loader
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initPageActions);
+} else {
+    // DOM already loaded
     initPageActions();
-});
+}

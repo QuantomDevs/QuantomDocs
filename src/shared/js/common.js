@@ -205,9 +205,40 @@ const initTheme = () => {
 };
 
 // Header and Footer Injection System
-const injectHeader = () => {
+const injectHeader = async () => {
     // Check if we're on the docs page to show search bar and adjust logo text
     const isDocsPage = window.location.pathname.includes('/docs');
+
+    // Load product buttons if on docs page
+    let productButtonsHTML = '';
+    if (isDocsPage) {
+        try {
+            const response = await fetch('/docs/config/docs-config.json');
+            const config = await response.json();
+            const products = config.products.filter(p => p.showInDocs);
+
+            // Get current product from URL
+            const pathParts = window.location.pathname.split('/').filter(p => p);
+            const currentProduct = pathParts.length > 1 ? pathParts[1] : null;
+
+            productButtonsHTML = `
+                <div class="header-second-row">
+                    <div class="header-second-row-content">
+                        ${products.map(product => `
+                            <button class="product-nav-btn ${currentProduct === product.id ? 'active' : ''}"
+                                    data-product-id="${product.id}"
+                                    onclick="navigateToProduct('${product.id}')">
+                                ${product.name}
+                            </button>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        } catch (error) {
+            console.error('Failed to load products for header:', error);
+        }
+    }
+
     const searchBarHTML = isDocsPage ? `
         <button id="docs-search-btn" class="docs-search-button" title="Search documentation (⌘K)">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -229,10 +260,11 @@ const injectHeader = () => {
             </div>
             <button id="mobileMenuToggle" class="mobile-menu-toggle-btn"><i class="fas fa-bars"></i></button>
             <nav id="mainNav">
-            ${searchBarHTML}
+                ${searchBarHTML}
                 <a href="/main" class="nav-link">Home</a>
                 <a href="/downloads" class="nav-link">Download</a>
                 <a href="/docs" class="nav-link">Documentation</a>
+                <a href="https://discord.gg/f46gXT69Fd" class="nav-link" target="_blank">Discord</a>
                 <div class="icon-links">
                     <button id="theme-toggle-btn" class="icon-link theme-toggle" title="Toggle dark/light mode">
                         <i class="fas fa-moon"></i>
@@ -240,6 +272,7 @@ const injectHeader = () => {
                 </div>
             </nav>
         </div>
+        ${productButtonsHTML}
     `;
 
     const header = document.querySelector('header');
@@ -253,6 +286,11 @@ const injectHeader = () => {
             themeToggle.addEventListener('click', toggleTheme);
         }
     }
+};
+
+// Navigate to product function
+window.navigateToProduct = (productId) => {
+    window.location.href = `/docs/${productId}`;
 };
 
 const injectFooter = () => {

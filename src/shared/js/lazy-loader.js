@@ -155,13 +155,12 @@ async function loadDocsModules() {
         ]);
 
         // Lade Docs-spezifische Module
-        // Pfade relativ von der aufrufenden Seite (docs/index.html)
-        const basePath = window.location.pathname.includes('/docs/') ? 'js/' : '../docs/js/';
+        // Absolute Pfade von der Root
         await Promise.all([
-            loadScript(basePath + 'docs.js', 'docs-js'),
-            loadScript(basePath + 'marked-extension.js', 'marked-extension-js'),
-            loadScript(basePath + 'docs-products.js', 'docs-products-js'),
-            loadScript(basePath + 'docs-page-actions.js', 'docs-page-actions-js')
+            loadScript('/docs/js/docs.js', 'docs-js'),
+            loadScript('/docs/js/marked-extension.js', 'marked-extension-js'),
+            loadScript('/docs/js/docs-products.js', 'docs-products-js'),
+            loadScript('/docs/js/docs-page-actions.js', 'docs-page-actions-js')
         ]);
 
         loadedResources.docsCore = true;
@@ -191,9 +190,8 @@ async function loadSearchModule() {
         // Zeige Loading Indicator
         showLoadingIndicator('Initializing search...');
 
-        // Lade Search Modul
-        const basePath = window.location.pathname.includes('/docs/') ? 'js/' : '../docs/js/';
-        await loadScript(basePath + 'docs-search.js', 'docs-search-js');
+        // Lade Search Modul mit absolutem Pfad
+        await loadScript('/docs/js/docs-search.js', 'docs-search-js');
 
         loadedResources.docsSearch = true;
 

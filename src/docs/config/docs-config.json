@@ -1,4 +1,14 @@
 {
+  "general": {
+    "default": true,
+    "defaultProduct": "quantom",
+    "sidebarRightHeaders": {
+      "mainSectionHeader": true,
+      "subSectionHeader": true,
+      "subSubSectionHeader": false
+    },
+    "rightSidebarSectionGap": true
+  },
   "products": [
     {
       "id": "quantom",
@@ -6,7 +16,8 @@
       "description": "High-performance Minecraft server software optimized for large networks",
       "path": "quantom",
       "icon": "🚀",
-      "showInDocs": true
+      "showInDocs": true,
+      "firstSide": "quantom/getting-started/Installation.md"
     }
   ]
 }

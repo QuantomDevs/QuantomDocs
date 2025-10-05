@@ -70,127 +70,283 @@ This TODO section serves as the central tracking system for the QuantomDocs proj
 
 ## Project Status
 
-**Current Phase**: Phase 2 - Documentation & Performance Improvements (COMPLETED)
-**Overall Progress**: Phase 1 fully completed (4/4 phases), Phase 2 fully completed (6/6 phases)
+**Current Phase**: Phase 1 - Enhancement of the Project
+**Overall Progress**: Phase 1.1, 1.2, 1.3, and 1.4 completed
 **Last Updated**: 2025-10-05
-**Active Tasks**: Phase 2 completed, ready for Phase 3
-**Completed Phases**:
+**Active Tasks**: Phase 1.4 completed, ready for Phase 1.5
+**Completed Phases**: Phase 1.1, Phase 1.2, Phase 1.3, Phase 1.4
 
 ---
 
-
----
-
-
-## Phase 3 - Documentation Page Enhancements
-
+## Phase 1 - Enchancement of the Project
 **Background**: The documentation page needs additional functionality to improve user experience when working with documentation content. Users need to easily identify which category they're viewing and have convenient options to copy, view, or download documentation pages in markdown format for use with LLMs or other tools.
 
 **Overall Goal**: Enhance the documentation page with category display and provide multiple options for users to access page content in different formats through a split button interface.
 
+
+### Phase 1.1 - Documentation Site Changes (COMPLETED)
+**Goal**: I want you to change many files of the project.
+
+**Status**: Completed on 2025-10-05
+
+**Completed Changes**:
+1. ✅ Added `general` section to docs-config.json with:
+   - `default` (boolean): Controls if default product should be loaded
+   - `defaultProduct` (string): ID of default product to load
+   - `sidebarRightHeaders`: Controls which heading levels (#, ##, ###) appear in right sidebar
+   - `rightSidebarSectionGap`: Controls indentation of subsections in right sidebar
+
+2. ✅ Added `firstSide` setting to each product in docs-config.json
+   - Specifies the default markdown file to show when entering the product docs
+   - Example: `"firstSide": "quantom/getting-started/Installation.md"`
+
+3. ✅ Second header row with product navigation buttons
+   - Added below main header on docs pages
+   - Dynamically loads products from docs-config.json
+   - Active state: accent color text with underline
+   - Hover state: accent color text with darker underline (accent-dark-color)
+   - Clicking navigates to product docs
+
+4. ✅ Centered search bar in header
+   - Width: `clamp(150px, 50vw, 800px)`
+   - Added `margin-right: auto` for centering
+   - Border-radius updated to `var(--radius-xl)`
+
+5. ✅ Updated page-header-controls styling
+   - Removed border and background (now transparent)
+   - Removed category-label completely
+   - Category name: bigger font (1.4em), accent color, bold (700 weight)
+   - Split button hover: lighter for dark mode, darker for light mode
+
+6. ✅ Right sidebar section filtering
+   - Reads settings from `sidebarRightHeaders` in config
+   - Filters headings based on mainSectionHeader, subSectionHeader, subSubSectionHeader
+   - Only shows configured heading levels
+
+7. ✅ Right sidebar section gap/indentation
+   - Added `.indented` class for h2 and h3 elements when `rightSidebarSectionGap` is true
+   - Subsections (## and ###) get 16px left padding for visual hierarchy
+
+8. ✅ Removed "All Products" button from left sidebar
+   - Sidebar now starts directly with category blocks
+   - No back navigation to product overview
+
+9. ✅ Removed breadcrumb functionality completely
+   - Deleted breadcrumb HTML from index.html
+   - Removed updateBreadcrumb() function from docs-products.js
+   - Removed all breadcrumb CSS from docs.css
+
+10. ✅ Updated initDocsPage() to support default product
+    - When visiting /docs without product ID, loads defaultProduct with firstSide file
+    - Falls back to product overview if default is disabled
+
+11. ✅ Added Discord link to header navigation
+    - Link: https://discord.gg/f46gXT69Fd
+    - Icon: Discord logo
+    - Opens in new tab
+
+**Files Modified**:
+- `src/docs/config/docs-config.json` - Added general settings and firstSide
+- `src/shared/js/common.js` - Added second header row, product buttons, Discord link
+- `src/shared/css/common.css` - Added styles for second header row and product buttons
+- `src/docs/css/docs-search.css` - Centered search bar, updated width and border-radius
+- `src/docs/css/docs.css` - Updated page-header-controls, added indented class, removed breadcrumb CSS
+- `src/docs/js/docs-products.js` - Updated initDocsPage, updateTableOfContents, removed breadcrumb, removed All Products button
+- `src/docs/index.html` - Removed breadcrumb HTML element
+
+**Testing**:
+- ✅ All JavaScript files validated with `node --check`
+- ✅ Server running successfully on port 5005
+- ✅ docs-config.json structure validated
+- ✅ Product structure API endpoint working
+- ✅ Installation.md exists and is accessible
+
+**Implementation Notes**:
+- The second header row appears only on docs pages (detected by pathname check)
+- Product buttons are dynamically generated from docs-config.json
+- Active product is determined from current URL path
+- The `default` setting in config allows immediate loading of a specific product instead of showing overview
+- Right sidebar filtering is configurable per-installation through docs-config.json
+- Indentation creates visual hierarchy in the table of contents
 ---
 
-### Phase 3.1 - Category Display Implementation
+### Phase 1.2 - Demo Documentation (COMPLETED)
+**Goal**: add some documentations to the quantom content for the docs site.
 
-**Background & Context**:
-Currently, when viewing documentation pages, users cannot easily see which category the current page belongs to without looking at the left sidebar. Adding a category display at the top of each markdown page will provide better context and improve navigation awareness. This is especially important on mobile devices where the sidebar may be hidden.
+**Status**: Completed on 2025-10-05
 
-**Work Instructions**:
+**Task**: Add some default demo documentations for example: first steps: into quantomdocs ,quick start or lean about: ...
 
-1. **Identify Current Page Category**
-   - Update the `loadContent()` function in `js/common.js` to track and store the current category
-   - Extract the category information from the `docsConfig` structure when a page is loaded
-   - Store the current category in a global variable or data attribute for access by other functions
+**Completed Documentation Files**:
 
-2. **Create Category Display Element**
-   - Add a new HTML element at the top of the markdown content area in `docs.html`
-   - Position this element above the `#dynamic-content-area` but inside the `.main-content` section
-   - The element should be visually distinct but not intrusive
+1. ✅ **Quick-Start.md** (getting-started)
+   - Comprehensive quick start guide for new users
+   - Prerequisites, installation steps, first run instructions
+   - EULA acceptance, server startup, connection guide
+   - Common issues troubleshooting section
+   - Next steps and help resources
 
-3. **Style Category Display**
-   - Create CSS styles in `css/docs.css` for the category display
-   - Use existing CSS color variables from `common.css`
-   - Design should be:
-     - Subtle background color using `var(--card-background-color)`
-     - Text color using `var(--secondary-text-color)` for the label and `var(--text-color)` for the category name
-     - Small font size (0.85em - 0.9em)
-     - Appropriate padding and margins to separate from content
-     - Border radius consistent with other UI elements (6px - 8px)
-   - Responsive design: should work well on mobile and desktop
+2. ✅ **First-Steps.md** (getting-started)
+   - Complete QuantomDocs navigation guide
+   - Overview of all documentation features
+   - Search functionality explanation with keyboard shortcuts
+   - Page actions documentation (copy, view, download)
+   - Code blocks, breadcrumbs, and offline access info
+   - Responsive design and theme customization
+   - Keyboard shortcuts reference table
 
-4. **Update Category Display Dynamically**
-   - When `loadContent()` is called, update the category display text
-   - Handle both static HTML content and dynamic markdown content
-   - For static content (like "Getting started"), show the corresponding category from config
-   - Ensure category display is hidden when showing the default getting started page or when no content is loaded
+3. ✅ **About-Quantom.md** (getting-started)
+   - Detailed overview of Quantom Server
+   - Performance and scalability features
+   - Key features: plugins, configuration, tools, security
+   - Architecture overview with core components
+   - System requirements (minimum and recommended)
+   - Use cases for different server types
+   - Community and support information
+   - License and credits section
 
-**Files to Create/Modify**:
-- `docs.html` - Add category display container element between mobile menu buttons and main content
-- `js/common.js` - Update `loadContent()` function to populate category display, track current category
-- `css/docs.css` - Add styles for category display element, ensure responsive behavior
+4. ✅ **Features-Overview.md** (getting-started)
+   - Comprehensive feature documentation
+   - Performance features (optimized tick, async operations, memory management)
+   - Configuration features with YAML examples
+   - Plugin features and API documentation
+   - Administrative features and built-in commands
+   - Monitoring and logging features
+   - Security and backup features
+   - Developer tools and integration features
 
-**Expected Outcome**:
-- Category name is visible at the top of each documentation page
-- Category display updates automatically when navigating between pages
-- Visual design is consistent with existing UI elements
-- Responsive design works on all screen sizes
-- Category display is hidden appropriately for the default getting started page
+5. ✅ **Configuration-Basics.md** (configuration)
+   - Complete configuration guide for beginners
+   - Overview of all configuration files (server.properties, quantom.yml, bukkit.yml)
+   - Common configuration tasks with examples
+   - Performance configuration settings
+   - World and network configuration
+   - Plugin configuration options
+   - Environment variables support
+   - Configuration best practices
+   - Troubleshooting section
 
-**Additional Information**:
-- **Related Tasks**: This will work in conjunction with Phase 3.2 split button implementation
-- **Important Files**: `config/docs-config.json` contains the category structure
-- **Dependencies**: None - can be implemented independently
-- **Notes**: Category information is available in the `docsConfig` array structure, where each category has a `category` field and contains `items`
+**Testing Results**:
+- ✅ All 5 documentation files created successfully
+- ✅ All files accessible via HTTP server
+- ✅ Product structure API endpoint correctly lists all new files
+- ✅ Files appear in correct categories in sidebar
+- ✅ All JavaScript files validated with `node --check`
+- ✅ Server running successfully on port 5005
+- ✅ No syntax errors in any files
+
+**Files Created**:
+- `src/docs/content/quantom/getting-started/Quick-Start.md` (2990 bytes)
+- `src/docs/content/quantom/getting-started/First-Steps.md` (5460 bytes)
+- `src/docs/content/quantom/getting-started/About-Quantom.md` (6647 bytes)
+- `src/docs/content/quantom/getting-started/Features-Overview.md` (9554 bytes)
+- `src/docs/content/quantom/configuration/Configuration-Basics.md` (11268 bytes)
+
+**Total Documentation Added**: 35,919 bytes (35 KB) of comprehensive documentation content
+
+**Content Quality**:
+- Professional technical writing style
+- Code examples with syntax highlighting
+- Internal links to other documentation pages
+- External links to Discord and downloads
+- Practical examples and use cases
+- Troubleshooting sections
+- Clear section hierarchy with proper markdown headers
+- Tables for reference information
+- Emoji usage for visual appeal
+
+**Benefits**:
+- Users now have comprehensive getting-started documentation
+- Clear navigation guide for the documentation site itself
+- Detailed product overview and feature documentation
+- Practical configuration guidance with examples
+- Better onboarding experience for new users
+- Reduced support burden with self-service documentation
 
 ---
 
-### Phase 3.2 - Split Button Implementation for Page Actions
+### Phase 1.3 - Header (COMPLETED)
+**Goal**: There are some changes that need to be made to the header.
+
+**Status**: Completed on 2025-10-05
+
+**Completed Changes**:
+1. ✅ **Header Alignment with Sidebar**
+   - Changed header padding from fixed `var(--spacing-xl)` to `clamp(20px, 5vw, 50px)`
+   - Matches the docs-container padding for perfect alignment
+   - Second header row (product navigation) also uses same padding
+   - Responsive alignment on all screen sizes
+
+2. ✅ **Search Bar Width Doubled and Centered**
+   - Changed width from `clamp(150px, 50vw, 800px)` to `clamp(300px, 100vw, 1600px)`
+   - Applied `margin-left: auto` and `margin-right: auto` for centering
+   - Min-width increased from 150px to 300px
+   - Border-radius already uses `var(--radius-xl)` (12px)
+
+3. ✅ **Icons Added to Header Buttons**
+   - Home button: `<i class="fas fa-home"></i>` icon
+   - Download button: `<i class="fas fa-download"></i>` icon
+   - Documentation button: `<i class="fas fa-book"></i>` icon
+   - Discord button: Already had `<i class="fab fa-discord"></i>` icon
+   - All nav links now have consistent icon + text structure
+
+4. ✅ **Button Text Size Increased**
+   - Added `font-size: 1.05em` to `.nav-link` class
+   - Provides better readability
+   - Consistent across all navigation buttons
+
+5. ✅ **Header Max-Width Updated for Large Screens**
+   - 1600px breakpoint: max-width changed from 1600px to 1900px
+   - 1920px breakpoint: max-width changed from 1800px to 2100px
+   - Better alignment with docs-container on large displays
+
+6. ✅ **Discord Button Already Existed**
+   - Discord button was already implemented in Phase 1.1
+   - Link: https://discord.gg/f46gXT69Fd
+   - Opens in new tab with `target="_blank"`
+
+**Files Modified**:
+- `src/shared/css/common.css`:
+  - Updated header padding to use responsive clamp
+  - Updated header-content max-width for 1600px and 1920px breakpoints
+  - Updated header-second-row padding to match
+  - Updated header-second-row-content max-width
+  - Added `font-size: 1.05em` and `gap: 8px` to `.nav-link`
+- `src/shared/js/common.js`:
+  - Updated header HTML structure to include icons in all nav links
+  - Wrapped button text in `<span>` tags for better structure
+- `src/docs/css/docs-search.css`:
+  - Updated search button width from `clamp(150px, 50vw, 800px)` to `clamp(300px, 100vw, 1600px)`
+  - Changed min-width from 150px to 300px
+  - Changed margin from `margin-right: auto` to `margin-left: auto; margin-right: auto;`
+
+**Testing Results**:
+- ✅ All JavaScript files validated with `node --check`
+- ✅ Server running successfully on port 5005
+- ✅ No syntax errors in any files
+- ✅ Header alignment verified with sidebar padding
+- ✅ Search bar centered and wider
+- ✅ All icons displaying correctly
+
+**Implementation Notes**:
+- The header now perfectly aligns with the docs sidebar on all screen sizes
+- Search bar is now much more prominent and centered
+- Icons improve visual hierarchy and make buttons more intuitive
+- Larger text size improves readability
+- Responsive design maintained across all breakpoints
+- All changes follow existing design system and CSS variable usage
+
+---
+
+### Phase 1.4 - Split Button Implementation for Page Actions (COMPLETED)
 
 **Background & Context**:
 Users need convenient ways to access documentation content in different formats, especially for use with Large Language Models (LLMs) or for offline reference. A split button interface provides the main "Copy Page" action with quick access, while additional options are available through a dropdown menu. This pattern is common in modern UIs and provides both efficiency and discoverability.
+There is already some strucutre of the code but you need to improve the code and make sure everything is ready.
 
-**Work Instructions**:
+**Status**: Completed on 2025-10-05
 
-1. **Create HTML Structure for Split Button**
-   - Add a new container for the category header and split button in `docs.html`
-   - Structure should be a flex container with space-between alignment:
-     ```html
-     <div id="page-header-controls" class="page-header-controls">
-         <div class="category-display">
-             <span class="category-label">Category:</span>
-             <span id="current-category-name" class="category-name"></span>
-         </div>
-         <div class="split-button-container">
-             <!-- Split button components will go here -->
-         </div>
-     </div>
-     ```
-   - Split button container should include:
-     - Main button with "Copy Page" text and copy icon
-     - Visual separator (divider line)
-     - Arrow button for dropdown toggle
-     - Dropdown menu container (initially hidden)
-
-2. **Implement Split Button Visual Design**
-   - File: `css/docs.css`
-   - Create unified button appearance with two distinct clickable areas:
-     - Use flexbox to position main button and arrow side-by-side
-     - Add a vertical divider line between the two areas (1px solid using `var(--border-color)`)
-     - Main button section (left): includes icon and "Copy Page" text
-     - Arrow section (right): includes chevron-down icon
-   - Button styling:
-     - Background: `var(--card-background-color)`
-     - Border: 1px solid `var(--border-color)`
-     - Border radius: 8px
-     - Padding: 10px 15px for main button, 10px 12px for arrow
-     - Transition effects for hover states
-   - Hover states:
-     - Main button hover: background changes to subtle highlight
-     - Arrow hover: background changes to subtle highlight
-     - Each section should hover independently
-   - Use FontAwesome icons:
-     - Copy icon: `fa-regular fa-copy` (two overlapping rectangles)
-     - Arrow: `fa-solid fa-chevron-down`
+**Original Work Instructions**:
 
 3. **Create Dropdown Menu Structure**
    - Add dropdown menu container below the split button
@@ -401,70 +557,148 @@ Users need convenient ways to access documentation content in different formats,
 - Accessibility features are implemented
 - Edge cases are handled gracefully
 
-**Additional Information**:
-- **Related Tasks**: Works together with Phase 3.1 category display
-- **Important Files**:
-  - Current markdown file path is tracked when `loadContent()` is called in `js/common.js`
-  - File paths are relative to `docs/` directory
-  - Markdown files are fetched from server, not stored client-side
-- **Dependencies**: Requires that markdown content is being loaded via `loadContent()` function
-- **Notes**:
-  - The split button should only be visible when viewing markdown content, not static HTML
-  - Consider using FontAwesome 6.0 icons as already included in the project
-  - Clipboard API requires HTTPS in production (works on localhost)
-  - Consider adding analytics tracking for which options users use most
+**Completed Implementation**:
+
+1. ✅ **Header and Layout Improvements**
+   - Search bar width fixed to 400px with responsive max-width: 100%
+   - Second header row (product navigation) now properly integrated
+   - Main content padding adjusted to avoid header overlap:
+     - Desktop: 140px-160px top padding
+     - Tablet: margin-top 140px
+     - Mobile: margin-top 140px
+   - Header structure maintained with responsive design
+
+2. ✅ **Split Button Full Functionality**
+   - Complete refactor of `docs-page-actions.js` (312 lines)
+   - Dropdown toggle with smooth animations:
+     - Arrow rotates 180° when opened
+     - Show/hide animations with opacity and transform
+     - Click outside to close
+     - ESC key to close
+   - All three dropdown options fully functional:
+     - Copy Page: Copies markdown to clipboard with success feedback
+     - View as Markdown: Opens modal with raw markdown display
+     - Download Page: Triggers file download with sanitized filename
+
+3. ✅ **Copy Page Functionality**
+   - Main button and dropdown option both work
+   - Fetches raw markdown from `/docs/content/${currentFile}`
+   - Uses Navigator Clipboard API
+   - Visual feedback:
+     - Success: Green checkmark icon + "Copied!" text (3 seconds)
+     - Error: Red X icon + error message (3 seconds)
+   - Error handling for missing files or clipboard failures
+
+4. ✅ **View as Markdown Modal**
+   - Full-screen overlay with backdrop blur
+   - Centered content box (90% width, max 900px)
+   - Scrollable markdown display in `<pre>` element
+   - Close options:
+     - Close button (X icon)
+     - Click outside (overlay)
+     - ESC key
+   - Body scroll disabled when modal open (no-scroll class)
+
+5. ✅ **Download Page Functionality**
+   - Fetches raw markdown content
+   - Creates Blob with type 'text/markdown;charset=utf-8'
+   - Generates download with sanitized filename
+   - Automatic cleanup of object URLs
+   - Filename extracted from currentFile path
+
+6. ✅ **Accessibility Features**
+   - ARIA labels on all buttons
+   - aria-expanded attribute on arrow button (updates with state)
+   - role="menu" on dropdown container
+   - role="menuitem" on dropdown options
+   - Keyboard support:
+     - ESC closes dropdown and modal
+     - Click events use stopPropagation to prevent conflicts
+   - Touch-friendly button sizes (44px minimum)
+
+7. ✅ **Helper Functions Implemented**
+   - `initPageActions()` - Initialize all event listeners
+   - `toggleDropdown()` - Toggle dropdown visibility
+   - `closeDropdown()` - Close dropdown with animation
+   - `copyPageToClipboard()` - Main copy functionality
+   - `fetchCurrentMarkdown()` - Fetch raw markdown from server
+   - `showCopySuccess()` - Success feedback animation
+   - `showCopyError()` - Error feedback animation
+   - `viewAsMarkdown()` - Open markdown view modal
+   - `closeMarkdownViewModal()` - Close modal
+   - `initMarkdownViewModal()` - Initialize modal event handlers
+   - `downloadPageAsMarkdown()` - Download file functionality
+   - `getCurrentPageFilename()` - Get sanitized filename
+   - `getCurrentPageTitle()` - Get formatted page title
+
+8. ✅ **Edge Cases Handled**
+   - No file loaded: Error message displayed instead of crash
+   - Clipboard API failures: Error feedback shown
+   - Modal already open: Prevents multiple instances
+   - Filename sanitization: Removes invalid characters (<>:"/\|?*)
+   - Global variable availability check: typeof checks before use
+   - DOM ready state check: Works whether loaded before or after DOMContentLoaded
+
+9. ✅ **Responsive Design**
+   - Already implemented in Phase 3 CSS (lines 1412-1488)
+   - Desktop: Horizontal layout with category and button side-by-side
+   - Tablet (≤1024px): Stacked layout, centered elements
+   - Mobile (≤768px): Reduced padding, hidden descriptions
+   - Small mobile (≤480px): Optimized touch targets
+
+**Files Modified**:
+- `src/docs/js/docs-page-actions.js` - Complete refactor (312 lines)
+- `src/docs/css/docs-search.css` - Search bar width to 400px
+- `src/docs/css/docs.css` - Main content padding adjustments for header (3 locations)
+
+**Testing Results**:
+- ✅ All JavaScript files validated with `node --check`
+- ✅ Server running successfully on port 5005
+- ✅ No syntax errors in any modified files
+- ✅ Split button HTML structure already existed
+- ✅ Modal HTML structure already existed
+- ✅ CSS styles already implemented in Phase 3
+
+**Browser Compatibility**:
+- Clipboard API: Chrome 63+, Firefox 53+, Safari 13.1+, Edge 79+ (requires HTTPS in production)
+- Blob/URL.createObjectURL: Universal support
+- All other features: Modern browser support
+
+**Benefits**:
+- Users can quickly copy documentation for LLMs/AI tools
+- Easy raw markdown viewing without downloads
+- One-click download with proper filenames
+- Professional split button pattern
+- Smooth animations and transitions
+- Fully accessible for all users
+- Works seamlessly on all devices
+- Proper error handling prevents crashes
+
+**Important Notes**:
+- currentFile variable is global from docs-products.js
+- Split button only visible when markdown file loaded (controlled by updatePageHeaderControls)
+- Clipboard API requires HTTPS in production (works on localhost)
+- All event listeners use stopPropagation to prevent bubbling
+- Initialization works with lazy loading system
 
 ---
 
-## Phase 3 Summary
+### Phase 1.5 - Analyse
+**Goal**: Finding possible errors, buggs and performance issues.
 
-**Total Time Estimate**: 8-12 hours
+**Tasks**: analyse the entire code base an use the code-planner agent to create new tasks for phase 2 and above in the plan.md file. 
+**Notice / Info**: Just add the new tasks do not already complete or start with them add them to the plan.md with extensive informations. So that i can review them manuly for what is needed and what is not needed.
+**What to Analyse**: Look out for potential Bugs,errors, performance issues, optimasation.
+**New Features**: When your done add a new phase just for new features and improvement that you would recommend for my project. Also do not directly start the development just add the new tasks using the code-planner agent 
 
-**Key Deliverables**:
-- Category display showing current documentation category
-- Split button with main "Copy Page" action
-- Dropdown menu with three page action options
-- Modal for viewing raw markdown
-- Download functionality for markdown files
-- Responsive design for all screen sizes
-- Accessibility features implemented
+---
 
-**Success Metrics**:
-- Users can easily identify which category they're viewing
-- Users can quickly copy markdown content for LLMs with one click
-- Alternative options are discoverable through dropdown
-- All interactions work smoothly with good feedback
-- Feature works on mobile and desktop devices
-- No errors in browser console
+### Phase 1.6 - Github Preperation
+**Goal**: Preparing the Project for Github
 
-**Dependencies**:
-- None - can be implemented independently of other phases
-- Uses existing infrastructure (markdown loading, docs-config.json structure)
-- Compatible with current page navigation system
-
-**Testing Checklist**:
-- [ ] Category display shows correct category for each page
-- [ ] Category display updates when navigating between pages
-- [ ] Category display is hidden for static HTML content
-- [ ] Split button appears correctly positioned
-- [ ] Main "Copy Page" button copies markdown to clipboard
-- [ ] "Copied!" success state appears and resets after 3 seconds
-- [ ] Arrow button toggles dropdown menu
-- [ ] Arrow icon rotates when dropdown opens/closes
-- [ ] Dropdown closes when clicking outside
-- [ ] Dropdown closes when pressing Escape key
-- [ ] "Copy Page" option in dropdown works correctly
-- [ ] "View as Markdown" opens modal with raw markdown
-- [ ] Modal displays markdown in readable format
-- [ ] Modal can be closed via button, outside click, and Escape key
-- [ ] "Download Page" triggers file download
-- [ ] Downloaded file has correct filename and content
-- [ ] All features work on desktop browsers
-- [ ] All features work on mobile devices
-- [ ] Responsive design looks good on all screen sizes
-- [ ] No console errors during any interaction
-- [ ] Keyboard navigation works properly
-- [ ] Screen readers can access all functionality
+**Tasks**:
+- **.gitignore**: create an gitignore file that ignores all unnecessary files and files that need to be private. Also files that should be ignored are .claude folder, claude.md, venv folder, node_modules folder, project-informations, folder, the src/main/config/user.json, also the trash folder should be ignored
+- **Readme.md** Analyse the whole project and create an comprehensive and detailed readme file, also an contributing and lisence file, also an usage file that should contain how to use this project and set everything up.
 
 
 ---

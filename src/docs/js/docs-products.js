@@ -7,6 +7,16 @@ let currentFile = null;
 
 // Initialize the documentation page
 async function initDocsPage() {
+    // Load config first
+    let config = null;
+    try {
+        const response = await fetch('/docs/config/docs-config.json');
+        config = await response.json();
+    } catch (error) {
+        console.error('Failed to load docs config:', error);
+        return;
+    }
+
     // Parse URL path: /docs or /docs/quantom/getting-started/installation
     const path = window.location.pathname;
     const pathParts = path.split('/').filter(p => p);
@@ -17,8 +27,25 @@ async function initDocsPage() {
     }
 
     if (pathParts.length === 0) {
-        // Just "/docs" - show product overview
-        await loadProductOverview();
+        // Just "/docs" - check if default is enabled
+        const general = config.general || {};
+        if (general.default === true && general.defaultProduct) {
+            // Load default product
+            const defaultProduct = general.defaultProduct;
+            const product = config.products.find(p => p.id === defaultProduct);
+
+            if (product && product.firstSide) {
+                // Load the firstSide file
+                currentProduct = defaultProduct;
+                await loadProductDocs(defaultProduct, product.firstSide);
+            } else {
+                // Fallback to product overview
+                await loadProductOverview();
+            }
+        } else {
+            // Show product overview
+            await loadProductOverview();
+        }
     } else {
         // Product selected: /docs/{product}/... or /docs/{product}/{category}/{file}
         const selectedProduct = pathParts[0];
@@ -153,17 +180,6 @@ function buildSidebar(categories, productId) {
     const sidebar = document.querySelector('.sidebar-left');
     sidebar.innerHTML = '';
 
-    // Add "Back to Products" link
-    const backLink = document.createElement('div');
-    backLink.className = 'back-to-products';
-    backLink.innerHTML = `
-        <a href="/docs" style="display: flex; align-items: center; gap: 8px; padding: 12px; margin-bottom: 20px; background: var(--card-background-color); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-color); text-decoration: none; transition: all 0.2s;">
-            <i class="fas fa-arrow-left"></i>
-            <span>All Products</span>
-        </a>
-    `;
-    sidebar.appendChild(backLink);
-
     categories.forEach(category => {
         const categoryBlock = document.createElement('div');
         categoryBlock.className = 'nav-block';
@@ -233,9 +249,6 @@ async function loadMarkdownFile(filePath) {
         dynamicContent.innerHTML = html;
         dynamicContent.style.display = 'block';
 
-        // Update breadcrumb navigation
-        updateBreadcrumb(filePath);
-
         // Update page header controls (category + split button)
         updatePageHeaderControls(filePath);
 
@@ -286,46 +299,6 @@ function showLoadingSkeleton() {
     dynamicContent.style.display = 'block';
 }
 
-// Update breadcrumb navigation
-async function updateBreadcrumb(filePath) {
-    const breadcrumb = document.querySelector('.breadcrumb');
-    const breadcrumbList = document.getElementById('breadcrumb-list');
-
-    if (!breadcrumb || !breadcrumbList) return;
-
-    try {
-        // Parse file path: productId/categoryName/fileName.md
-        const pathParts = filePath.split('/');
-        const productId = pathParts[0];
-        const categoryName = pathParts[1];
-        const fileName = pathParts[2];
-
-        // Get product info from config
-        const configResponse = await fetch('config/docs-config.json');
-        const config = await configResponse.json();
-        const product = config.products.find(p => p.id === productId);
-
-        // Format names for display
-        const categoryDisplayName = formatCategoryName(categoryName);
-        const fileDisplayName = formatFileName(fileName);
-
-        // Build breadcrumb HTML
-        breadcrumbList.innerHTML = `
-            <li><a href="/main">Home</a></li>
-            <li><a href="/docs">Documentation</a></li>
-            <li><a href="/docs/${productId}">${product ? product.name : productId}</a></li>
-            <li>${categoryDisplayName}</li>
-            <li aria-current="page">${fileDisplayName}</li>
-        `;
-
-        // Show breadcrumb
-        breadcrumb.style.display = 'block';
-    } catch (error) {
-        console.error('Error updating breadcrumb:', error);
-        breadcrumb.style.display = 'none';
-    }
-}
-
 // Format category name for display
 function formatCategoryName(folderName) {
     return folderName
@@ -343,8 +316,49 @@ function formatFileName(fileName) {
 }
 
 // Update table of contents in right sidebar
-function updateTableOfContents(contentElement) {
-    const headings = contentElement.querySelectorAll('h1, h2, h3');
+async function updateTableOfContents(contentElement) {
+    // Load config to check sidebar settings
+    let config = null;
+    try {
+        const response = await fetch('/docs/config/docs-config.json');
+        config = await response.json();
+    } catch (error) {
+        console.error('Failed to load config for sidebar settings:', error);
+        // Use defaults if config fails
+        config = {
+            general: {
+                sidebarRightHeaders: {
+                    mainSectionHeader: true,
+                    subSectionHeader: true,
+                    subSubSectionHeader: false
+                },
+                rightSidebarSectionGap: true
+            }
+        };
+    }
+
+    const settings = config.general || {};
+    const headerSettings = settings.sidebarRightHeaders || {
+        mainSectionHeader: true,
+        subSectionHeader: true,
+        subSubSectionHeader: false
+    };
+    const useGap = settings.rightSidebarSectionGap !== false;
+
+    // Select headings based on settings
+    let selector = '';
+    const selectors = [];
+    if (headerSettings.mainSectionHeader) selectors.push('h1');
+    if (headerSettings.subSectionHeader) selectors.push('h2');
+    if (headerSettings.subSubSectionHeader) selectors.push('h3');
+
+    if (selectors.length === 0) {
+        // If no headings selected, show all by default
+        selectors.push('h1', 'h2', 'h3');
+    }
+
+    selector = selectors.join(', ');
+    const headings = contentElement.querySelectorAll(selector);
     const sidebarRight = document.querySelector('.sidebar-right ul');
     const mobileRightSidebar = document.querySelector('.mobile-right-sidebar-content');
 
@@ -367,6 +381,11 @@ function updateTableOfContents(contentElement) {
         a.textContent = heading.textContent;
         a.className = heading.tagName.toLowerCase();
         a.dataset.headingId = heading.id;
+
+        // Add gap class if needed (h2 and h3 get indented)
+        if (useGap && (heading.tagName === 'H2' || heading.tagName === 'H3')) {
+            a.classList.add('indented');
+        }
 
         // Smooth scroll on click
         a.addEventListener('click', (e) => {
