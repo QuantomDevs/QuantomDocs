@@ -219,6 +219,119 @@
     <script src="/shared/js/mobile-menu.js"></script>
 
     <script>
+        // Load 404 configuration and apply settings
+        async function load404Config() {
+            try {
+                const response = await fetch('/docs/config/docs-config.json');
+                const config = await response.json();
+                const error404Config = config.errorPages?.['404'];
+
+                if (!error404Config) {
+                    console.warn('404 error configuration not found, using defaults');
+                    return;
+                }
+
+                // Apply content settings
+                if (error404Config.content) {
+                    const { title, description, searchPlaceholder, homeButtonText } = error404Config.content;
+
+                    if (title) {
+                        document.querySelector('.error-title').textContent = title;
+                    }
+
+                    if (description) {
+                        const descElement = document.querySelector('.error-message');
+                        let processedDesc = description;
+
+                        // Apply placeholders before rendering
+                        if (error404Config.placeholders) {
+                            if (error404Config.placeholders.requestedUrl) {
+                                const requestedUrl = window.location.pathname;
+                                processedDesc = processedDesc.replace(/\{requestedUrl\}/g, `<code>${requestedUrl}</code>`);
+                            }
+
+                            if (error404Config.placeholders.timestamp) {
+                                const timestamp = new Date().toLocaleString();
+                                processedDesc = processedDesc.replace(/\{timestamp\}/g, timestamp);
+                            }
+
+                            if (error404Config.placeholders.productName) {
+                                const productName = config.general?.defaultProduct || 'Quantom';
+                                processedDesc = processedDesc.replace(/\{productName\}/g, productName);
+                            }
+                        }
+
+                        // Support basic markdown formatting
+                        if (error404Config.content.supportMarkdown) {
+                            processedDesc = processedDesc
+                                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')  // Bold
+                                .replace(/\*(.*?)\*/g, '<em>$1</em>')              // Italic
+                                .replace(/`(.*?)`/g, '<code>$1</code>');           // Inline code
+                        }
+
+                        // Support newlines
+                        processedDesc = processedDesc.replace(/\n/g, '<br>');
+
+                        descElement.innerHTML = processedDesc;
+                    }
+
+                    if (searchPlaceholder) {
+                        document.getElementById('error-search-input').placeholder = searchPlaceholder;
+                    }
+
+                    if (homeButtonText) {
+                        document.querySelector('.home-button span').textContent = homeButtonText;
+                    }
+                }
+
+                // Apply redirect settings
+                if (error404Config.redirect) {
+                    const { enabled, showQuickLinks, showSearchBar, links } = error404Config.redirect;
+
+                    // Hide search bar if disabled
+                    if (!showSearchBar) {
+                        document.querySelector('.search-container').style.display = 'none';
+                    }
+
+                    // Hide or rebuild quick links
+                    const quickLinksContainer = document.querySelector('.quick-links');
+                    if (!showQuickLinks) {
+                        quickLinksContainer.style.display = 'none';
+                    } else if (links && links.length > 0) {
+                        // Rebuild quick links from config
+                        quickLinksContainer.innerHTML = '';
+                        links.forEach(link => {
+                            const linkElement = document.createElement('a');
+                            linkElement.href = link.url;
+                            linkElement.className = 'quick-link';
+                            if (link.external) {
+                                linkElement.target = '_blank';
+                            }
+
+                            linkElement.innerHTML = `
+                                <i class="${link.icon}"></i>
+                                <span>${link.text}</span>
+                            `;
+
+                            quickLinksContainer.appendChild(linkElement);
+                        });
+                    }
+
+                    // If redirect is completely disabled, hide navigation elements
+                    if (!enabled) {
+                        quickLinksContainer.style.display = 'none';
+                        document.querySelector('.home-button').style.display = 'none';
+                    }
+                }
+
+            } catch (error) {
+                console.error('Failed to load 404 configuration:', error);
+            }
+        }
+
+        // Load configuration on page load
+        document.addEventListener('DOMContentLoaded', load404Config);
+
         // Redirect to docs search when user presses Enter in search input
         document.getElementById('error-search-input').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {

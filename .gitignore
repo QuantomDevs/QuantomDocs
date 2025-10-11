@@ -29,7 +29,8 @@ __pycache__/
 .claude/
 CLAUDE.md
 project-informations/
-src/main/config/users.json
+src/docs/config/users.json
+src/docs/config/analytics.json
 trash/
 
 # Build artifacts

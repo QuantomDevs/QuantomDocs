@@ -58,20 +58,20 @@
     justify-content: space-between;
     gap: 8px;
     padding: 8px 16px;
-    background: var(--docs-search-btn-bg);
+    background: var(--bg-primary);
     border: 1px solid var(--docs-search-btn-border);
-    border-radius: var(--radius-xl);
+    border-radius: var(--radius-2xl);
     color: var(--docs-search-btn-text);
     font-size: 0.9rem;
     cursor: pointer;
     transition: var(--transition-fast);
-    min-height: 44px;
-    width: 400px;
+    min-height: 54px;
+    width: 600px;
     max-width: 100%;
 }
 
 .docs-search-button:hover {
-    background: var(--docs-search-btn-hover-bg);
+    background: var(--bg-secondary);
     border-color: var(--accent-color);
     color: var(--text-primary);
 }
@@ -396,5 +396,27 @@
 
     .docs-search-shortcut {
         display: none;
+    }
+}
+
+/* Mobile Search Button - Convert to Icon Only (< 700px) */
+@media (max-width: 699px) {
+    .docs-search-button {
+        width: 44px;
+        height: 44px;
+        min-height: 44px;
+        padding: 0;
+        justify-content: center;
+        border-radius: 50%;
+    }
+
+    .docs-search-button > span:first-of-type,
+    .docs-search-button .shortcut-hint {
+        display: none;
+    }
+
+    .docs-search-button svg {
+        width: 20px;
+        height: 20px;
     }
 }

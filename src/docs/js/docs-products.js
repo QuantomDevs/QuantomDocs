@@ -3,6 +3,7 @@
 
 let currentProduct = null;
 let currentCategory = null;
+let currentMarkdown = null;
 let currentFile = null;
 
 // Initialize the documentation page
@@ -104,23 +105,35 @@ async function loadProductOverview() {
 
 // Hide docs containers when showing product overview
 function hideDocsContainers() {
-    document.querySelector('.sidebar-left').style.display = 'none';
-    document.querySelector('.sidebar-right').style.display = 'none';
-    document.querySelector('.main-content').style.display = 'none';
-    document.querySelector('.mobile-menu-buttons').style.display = 'none';
+    const sidebarLeft = document.querySelector('.sidebar-left');
+    const sidebarRight = document.querySelector('.sidebar-right');
+    const mainContent = document.querySelector('.main-content');
+
+    if (sidebarLeft) sidebarLeft.style.display = 'none';
+    if (sidebarRight) sidebarRight.style.display = 'none';
+    if (mainContent) mainContent.style.display = 'none';
 }
 
 // Show docs containers when loading product
 function showDocsContainers() {
-    document.getElementById('product-overview').style.display = 'none';
-    document.querySelector('.sidebar-left').style.display = 'block';
-    document.querySelector('.sidebar-right').style.display = 'block';
-    document.querySelector('.main-content').style.display = 'block';
+    const productOverview = document.getElementById('product-overview');
+    const sidebarLeft = document.querySelector('.sidebar-left');
+    const sidebarRight = document.querySelector('.sidebar-right');
+    const mainContent = document.querySelector('.main-content');
 
-    // Show mobile menu buttons on small screens
-    if (window.innerWidth <= 1024) {
-        document.querySelector('.mobile-menu-buttons').style.display = 'flex';
+    if (productOverview) productOverview.style.display = 'none';
+
+    // Show sidebars and main content
+    // On mobile, sidebar should be hidden initially (transform handles visibility)
+    if (sidebarLeft) {
+        sidebarLeft.style.display = 'block';
+        // On mobile, ensure it starts hidden (transform will be applied by CSS)
+        if (window.innerWidth <= 1024) {
+            sidebarLeft.classList.remove('active');
+        }
     }
+    if (sidebarRight) sidebarRight.style.display = 'block';
+    if (mainContent) mainContent.style.display = 'block';
 }
 
 // Select a product and load its documentation
@@ -265,6 +278,9 @@ async function loadMarkdownFile(filePath) {
         // Store current file path
         currentFile = filePath;
 
+        // Track analytics for markdown file view
+        trackMarkdownView(filePath);
+
     } catch (error) {
         console.error('Error loading markdown file:', error);
         dynamicContent.innerHTML = `
@@ -274,6 +290,33 @@ async function loadMarkdownFile(filePath) {
             </div>
         `;
         dynamicContent.style.display = 'block';
+    }
+}
+
+// Track markdown file view in analytics
+async function trackMarkdownView(filePath) {
+    try {
+        // Convert file path to URL format: quantom/01-Getting-Started/Installation.md -> /docs/quantom/getting-started/installation
+        const pathParts = filePath.replace('.md', '').split('/');
+        const cleanPath = pathParts.map(part =>
+            part.split('-').map(word => word.toLowerCase()).join('-')
+        ).join('/');
+        const trackPath = `/docs/${cleanPath}`;
+
+        // Send analytics tracking request (no auth required for tracking)
+        await fetch('/api/analytics/track', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                path: trackPath,
+                type: 'markdown'
+            })
+        });
+    } catch (error) {
+        // Silently fail - don't interrupt user experience for analytics
+        console.debug('Analytics tracking failed:', error);
     }
 }
 
@@ -303,6 +346,7 @@ function showLoadingSkeleton() {
 function formatCategoryName(folderName) {
     return folderName
         .replace(/-/g, ' ')
+        .replace('.md','')
         .split(' ')
         .map(word => word.charAt(0).toUpperCase() + word.slice(1))
         .join(' ');
@@ -485,6 +529,7 @@ function setActiveSidebarLink(filePath) {
 function updatePageHeaderControls(filePath) {
     const pageHeaderControls = document.getElementById('page-header-controls');
     const categoryNameElement = document.getElementById('current-category-name');
+    const markdownNameElement = document.getElementById('current-markdown-name');
 
     if (!pageHeaderControls || !categoryNameElement) return;
 
@@ -492,15 +537,19 @@ function updatePageHeaderControls(filePath) {
         // Parse file path: productId/categoryName/fileName.md
         const pathParts = filePath.split('/');
         const categoryName = pathParts[1];
+        const markdownName = pathParts[2];
 
         // Format category name for display
         const categoryDisplayName = formatCategoryName(categoryName);
+        const markdownDisplayName = formatCategoryName(markdownName);
 
         // Update category name
         categoryNameElement.textContent = categoryDisplayName;
+        markdownNameElement.textContent = markdownDisplayName;
 
         // Store current category
         currentCategory = categoryDisplayName;
+        currentMarkdown = markdownDisplayName;
 
         // Show page header controls
         pageHeaderControls.style.display = 'flex';
@@ -512,6 +561,104 @@ function updatePageHeaderControls(filePath) {
 
 // Note: addCopyButtonListeners is defined in docs.js and will be called from there
 
+// Mobile Product Selector Functions
+async function initMobileProductSelector() {
+    const selectorContainer = document.getElementById('mobile-product-selector');
+    const selectorButton = document.getElementById('product-selector-btn');
+    const selectorDropdown = document.getElementById('product-selector-dropdown');
+    const currentProductName = document.getElementById('current-product-name');
+
+    if (!selectorContainer || !selectorButton || !selectorDropdown) {
+        return;
+    }
+
+    try {
+        // Load products from config
+        const response = await fetch('/docs/config/docs-config.json');
+        const config = await response.json();
+        const products = config.products.filter(p => p.showInDocs);
+
+        if (products.length <= 1) {
+            // Hide selector if only one product or no products
+            selectorContainer.style.display = 'none';
+            return;
+        }
+
+        // Populate dropdown
+        selectorDropdown.innerHTML = products.map(product => `
+            <div class="product-selector-item" data-product-id="${product.id}">
+                <span class="product-icon">${product.icon || '📦'}</span>
+                <div class="product-info">
+                    <div class="product-name">${product.name}</div>
+                    <div class="product-description">${product.description || ''}</div>
+                </div>
+            </div>
+        `).join('');
+
+        // Update current product name
+        if (currentProduct) {
+            const product = products.find(p => p.id === currentProduct);
+            if (product) {
+                currentProductName.textContent = product.name;
+            }
+        }
+
+        // Toggle dropdown
+        selectorButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const isActive = selectorDropdown.classList.toggle('active');
+            selectorButton.classList.toggle('active', isActive);
+        });
+
+        // Handle product selection
+        selectorDropdown.querySelectorAll('.product-selector-item').forEach(item => {
+            item.addEventListener('click', async () => {
+                const productId = item.dataset.productId;
+                const product = products.find(p => p.id === productId);
+
+                if (product) {
+                    // Close dropdown
+                    selectorDropdown.classList.remove('active');
+                    selectorButton.classList.remove('active');
+
+                    // Update current product name
+                    currentProductName.textContent = product.name;
+
+                    // Load product documentation
+                    if (product.firstSide) {
+                        await loadProductDocs(productId, product.firstSide);
+                    } else {
+                        await loadProductDocs(productId);
+                    }
+
+                    // Close mobile sidebar
+                    const sidebar = document.querySelector('.sidebar-left');
+                    const overlay = document.getElementById('mobile-sidebar-overlay');
+                    if (sidebar) {
+                        sidebar.classList.remove('active');
+                        document.body.classList.remove('no-scroll');
+                    }
+                    if (overlay) {
+                        overlay.classList.remove('active');
+                    }
+                }
+            });
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!selectorContainer.contains(e.target)) {
+                selectorDropdown.classList.remove('active');
+                selectorButton.classList.remove('active');
+            }
+        });
+
+    } catch (error) {
+        console.error('Failed to initialize mobile product selector:', error);
+        selectorContainer.style.display = 'none';
+    }
+}
+
 // Handle browser back/forward navigation
 window.addEventListener('popstate', (event) => {
     // Re-initialize based on current URL path
@@ -519,6 +666,8 @@ window.addEventListener('popstate', (event) => {
 });
 
 // Initialize when DOM is ready
-document.addEventListener('DOMContentLoaded', () => {
-    initDocsPage();
+document.addEventListener('DOMContentLoaded', async () => {
+    await initDocsPage();
+    // Initialize mobile product selector after docs page loads
+    await initMobileProductSelector();
 });

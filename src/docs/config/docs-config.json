@@ -9,12 +9,65 @@
     },
     "rightSidebarSectionGap": true
   },
+  "errorPages": {
+    "404": {
+      "redirect": {
+        "enabled": true,
+        "showQuickLinks": true,
+        "showSearchBar": true,
+        "links": [
+          {
+            "text": "Home",
+            "url": "/main",
+            "icon": "fas fa-home"
+          },
+          {
+            "text": "Documentation",
+            "url": "/docs",
+            "icon": "fas fa-book"
+          },
+          {
+            "text": "Downloads",
+            "url": "/downloads",
+            "icon": "fas fa-download"
+          },
+          {
+            "text": "Discord",
+            "url": "https://discord.gg/5gdthYHqSv",
+            "icon": "fab fa-discord",
+            "external": true
+          }
+        ]
+      },
+      "content": {
+        "title": "Page Not Found",
+        "description": "The page you're looking for **{requestedUrl}** doesn't exist or has been moved.\nLet's help you find what you need in the {productName} documentation.",
+        "searchPlaceholder": "Search for guides, tutorials, configuration...",
+        "homeButtonText": "Back to Homepage",
+        "supportMarkdown": true
+      },
+      "placeholders": {
+        "requestedUrl": true,
+        "timestamp": true,
+        "productName": true
+      }
+    }
+  },
   "products": [
     {
       "id": "quantom",
       "name": "Quantom Server",
       "description": "High-performance Minecraft server software optimized for large networks",
       "path": "quantom",
+      "icon": "🚀",
+      "showInDocs": true,
+      "firstSide": "quantom/getting-started/Installation.md"
+    },
+    {
+      "id": "test",
+      "name": "Test",
+      "description": "High-performance Minecraft server software optimized for large networks",
+      "path": "test",
       "icon": "🚀",
       "showInDocs": true,
       "firstSide": "quantom/getting-started/Installation.md"

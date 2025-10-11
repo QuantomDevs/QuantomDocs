@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - Quantom</title>
+    <link rel="icon" href="/shared/images/favicon/favicon.png" type="image/png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="/shared/css/common.css">
+    <link rel="stylesheet" href="/docs/css/settings.css">
+    <link rel="stylesheet" href="/docs/css/docs-components.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.1.0/github-markdown.min.css">
+
+    <!-- Prism.js for syntax highlighting -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <!-- LOGIN SUBPAGE -->
+    <!-- This page is shown when the user is not authenticated -->
+    <div id="loginPage" class="login-page" style="display: none;">
+        <div class="login-container">
+            <div class="login-card">
+                <div class="login-header">
+                    <img src="/shared/images/favicon/favicon.png" alt="Quantom Logo" class="login-logo">
+                    <h1>Sign in to Quantom</h1>
+                    <p>Access your settings and manage your account</p>
+                </div>
+
+                <form id="loginForm" class="login-form">
+                    <div class="form-group">
+                        <label for="username">
+                            <i class="fas fa-user"></i>
+                            Username
+                        </label>
+                        <input type="text" id="username" name="username" required autocomplete="username" placeholder="Enter your username">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password">
+                            <i class="fas fa-lock"></i>
+                            Password
+                        </label>
+                        <div class="password-input-container">
+                            <input type="password" id="password" name="password" required autocomplete="current-password" placeholder="Enter your password">
+                            <button type="button" id="togglePassword" class="password-toggle">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn-login" id="loginBtn">
+                        <span>Continue</span>
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
+
+                    <div class="error-message" id="loginError" style="display: none;">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <span id="loginErrorText">Invalid credentials</span>
+                    </div>
+                </form>
+
+                <div class="login-footer">
+                    <p class="legal-text">By signing in, you agree to the <a href="/legal">Terms of Service</a> and <a href="/legal">Privacy Policy</a>.</p>
+                    <p class="support-text">
+                        Need help?
+                        <a href="https://discord.gg/f46gXT69Fd" target="_blank" rel="noopener noreferrer">Contact Support</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN SETTINGS PAGE -->
+    <!-- This page is shown when the user is authenticated -->
+    <div id="settingsPage" class="settings-page" style="display: none;">
+        <!-- Sidebar Navigation -->
+        <aside id="settingsSidebar" class="settings-sidebar">
+            <!-- User Profile Section at the top -->
+            <div class="sidebar-user-section">
+                <button id="userMenuToggle" class="user-menu-toggle">
+                    <div class="user-info">
+                        <i class="fas fa-user-circle user-avatar"></i>
+                        <span id="currentUsername" class="username">Admin</span>
+                    </div>
+                    <i class="fas fa-chevron-down dropdown-icon"></i>
+                </button>
+                <!-- Dropdown Menu -->
+                <div id="userDropdown" class="user-dropdown" style="display: none;">
+                    <button class="dropdown-item" data-action="change-password">
+                        <i class="fas fa-key"></i>
+                        Change Password
+                    </button>
+                    <button class="dropdown-item" data-action="logout">
+                        <i class="fas fa-sign-out-alt"></i>
+                        Log Out
+                    </button>
+                </div>
+            </div>
+
+            <!-- Collapse Button (top right of sidebar) -->
+            <button id="sidebarCollapseBtn" class="sidebar-collapse-btn" title="Collapse sidebar">
+                <i class="fas fa-angles-left"></i>
+            </button>
+
+            <!-- Navigation Tabs -->
+            <nav class="sidebar-nav">
+                <!--
+                    MODULAR TAB STRUCTURE:
+                    Each tab has:
+                    - data-tab: unique identifier for the tab
+                    - class "nav-tab": base styling
+                    - class "active": indicates current active tab
+                    - icon: FontAwesome icon
+                    - span: tab label (hidden when sidebar is collapsed)
+
+                    To add a new tab:
+                    1. Add a new button with data-tab="your-tab-id"
+                    2. Add your icon and label
+                    3. Create corresponding content in the main-content area
+                    4. The JavaScript will handle tab switching automatically
+                -->
+                <button class="nav-tab active" data-tab="overview">
+                    <i class="fas fa-home"></i>
+                    <span>Overview</span>
+                </button>
+                <button class="nav-tab" data-tab="editor">
+                    <i class="fas fa-edit"></i>
+                    <span>Editor</span>
+                </button>
+                <button class="nav-tab" data-tab="analytics">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Analytics</span>
+                </button>
+                <button class="nav-tab" data-tab="settings">
+                    <i class="fas fa-cog"></i>
+                    <span>Settings</span>
+                </button>
+                <button class="nav-tab" data-tab="themes">
+                    <i class="fas fa-palette"></i>
+                    <span>Themes</span>
+                </button>
+
+                <!-- Divider -->
+                <div class="nav-divider"></div>
+
+                <button class="nav-tab" data-tab="authentication">
+                    <i class="fas fa-shield-alt"></i>
+                    <span>Authentication</span>
+                </button>
+
+                <!-- Divider -->
+                <div class="nav-divider"></div>
+
+                <!-- External Links -->
+                <a href="https://docs.quantom.dev" target="_blank" rel="noopener noreferrer" class="nav-tab nav-link">
+                    <i class="fas fa-book"></i>
+                    <span>Documentation</span>
+                    <i class="fas fa-external-link-alt external-icon"></i>
+                </a>
+                <a href="https://discord.gg/f46gXT69Fd" target="_blank" rel="noopener noreferrer" class="nav-tab nav-link">
+                    <i class="fab fa-discord"></i>
+                    <span>Support</span>
+                    <i class="fas fa-external-link-alt external-icon"></i>
+                </a>
+            </nav>
+
+            <!-- Theme Toggle at Bottom -->
+            <div class="sidebar-footer">
+                <button id="themeToggleSidebar" class="theme-toggle-btn">
+                    <i class="fas fa-moon theme-icon"></i>
+                    <span>Dark Mode</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="settings-main">
+            <!--
+                MODULAR CONTENT STRUCTURE:
+                Each content section has:
+                - id: matches the data-tab value from sidebar (e.g., "overview-content")
+                - class "tab-content": base styling
+                - class "active": indicates currently displayed content
+
+                To add new content:
+                1. Create a new div with id="your-tab-id-content"
+                2. Add class="tab-content"
+                3. Add your content inside
+                4. The JavaScript will handle showing/hiding automatically
+            -->
+
+            <!-- Overview Tab Content -->
+            <div id="overview-content" class="tab-content active">
+                <div class="content-header">
+                    <h1>Overview</h1>
+                    <p>Welcome to your Quantom settings dashboard</p>
+                </div>
+                <div class="content-body">
+                    <!-- Overview content will be populated by JavaScript -->
+                    <div class="empty-state">
+                        <i class="fas fa-chart-bar empty-icon"></i>
+                        <h3>Overview Dashboard</h3>
+                        <p>This section will display an overview of your system statistics and quick actions.</p>
+                        <p class="empty-state-hint">Coming soon...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Editor Tab Content -->
+            <div id="editor-content" class="tab-content">
+                <div class="content-header">
+                    <h1>Editor</h1>
+                    <p>Edit and manage your documentation files</p>
+                </div>
+                <div class="content-body editor-container">
+                    <!-- Editor Toolbar -->
+                    <div class="editor-toolbar" id="editorToolbar" style="display: none;">
+                        <div class="editor-toolbar-left">
+                            <span class="editor-file-path" id="editorFilePath">No file selected</span>
+                        </div>
+                        <div class="editor-toolbar-right">
+                            <!-- Editor Mode Toggle -->
+                            <div class="editor-mode-toggle">
+                                <button id="rawModeBtn" class="mode-btn active" title="Raw markdown editor">
+                                    <i class="fas fa-code"></i>
+                                    <span>Raw</span>
+                                </button>
+                                <button id="visualModeBtn" class="mode-btn" title="Visual preview">
+                                    <i class="fas fa-eye"></i>
+                                    <span>Visual</span>
+                                </button>
+                            </div>
+                            <button class="btn btn-secondary btn-sm" id="createMarkdownBtn">
+                                <i class="fas fa-file-medical"></i>
+                                <span>Create Markdown</span>
+                            </button>
+                            <button class="btn btn-secondary btn-sm" id="createFolderBtn">
+                                <i class="fas fa-folder-plus"></i>
+                                <span>Create Folder</span>
+                            </button>
+                            <button class="btn btn-primary btn-sm" id="publishBtn" disabled>
+                                <i class="fas fa-save"></i>
+                                <span>Publish</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Editor Main Area -->
+                    <div class="editor-main">
+                        <!-- File Browser -->
+                        <div class="file-browser">
+                            <div class="file-browser-header">
+                                <h3>Files</h3>
+                                <select id="productSelector" class="product-selector">
+                                    <option value="quantom">Quantom</option>
+                                </select>
+                            </div>
+                            <div class="file-tree" id="fileTree">
+                                <div class="loading-state">
+                                    <i class="fas fa-spinner fa-spin"></i>
+                                    <p>Loading files...</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Editor Area -->
+                        <div class="editor-area" id="editorArea">
+                            <div class="empty-editor-state">
+                                <i class="fas fa-file-alt"></i>
+                                <h3>No File Selected</h3>
+                                <p>Select a file from the browser to start editing</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analytics Tab Content -->
+            <div id="analytics-content" class="tab-content">
+                <div class="content-header">
+                    <h1>Analytics</h1>
+                    <p>View visitor statistics and popular pages</p>
+                </div>
+                <div class="content-body" id="analyticsContainer">
+                    <!-- Analytics content will be dynamically loaded -->
+                    <div class="loading-state">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <p>Loading analytics...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings Tab Content -->
+            <div id="settings-content" class="tab-content">
+                <div class="content-header">
+                    <h1>Settings</h1>
+                    <p>Configure documentation and system settings</p>
+                </div>
+                <div class="content-body" id="settingsConfigContainer">
+                    <!-- Settings will be dynamically loaded from docs-config.json -->
+                    <div class="loading-state">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <p>Loading settings...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Themes Tab Content -->
+            <div id="themes-content" class="tab-content">
+                <div class="content-header">
+                    <h1>Themes</h1>
+                    <p>Customize the appearance of your documentation</p>
+                </div>
+                <div class="content-body">
+                    <div class="empty-state">
+                        <i class="fas fa-palette empty-icon"></i>
+                        <h3>Theme Customization</h3>
+                        <p>Customize colors, fonts, and visual styles for your documentation.</p>
+                        <p class="empty-state-hint">Coming soon...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Authentication Tab Content -->
+            <div id="authentication-content" class="tab-content">
+                <div class="content-header">
+                    <h1>Authentication</h1>
+                    <p>Manage users and access control</p>
+                </div>
+                <div class="content-body" id="authenticationContainer">
+                    <div class="action-bar">
+                        <button id="createUserBtn" class="btn btn-primary">
+                            <i class="fas fa-user-plus"></i>
+                            Create User
+                        </button>
+                    </div>
+                    <!-- User list will be dynamically loaded -->
+                    <div id="usersList" class="users-list loading-state">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <p>Loading users...</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Change Password Modal -->
+    <div id="changePasswordModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Change Password</h2>
+                <button class="modal-close" data-modal="changePasswordModal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="changePasswordForm">
+                    <div class="form-group">
+                        <label for="currentPassword">Current Password</label>
+                        <input type="password" id="currentPassword" name="currentPassword" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="newPassword">New Password</label>
+                        <input type="password" id="newPassword" name="newPassword" required minlength="8">
+                    </div>
+                    <div class="form-group">
+                        <label for="confirmPassword">Confirm New Password</label>
+                        <input type="password" id="confirmPassword" name="confirmPassword" required minlength="8">
+                    </div>
+                    <div class="error-message" id="changePasswordError" style="display: none;">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <span id="changePasswordErrorText"></span>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-modal="changePasswordModal">Cancel</button>
+                <button class="btn btn-primary" id="savePasswordBtn">Save Password</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Editor Modal (for Authentication tab) -->
+    <div id="userEditorModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="userEditorTitle">Create User</h2>
+                <button class="modal-close" data-modal="userEditorModal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="userEditorForm">
+                    <input type="hidden" id="editUsername" name="editUsername">
+                    <div class="form-group">
+                        <label for="editorUsername">Username</label>
+                        <input type="text" id="editorUsername" name="editorUsername" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editorPassword">Password</label>
+                        <input type="password" id="editorPassword" name="editorPassword">
+                        <small class="form-hint">Leave empty to keep current password (when editing)</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="editorRole">Role</label>
+                        <select id="editorRole" name="editorRole" required>
+                            <option value="user">User</option>
+                            <option value="admin">Admin</option>
+                        </select>
+                    </div>
+                    <div class="error-message" id="userEditorError" style="display: none;">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <span id="userEditorErrorText"></span>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-modal="userEditorModal">Cancel</button>
+                <button class="btn btn-primary" id="saveUserBtn">Save User</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div id="confirmModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="confirmTitle">Confirm Action</h2>
+                <button class="modal-close" data-modal="confirmModal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p id="confirmMessage">Are you sure you want to perform this action?</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-modal="confirmModal">Cancel</button>
+                <button class="btn btn-danger" id="confirmActionBtn">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create File/Folder Modal -->
+    <div id="createItemModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="createItemTitle">Create File</h2>
+                <button class="modal-close" data-modal="createItemModal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="createItemForm">
+                    <input type="hidden" id="createItemType" value="file">
+                    <input type="hidden" id="createItemFolder" value="">
+                    <div class="form-group">
+                        <label for="createItemName">Name</label>
+                        <input type="text" id="createItemName" name="createItemName" required placeholder="Enter name">
+                        <small class="form-hint" id="createItemHint">Enter the file name (e.g., Installation.md)</small>
+                    </div>
+                    <div class="error-message" id="createItemError" style="display: none;">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <span id="createItemErrorText"></span>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-modal="createItemModal">Cancel</button>
+                <button class="btn btn-primary" id="saveItemBtn">Create</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rename Modal -->
+    <div id="renameModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Rename</h2>
+                <button class="modal-close" data-modal="renameModal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="renameForm">
+                    <input type="hidden" id="renameOldPath" value="">
+                    <div class="form-group">
+                        <label for="renameNewName">New Name</label>
+                        <input type="text" id="renameNewName" name="renameNewName" required>
+                    </div>
+                    <div class="error-message" id="renameError" style="display: none;">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <span id="renameErrorText"></span>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-modal="renameModal">Cancel</button>
+                <button class="btn btn-primary" id="saveRenameBtn">Rename</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Context Menu -->
+    <div id="contextMenu" class="context-menu" style="display: none;">
+        <div class="context-menu-item" data-action="rename">
+            <i class="fas fa-edit"></i>
+            <span>Rename</span>
+        </div>
+        <div class="context-menu-item danger" data-action="delete">
+            <i class="fas fa-trash"></i>
+            <span>Delete</span>
+        </div>
+    </div>
+
+    <!-- Slash Command Palette -->
+    <div id="slashCommandPalette" class="slash-command-palette" style="display: none;">
+        <input type="text" id="commandFilter" class="command-filter" placeholder="Type to filter commands...">
+        <div class="command-list" id="commandList"></div>
+    </div>
+
+    <!-- Upload Progress Indicator -->
+    <div id="uploadProgress" class="upload-progress" style="display: none;">
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+        </div>
+        <span class="progress-text" id="progressText">Uploading: 0%</span>
+    </div>
+
+    <!-- Marked.js for markdown parsing -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <!-- Prism.js core for syntax highlighting -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-java.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+
+    <script src="/shared/js/common.js"></script>
+    <script src="/docs/js/marked-extension.js"></script>
+    <script src="/docs/js/settings.js"></script>
+</body>
+</html>

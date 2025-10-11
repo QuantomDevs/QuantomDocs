@@ -129,7 +129,7 @@ async function copyPageToClipboard() {
         const markdown = await fetchCurrentMarkdown();
 
         // Copy to clipboard
-        await navigator.clipboard.writeText(markdown);
+        copyToClipboard(markdown);
 
         // Show success feedback
         showCopySuccess(mainCopyBtn);

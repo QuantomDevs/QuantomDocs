@@ -222,21 +222,27 @@ const injectHeader = async () => {
             const currentProduct = pathParts.length > 1 ? pathParts[1] : null;
 
             productButtonsHTML = `
-                <div class="header-second-row">
-                    <div class="header-second-row-content">
-                        ${products.map(product => `
+                ${products.map(product => `
                             <button class="product-nav-btn ${currentProduct === product.id ? 'active' : ''}"
                                     data-product-id="${product.id}"
                                     onclick="navigateToProduct('${product.id}')">
                                 ${product.name}
                             </button>
                         `).join('')}
-                    </div>
-                </div>
             `;
         } catch (error) {
             console.error('Failed to load products for header:', error);
         }
+    }
+
+    let mainButtonsHTML = '';
+    if (!isDocsPage) {
+        mainButtonsHTML = `
+                <a href="/main" class="nav-link">Home</a>
+                <a href="/downloads" class="nav-link">Download</a>
+                <a href="/docs" class="nav-link">Documentation</a>
+                <a href="https://discord.gg/f46gXT69Fd" class="nav-link" target="_blank">Discord</a>
+        `;
     }
 
     const searchBarHTML = isDocsPage ? `
@@ -252,19 +258,30 @@ const injectHeader = async () => {
     // Change logo text based on page
     const logoText = isDocsPage ? 'Quantom Docs' : 'Quantom';
 
+    // Add docs menu button for mobile (only on docs page)
+    const docsMenuButtonHTML = isDocsPage ? `
+        <button id="docsMenuToggle" class="docs-menu-toggle-btn" title="Open navigation menu">
+            <i class="fas fa-bars"></i>
+        </button>
+    ` : '';
+
+    // Add normal mobile menu button (NOT on docs page)
+    const mobileMenuButtonHTML = !isDocsPage ? `
+        <button id="mobileMenuToggle" class="mobile-menu-toggle-btn"><i class="fas fa-bars"></i></button>
+    ` : '';
+
     const headerHTML = `
         <div class="header-content">
-            <div class="logo-container">
+            ${docsMenuButtonHTML}
+            <a href="/main" class="logo-container">
                 <img src="/shared/images/favicon/favicon.png" alt="Quantom Logo" class="logo-img">
                 <span class="logo-text"><strong>${logoText}</strong></span>
-            </div>
-            <button id="mobileMenuToggle" class="mobile-menu-toggle-btn"><i class="fas fa-bars"></i></button>
+            </a>
+            ${mobileMenuButtonHTML}
+            ${searchBarHTML}
             <nav id="mainNav">
-                ${searchBarHTML}
-                <a href="/main" class="nav-link">Home</a>
-                <a href="/downloads" class="nav-link">Download</a>
-                <a href="/docs" class="nav-link">Documentation</a>
-                <a href="https://discord.gg/f46gXT69Fd" class="nav-link" target="_blank">Discord</a>
+                ${mainButtonsHTML}
+                ${productButtonsHTML}
                 <div class="icon-links">
                     <button id="theme-toggle-btn" class="icon-link theme-toggle" title="Toggle dark/light mode">
                         <i class="fas fa-moon"></i>
@@ -272,7 +289,6 @@ const injectHeader = async () => {
                 </div>
             </nav>
         </div>
-        ${productButtonsHTML}
     `;
 
     const header = document.querySelector('header');
@@ -284,6 +300,11 @@ const injectHeader = async () => {
         const themeToggle = document.getElementById('theme-toggle-btn');
         if (themeToggle) {
             themeToggle.addEventListener('click', toggleTheme);
+        }
+
+        // Dispatch event to notify docs.js that header is ready
+        if (isDocsPage) {
+            window.dispatchEvent(new Event('headerInjected'));
         }
     }
 };
@@ -770,6 +791,75 @@ function dismissUpdateNotification() {
         setTimeout(() => notification.remove(), 300);
     }
 }
+
+/**
+ * Copy text to clipboard
+ * Cross-platform compatible (iOS, Android, Mac, Windows, Linux)
+ * @param {string} text - Text to copy
+ */
+async function copyToClipboard(text) {
+  // Method 1: Try modern Clipboard API (works on HTTPS and modern browsers)
+  if (navigator.clipboard && window.isSecureContext) {
+    try {
+      await navigator.clipboard.writeText(text);
+      showNotification('Copied to clipboard!', 'success');
+      return;
+    } catch (err) {
+      console.log('Clipboard API failed, trying fallback method');
+    }
+  }
+
+  // Method 2: Fallback for older browsers and non-HTTPS
+  try {
+    // Create a temporary textarea element
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+
+    // Make it invisible but still selectable
+    textarea.style.position = 'fixed';
+    textarea.style.top = '0';
+    textarea.style.left = '0';
+    textarea.style.width = '2em';
+    textarea.style.height = '2em';
+    textarea.style.padding = '0';
+    textarea.style.border = 'none';
+    textarea.style.outline = 'none';
+    textarea.style.boxShadow = 'none';
+    textarea.style.background = 'transparent';
+    textarea.style.opacity = '0';
+    textarea.setAttribute('readonly', '');
+
+    document.body.appendChild(textarea);
+
+    // Handle iOS devices specifically
+    if (navigator.userAgent.match(/ipad|iphone/i)) {
+      const range = document.createRange();
+      range.selectNodeContents(textarea);
+      const selection = window.getSelection();
+      selection.removeAllRanges();
+      selection.addRange(range);
+      textarea.setSelectionRange(0, 999999);
+    } else {
+      textarea.select();
+    }
+
+    // Execute copy command
+    const successful = document.execCommand('copy');
+    document.body.removeChild(textarea);
+
+    if (successful) {
+      showNotification('Copied to clipboard!', 'success');
+    } else {
+      throw new Error('Copy command failed');
+    }
+  } catch (err) {
+    console.error('Failed to copy:', err);
+
+    // Method 3: Final fallback - show text in a prompt
+    showCopyFallbackModal(text);
+  }
+}
+
 
 // ============================================
 // OFFLINE INDICATOR
