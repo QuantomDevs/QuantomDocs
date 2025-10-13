@@ -6,21 +6,20 @@
 // Available legal pages
 const LEGAL_PAGES = {
     'terms-of-service': {
-        file: '/main/legal/terms-of-service.md',
+        file: '/legal/content/terms-of-service.md',
         title: 'Terms of Service'
     },
     'privacy-policy': {
-        file: '/main/legal/privacy-policy.md',
+        file: '/legal/content/privacy-policy.md',
         title: 'Privacy Policy'
     },
     'impressum': {
-        file: '/main/legal/impressum.md',
+        file: '/legal/content/impressum.md',
         title: 'Impressum'
     }
 };
 
 // DOM Elements
-let welcomeSection;
 let contentSection;
 let navLinks;
 
@@ -29,7 +28,6 @@ let navLinks;
  */
 function initLegalPage() {
     // Get DOM elements
-    welcomeSection = document.getElementById('legal-welcome');
     contentSection = document.getElementById('legal-content');
     navLinks = document.querySelectorAll('.legal-nav-link');
 
@@ -75,28 +73,20 @@ function handleRouting() {
         if (pageName && LEGAL_PAGES[pageName]) {
             loadPage(pageName);
         } else if (pageName === '') {
-            // Just /legal/ - show welcome
-            showWelcome();
+            // Just /legal/ - load first document (terms-of-service)
+            history.replaceState({ page: 'terms-of-service' }, '', '/legal/terms-of-service');
+            loadPage('terms-of-service');
         } else {
-            // Invalid page - redirect to welcome
+            // Invalid page - redirect to first document
             console.warn(`Invalid legal page: ${pageName}`);
-            history.replaceState({}, '', '/legal/');
-            showWelcome();
+            history.replaceState({ page: 'terms-of-service' }, '', '/legal/terms-of-service');
+            loadPage('terms-of-service');
         }
     } else {
-        // Default to welcome
-        showWelcome();
+        // Default to first document
+        history.replaceState({ page: 'terms-of-service' }, '', '/legal/terms-of-service');
+        loadPage('terms-of-service');
     }
-}
-
-/**
- * Show the welcome section
- */
-function showWelcome() {
-    welcomeSection.style.display = 'block';
-    contentSection.style.display = 'none';
-    clearActiveNav();
-    document.title = 'Legal - Quantom';
 }
 
 /**
@@ -106,7 +96,8 @@ function showWelcome() {
 async function loadPage(pageName) {
     if (!LEGAL_PAGES[pageName]) {
         console.error(`Legal page not found: ${pageName}`);
-        showWelcome();
+        // Load first document as fallback
+        loadPage('terms-of-service');
         return;
     }
 
@@ -116,7 +107,6 @@ async function loadPage(pageName) {
         // Show loading state
         contentSection.innerHTML = '<div style="text-align: center; padding: 2rem;"><i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: var(--text-secondary);"></i></div>';
         contentSection.style.display = 'block';
-        welcomeSection.style.display = 'none';
 
         // Fetch markdown file
         const response = await fetch(pageInfo.file);
@@ -141,7 +131,6 @@ async function loadPage(pageName) {
         // Display content
         contentSection.innerHTML = htmlContent;
         contentSection.style.display = 'block';
-        welcomeSection.style.display = 'none';
 
         // Update active navigation
         updateActiveNav(pageName);
@@ -191,25 +180,11 @@ function clearActiveNav() {
 }
 
 /**
- * Handle legal card link clicks (from welcome section)
+ * Initialize on DOM ready
  */
 document.addEventListener('DOMContentLoaded', () => {
     // Initialize the page
     initLegalPage();
-
-    // Handle legal card links
-    const legalCardLinks = document.querySelectorAll('.legal-card-link');
-    legalCardLinks.forEach(link => {
-        link.addEventListener('click', (e) => {
-            e.preventDefault();
-            const href = link.getAttribute('href');
-            const pageName = href.replace('/legal/', '');
-
-            // Update URL and load page
-            history.pushState({ page: pageName }, '', href);
-            loadPage(pageName);
-        });
-    });
 });
 
 /**
@@ -218,7 +193,6 @@ document.addEventListener('DOMContentLoaded', () => {
 if (typeof window !== 'undefined') {
     window.legalPage = {
         loadPage,
-        showWelcome,
         handleRouting
     };
 }

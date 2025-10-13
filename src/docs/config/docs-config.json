@@ -12,9 +12,9 @@
   "errorPages": {
     "404": {
       "redirect": {
-        "enabled": true,
-        "showQuickLinks": true,
-        "showSearchBar": true,
+        "enabled": false,
+        "showQuickLinks": false,
+        "showSearchBar": false,
         "links": [
           {
             "text": "Home",

@@ -9,9 +9,10 @@
     display: flex;
     gap: var(--spacing-2xl);
     max-width: var(--max-width-full);
-    margin: 0 auto;
+    margin: 50px auto 0 auto;
     padding: var(--spacing-2xl) var(--spacing-xl);
     min-height: calc(100vh - var(--header-height) - var(--footer-height, 80px));
+    justify-content: center;
 }
 
 /* ========================================
@@ -31,7 +32,6 @@
 .sidebar-header {
     margin-bottom: var(--spacing-lg);
     padding-bottom: var(--spacing-md);
-    border-bottom: 1px solid var(--border-color);
 }
 
 .sidebar-header h3 {
@@ -71,7 +71,7 @@
 
 .legal-nav-link:hover {
     background-color: var(--bg-tertiary);
-    color: var(--text-primary);
+    color: var(--accent-color);
 }
 
 .legal-nav-link.active {
@@ -86,7 +86,7 @@
 .main-content {
     flex: 1;
     min-width: 0;
-    max-width: 100%;
+    max-width: 50rem;
 }
 
 /* Welcome Section */
@@ -203,15 +203,15 @@
     font-size: var(--text-2xl);
     font-weight: 600;
     color: var(--text-primary);
-    margin-top: var(--spacing-2xl);
-    margin-bottom: var(--spacing-md);
+    margin-top: var(--spacing-lg);
+    margin-bottom: var(--spacing-sm);
 }
 
 #legal-content h3 {
     font-size: var(--text-xl);
     font-weight: 600;
     color: var(--text-primary);
-    margin-top: var(--spacing-xl);
+    margin-top: var(--spacing-md);
     margin-bottom: var(--spacing-sm);
 }
 

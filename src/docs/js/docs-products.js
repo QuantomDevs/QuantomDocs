@@ -191,7 +191,20 @@ async function loadProductDocs(productId, specificFile = null) {
 // Build the left sidebar navigation from categories
 function buildSidebar(categories, productId) {
     const sidebar = document.querySelector('.sidebar-left');
-    sidebar.innerHTML = '';
+
+    // Build search button HTML
+    const searchButtonHTML = `
+        <button id="docs-search-btn" class="docs-search-button-sidebar" title="Search documentation (⌘K)" style="display: flex;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M21 21L15 15M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span>Search</span>
+            <span class="search-shortcut">⌘K</span>
+        </button>
+    `;
+
+    // Clear sidebar and add search button first
+    sidebar.innerHTML = searchButtonHTML;
 
     categories.forEach(category => {
         const categoryBlock = document.createElement('div');

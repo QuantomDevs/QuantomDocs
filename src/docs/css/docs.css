@@ -89,17 +89,14 @@ body.no-scroll {
 /* Main Layout */
 .docs-container {
     box-sizing: border-box;
-    max-width: 92rem;
-    padding: clamp(140px, 15vh, 160px) clamp(20px, 5vw, 50px) clamp(30px, 5vh, 50px) clamp(20px, 5vw, 50px);
-    margin-right: auto;
-    margin-left: auto;
+    padding: clamp(80px, 5vh, 110px) clamp(10px, 5vw, 20px) clamp(10px, 5vh, 30px) clamp(10px, 5vw, 20px);
+    margin: 0 auto;
 }
 
 /* Desktop layout (> 1024px) */
 @media (min-width: 1025px) {
     .docs-container {
         display: flex;
-        gap: var(--spacing-2xl);
     }
 
     .mobile-product-selector {
@@ -122,9 +119,6 @@ body.no-scroll {
         width: 300px;
     }
 
-    .docs-container {
-        max-width: 102rem;
-    }
 }
 
 /* Large Desktop (1800px+) */
@@ -132,10 +126,6 @@ body.no-scroll {
     .sidebar-right,
     .sidebar-left {
         width: 300px;
-    }
-
-    .docs-container {
-        max-width: 108rem;
     }
 
     .main-content {
@@ -152,6 +142,13 @@ body.no-scroll {
         margin-top: 110px !important;
         width: 100%;
         max-width: 100%;
+    }
+
+    .content-container {
+        background: transparent;
+        border: none;
+        padding: 0;
+        min-height: auto;
     }
 
     .sidebar-left {
@@ -188,6 +185,7 @@ body.no-scroll {
         flex: none !important;
         min-width: 0;
         display: block !important;
+        overflow-y: visible;
     }
 
     #mobile-sidebar-overlay {
@@ -225,6 +223,13 @@ body.no-scroll {
         margin-top: 105px !important;
         width: 100%;
         max-width: 100%;
+    }
+
+    .content-container {
+        background: transparent;
+        border: none;
+        padding: 0;
+        min-height: auto;
     }
 
     .sidebar-left {
@@ -279,6 +284,7 @@ body.no-scroll {
         min-width: 0;
         padding: 20px 15px !important;
         display: block !important;
+        overflow-y: visible;
     }
 
     .mobile-product-selector {
@@ -301,17 +307,95 @@ body.no-scroll {
     }
 }
 
-/* Left Sidebar (Navigation) - Base styles for desktop */
-.sidebar-left {
-    /* Mobile styles will be defined in media queries */
+/* Content Container - Wraps content-columns and footer */
+.content-container {
+    background: var(--bg-quaternary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-2xl);
+    padding: var(--spacing-md);
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    overflow-y: auto;
+    max-height: calc(100vh - 100px); /* Use min-height to ensure it's at least viewport height */
+}
+
+/* Content Columns - Wraps main-content and sidebar-right */
+.content-columns {
+    display: flex;
+    flex: 1;
+    justify-content: center;
+}
+
+/* Desktop layout for content-columns */
+@media (min-width: 1025px) {
+    .content-columns {
+        gap: var(--spacing-xl);
+    }
+}
+
+/* Hide sidebar-right under 1200px */
+@media (max-width: 1199px) {
+    .sidebar-right {
+        display: none !important;
+    }
+}
+
+/* Footer within content-container */
+.content-container .footer {
+    width: 100%;
+    margin-top: auto;
+    padding-top: var(--spacing-lg);
+    border-top: 1px solid var(--border-color);
+}
+
+/* Search Button in Sidebar */
+.docs-search-button-sidebar {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: var(--bg-primary);
+    border: 1px solid var(--border-primary);
+    border-radius: var(--radius-xl);
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-bottom: var(--spacing-md);
+}
+
+.docs-search-button-sidebar:hover {
+    background: var(--bg-secondary);
+    border-color: var(--border-accent);
+    color: var(--text-primary);
+}
+
+.docs-search-button-sidebar svg {
+    flex-shrink: 0;
+}
+
+.docs-search-button-sidebar span:first-of-type {
+    flex: 1;
+    text-align: left;
+}
+
+.docs-search-button-sidebar .search-shortcut {
+    background: var(--bg-secondary);
+    padding: 2px 6px;
+    border-radius: var(--radius-sm);
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+    border: 1px solid var(--border-secondary);
 }
 
 /* Desktop sidebar styles (> 1024px) */
 @media (min-width: 1025px) {
     .sidebar-left {
-        position: sticky;
-        top: 80px;
-        height: calc(100vh - 100px);
+        align-self: flex-start;
+        height: 100%;
+        max-height: calc(100vh - 200px);
         overflow-y: auto;
         padding: clamp(15px, 2vw, 20px);
         width: 18rem;
@@ -345,14 +429,14 @@ body.no-scroll {
 
 .sidebar-left .nav-block ul li a {
     color: var(--secondary-text-color);
-    font-size: clamp(0.85rem, 1vw, 0.95rem);
+    font-size: clamp(0.95rem, 1.1vw, 1.05rem);
     text-decoration: none;
     transition: all 0.2s ease-in-out;
     display: block;
     padding: 6px 12px;
     border-radius: 6px;
     background-color: transparent;
-    margin-left: -12px;
+    margin-left: var(--spacing-sm);
 }
 
 .sidebar-left .nav-block ul li a:hover {
@@ -362,7 +446,7 @@ body.no-scroll {
 
 .sidebar-left .nav-block ul li a.active {
     color: var(--accent-color);
-    background-color: rgba(217, 119, 87, 0.1);
+    background-color: var(--accent-hover-color);
 }
 
 .sidebar-left hr {
@@ -373,11 +457,13 @@ body.no-scroll {
 
 /* Main Content Area */
 .main-content {
-    padding: clamp(15px, 3vw, 20px);
+    padding: var(--spacing-md);
+    padding-right: var(--spacing-lg);
     color: var(--text-color);
     flex: 1; /* Allow main content to grow and fill available space */
-    min-width: 0; /* Prevent flex item from overflowing */
-    max-width: 100%; /* Ensure it doesn't exceed container */
+    max-width: 50%;
+    overflow-y: auto;
+    height: 100%;
 }
 
 .main-content h1 {
@@ -711,21 +797,26 @@ body.no-scroll {
     font-weight: 600;
 }
 
-/* Right Sidebar ("On this page") */
-.sidebar-right {
-    /* Mobile styles will be defined in media queries */
+/* Right Sidebar ("On this page") - Desktop sidebar styles (> 1200px) */
+@media (min-width: 1200px) {
+    .sidebar-right {
+        display: block !important;
+        position: sticky;
+        top: var(--spacing-md);
+        align-self: flex-start;
+        width: 16rem;
+        height: fit-content;
+        max-height: calc(100vh - 250px);
+        overflow-y: auto;
+        padding: var(--spacing-md);
+        flex-shrink: 0; /* Prevent sidebar from shrinking */
+    }
 }
 
-/* Desktop sidebar styles (> 1024px) */
-@media (min-width: 1025px) {
-    .sidebar-right {
-        position: sticky;
-        top: 80px;
-        width: 18rem;
-        height: calc(100vh - 100px);
-        overflow-y: auto;
-        padding: clamp(15px, 2vw, 20px);
-        flex-shrink: 0; /* Prevent sidebar from shrinking */
+/* Main Content Width Adjustment (768px - 1199px) */
+@media (min-width: 480px) and (max-width: 1199px) {
+    .main-content {
+        max-width: 90%;
     }
 }
 
@@ -733,6 +824,14 @@ body.no-scroll {
     color: var(--text-color);
     font-size: clamp(1rem, 1.3vw, 1.1rem);
     margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.sidebar-right h4 svg {
+    flex-shrink: 0;
+    opacity: 0.8;
 }
 
 .sidebar-right ul {
@@ -777,6 +876,7 @@ body.no-scroll {
     font-size: clamp(0.85rem, 1vw, 0.95rem);
     text-decoration: none;
     transition: color 0.2s ease-in-out;
+    font-family: var(--font-secondary);
 }
 
 .sidebar-right ul li a:hover {
@@ -806,7 +906,7 @@ body.no-scroll {
 
 /* GitHub Markdown CSS Overrides */
 .markdown-body {
-    background-color: var(--background-color) !important;
+    background-color: var(--markdown-background) !important;
     color: var(--text-color) !important;
 }
 
@@ -829,12 +929,12 @@ body.no-scroll {
 }
 
 .markdown-body code {
-    background-color: var(--card-background-color) !important;
+    background-color: var(--markdown-background) !important;
     color: var(--accent-color) !important;
 }
 
 .markdown-body pre {
-    background-color: var(--card-background-color) !important;
+    background-color: var(--markdown-background) !important;
     border: 1px solid var(--border-color) !important;
 }
 
@@ -848,11 +948,11 @@ body.no-scroll {
 }
 
 .markdown-body hr {
-    background-color: var(--border-color) !important;
+    background-color: var(--markdown-background) !important;
 }
 
 .markdown-body table {
-    background-color: var(--card-background-color) !important;
+    background-color: var(--markdown-background) !important;
     border-color: var(--border-color) !important;
 }
 
@@ -862,12 +962,12 @@ body.no-scroll {
 }
 
 .markdown-body tr:nth-child(2n) {
-    background-color: var(--background-color) !important;
+    background-color: var(--markdown-background) !important;
 }
 
 .markdown-body .highlight pre,
 .markdown-body pre.highlight {
-    background-color: var(--card-background-color) !important;
+    background-color: var(--markdown-background) !important;
 }
 
 .markdown-body .task-list-item {
@@ -875,7 +975,7 @@ body.no-scroll {
 }
 
 .markdown-body .task-list-item input[type="checkbox"] {
-    background-color: var(--card-background-color) !important;
+    background-color: var(--markdown-background) !important;
     border-color: var(--border-color) !important;
 }
 
@@ -911,6 +1011,14 @@ body.no-scroll {
 .mobile-right-sidebar-header h4 {
     margin: 0;
     color: var(--text-color);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.mobile-right-sidebar-header h4 svg {
+    flex-shrink: 0;
+    opacity: 0.8;
 }
 
 .mobile-right-sidebar-header .close-btn {
@@ -1168,6 +1276,7 @@ body.no-scroll {
     font-size: .875rem;
     line-height: 1.25rem;
     height: 1.25rem;
+    margin-bottom: var(--spacing-sm);
 }
 
 .markdown-name {
@@ -1352,7 +1461,7 @@ html[data-theme="light"] .split-button-arrow:hover {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    background: var(--card-background-color);
+    background: var(--markdown-background);
     border: 1px solid var(--border-color);
     border-radius: 12px;
     width: 90%;
@@ -1389,7 +1498,7 @@ html[data-theme="light"] .split-button-arrow:hover {
 }
 
 .markdown-view-close-btn:hover {
-    background: var(--background-color);
+    background: var(--markdown-background);
     color: var(--text-color);
 }
 

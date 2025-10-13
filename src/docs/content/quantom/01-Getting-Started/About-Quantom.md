@@ -1,4 +1,3 @@
-# About Quantom Server
 
 Quantom Server is a high-performance Minecraft server software designed for networks of all sizes, from small community servers to large-scale multiplayer networks.
 

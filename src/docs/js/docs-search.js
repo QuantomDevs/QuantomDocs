@@ -189,7 +189,14 @@ function closeDocsSearchPopup() {
 async function buildSearchIndex() {
     try {
         // Load docs configuration (new product-based structure)
-        const response = await fetch('config/docs-config.json');
+        const configUrl = '/docs/config/docs-config.json';
+        console.log('[Search] Fetching config from:', configUrl);
+        const response = await fetch(configUrl);
+
+        if (!response.ok) {
+            throw new Error(`Failed to load docs-config.json: ${response.status} ${response.statusText}`);
+        }
+
         const config = await response.json();
         const products = config.products.filter(p => p.showInDocs);
 
@@ -199,6 +206,12 @@ async function buildSearchIndex() {
                 // Fetch product structure from backend
                 const apiBase = window.location.origin;
                 const structureResponse = await fetch(`${apiBase}/api/docs/products/${product.id}/structure`);
+
+                if (!structureResponse.ok) {
+                    console.error(`Failed to fetch structure for ${product.id}: ${structureResponse.status}`);
+                    continue;
+                }
+
                 const structure = await structureResponse.json();
 
                 // Process each category and file
@@ -218,10 +231,17 @@ async function buildSearchIndex() {
                         // Load markdown content for searching
                         try {
                             const contentResponse = await fetch(`/docs/content/${file.path}`);
-                            const markdown = await contentResponse.text();
-                            entry.content = extractTextFromMarkdown(markdown);
+
+                            if (!contentResponse.ok) {
+                                console.error(`Failed to load ${file.path}: ${contentResponse.status}`);
+                                entry.content = ''; // Set empty content if fetch fails
+                            } else {
+                                const markdown = await contentResponse.text();
+                                entry.content = extractTextFromMarkdown(markdown);
+                            }
                         } catch (error) {
                             console.error(`Failed to load ${file.path}:`, error);
+                            entry.content = ''; // Set empty content on error
                         }
 
                         allDocsEntries.push(entry);

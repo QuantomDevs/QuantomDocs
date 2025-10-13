@@ -158,12 +158,22 @@ const toggleTheme = () => {
     localStorage.setItem('theme', newTheme);
 
     // Update icon in header
-    const themeIcon = document.querySelector('#theme-toggle-btn i');
-    if (themeIcon) {
+    const themeBtn = document.querySelector('#theme-toggle-btn');
+    if (themeBtn) {
         if (newTheme === 'light') {
-            themeIcon.className = 'fas fa-sun';
+            // Sun icon for light mode
+            themeBtn.innerHTML = `
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M8 1.11133V2.00022 M12.8711 3.12891L12.2427 3.75735 M14.8889 8H14 M12.8711 12.8711L12.2427 12.2427 M8 14.8889V14 M3.12891 12.8711L3.75735 12.2427 M1.11133 8H2.00022 M3.12891 3.12891L3.75735 3.75735 M8.00043 11.7782C10.0868 11.7782 11.7782 10.0868 11.7782 8.00043C11.7782 5.91402 10.0868 4.22266 8.00043 4.22266C5.91402 4.22266 4.22266 5.91402 4.22266 8.00043C4.22266 10.0868 5.91402 11.7782 8.00043 11.7782Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            `;
         } else {
-            themeIcon.className = 'fas fa-moon';
+            // Moon icon for dark mode
+            themeBtn.innerHTML = `
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M11.5556 10.4445C8.48717 10.4445 6.00005 7.95743 6.00005 4.88899C6.00005 3.68721 6.38494 2.57877 7.03294 1.66943C4.04272 2.22766 1.77783 4.84721 1.77783 8.0001C1.77783 11.5592 4.66317 14.4445 8.22228 14.4445C11.2196 14.4445 13.7316 12.3948 14.4525 9.62321C13.6081 10.1414 12.6187 10.4445 11.5556 10.4445Z" fill="currentColor"/>
+                </svg>
+            `;
         }
     }
 
@@ -184,12 +194,22 @@ const initTheme = () => {
     document.documentElement.setAttribute('data-theme', savedTheme);
 
     // Update icon in header based on current theme
-    const themeIcon = document.querySelector('#theme-toggle-btn i');
-    if (themeIcon) {
+    const themeBtn = document.querySelector('#theme-toggle-btn');
+    if (themeBtn) {
         if (savedTheme === 'light') {
-            themeIcon.className = 'fas fa-sun';
+            // Sun icon for light mode
+            themeBtn.innerHTML = `
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M8 1.11133V2.00022 M12.8711 3.12891L12.2427 3.75735 M14.8889 8H14 M12.8711 12.8711L12.2427 12.2427 M8 14.8889V14 M3.12891 12.8711L3.75735 12.2427 M1.11133 8H2.00022 M3.12891 3.12891L3.75735 3.75735 M8.00043 11.7782C10.0868 11.7782 11.7782 10.0868 11.7782 8.00043C11.7782 5.91402 10.0868 4.22266 8.00043 4.22266C5.91402 4.22266 4.22266 5.91402 4.22266 8.00043C4.22266 10.0868 5.91402 11.7782 8.00043 11.7782Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            `;
         } else {
-            themeIcon.className = 'fas fa-moon';
+            // Moon icon for dark mode
+            themeBtn.innerHTML = `
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M11.5556 10.4445C8.48717 10.4445 6.00005 7.95743 6.00005 4.88899C6.00005 3.68721 6.38494 2.57877 7.03294 1.66943C4.04272 2.22766 1.77783 4.84721 1.77783 8.0001C1.77783 11.5592 4.66317 14.4445 8.22228 14.4445C11.2196 14.4445 13.7316 12.3948 14.4525 9.62321C13.6081 10.1414 12.6187 10.4445 11.5556 10.4445Z" fill="currentColor"/>
+                </svg>
+            `;
         }
     }
 
@@ -245,15 +265,8 @@ const injectHeader = async () => {
         `;
     }
 
-    const searchBarHTML = isDocsPage ? `
-        <button id="docs-search-btn" class="docs-search-button" title="Search documentation (⌘K)">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M21 21L15 15M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-            <span>Search...</span>
-            <span class="shortcut-hint">⌘K</span>
-        </button>
-    ` : '';
+    // Search button is now in the sidebar on docs pages, so we don't show it in the header
+    const searchBarHTML = '';
 
     // Change logo text based on page
     const logoText = isDocsPage ? 'Quantom Docs' : 'Quantom';
@@ -283,8 +296,11 @@ const injectHeader = async () => {
                 ${mainButtonsHTML}
                 ${productButtonsHTML}
                 <div class="icon-links">
+                    <a href="/settings" class="special-button">Sign Up</a>
                     <button id="theme-toggle-btn" class="icon-link theme-toggle" title="Toggle dark/light mode">
-                        <i class="fas fa-moon"></i>
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M11.5556 10.4445C8.48717 10.4445 6.00005 7.95743 6.00005 4.88899C6.00005 3.68721 6.38494 2.57877 7.03294 1.66943C4.04272 2.22766 1.77783 4.84721 1.77783 8.0001C1.77783 11.5592 4.66317 14.4445 8.22228 14.4445C11.2196 14.4445 13.7316 12.3948 14.4525 9.62321C13.6081 10.1414 12.6187 10.4445 11.5556 10.4445Z" fill="currentColor"/>
+                        </svg>
                     </button>
                 </div>
             </nav>
@@ -319,34 +335,26 @@ const injectFooter = () => {
         <div class="footer-content">
             <div class="footer-bottom">
                 <div class="footer-left">
-                    <span class="logo">✦ Snenjih</span>
-                    <span>© 2025 Quantom Systems</span>
+                    <img src="/shared/images/favicon/favicon.png" alt="Quantom Logo" class="footer-logo-img">
+                    <span class="footer-brand">Quantom Systems</span>
+                </div>
+                <div class="footer-center">
+                    <a href="/legal" class="footer-legal-link">Legal</a>
                 </div>
                 <div class="footer-right">
                     <a href="https://instagram.com/Snenjih" class="social-icon" title="Instagram">
                         <i class="fab fa-instagram"></i>
-                        <span class="social-name">Instagram</span>
                     </a>
                     <a href="https://x.com/Snenjih" class="social-icon" title="Twitter/X">
                         <i class="fab fa-twitter"></i>
-                        <span class="social-name">Twitter</span>
                     </a>
                     <a href="https://github.com/Snenjih" class="social-icon" title="GitHub">
                         <i class="fab fa-github"></i>
-                        <span class="social-name">GitHub</span>
                     </a>
                     <a href="https://discord.gg/5gdthYHqSv" class="social-icon" title="Discord">
                         <i class="fab fa-discord"></i>
-                        <span class="social-name">Discord</span>
-                    </a>
-                    <a href="/login" class="social-icon login-icon" title="Admin Login">
-                        <i class="fas fa-sign-in-alt"></i>
-                        <span class="social-name">Login</span>
                     </a>
                 </div>
-            </div>
-            <div class="footer-contact-status">
-                <span id="contact-status"></span>
             </div>
         </div>
     `;

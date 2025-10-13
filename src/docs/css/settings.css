@@ -21,7 +21,7 @@
 .login-card {
     background: var(--card-background-color);
     border: 1px solid var(--border-color);
-    border-radius: var(--border-radius-lg);
+    border-radius: var(--radius-2xl);
     padding: var(--spacing-2xl);
     box-shadow: var(--shadow-lg);
 }
@@ -35,6 +35,7 @@
     width: 64px;
     height: 64px;
     margin-bottom: var(--spacing-md);
+    border-radius: var(--radius-2xl);
 }
 
 .login-header h1 {
@@ -180,13 +181,31 @@
 .settings-page {
     min-height: 100vh;
     display: flex;
+    flex-direction: column;
     background: var(--background-color);
+}
+
+.settings-page > #settingsHeader {
+    position: sticky;
+    top: 0;
+    z-index: 999;
+    width: 100%;
+}
+
+.settings-page > #settingsFooter {
+    width: 100%;
+    margin-top: auto;
+}
+
+.settings-page-content-wrapper {
+    display: flex;
+    flex: 1;
 }
 
 /* ==================== SIDEBAR ==================== */
 .settings-sidebar {
     width: 280px;
-    background: var(--card-background-color);
+    background: var(--bg-secondary);
     border-right: 1px solid var(--border-color);
     display: flex;
     flex-direction: column;
@@ -212,6 +231,7 @@
 /* User Section */
 .sidebar-user-section {
     padding: var(--spacing-lg);
+    padding-top: calc(var(--spacing-lg) + 48px); /* Leave space for collapse button */
     border-bottom: 1px solid var(--border-color);
     position: relative;
 }
@@ -242,9 +262,11 @@
 }
 
 .user-avatar {
-    font-size: 24px;
-    color: var(--accent-color);
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-lg);
     flex-shrink: 0;
+    object-fit: cover;
 }
 
 .username {
@@ -337,6 +359,7 @@
     display: flex;
     flex-direction: column;
     gap: var(--spacing-xs);
+    justify-content: space-between;
 }
 
 .nav-tab,
@@ -369,16 +392,25 @@
 
 .nav-tab i,
 .nav-link i {
-    width: 20px;
+    width: 22px;
+    font-size: var(--font-size-lg);
     text-align: center;
     flex-shrink: 0;
 }
 
 .nav-tab span,
 .nav-link span {
+    font-size: var(--font-size-md);
     flex: 1;
     text-align: left;
     white-space: nowrap;
+}
+
+.nav-main-tabs,
+.nav-bottom-tabs {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
 }
 
 .external-icon {
@@ -549,7 +581,7 @@
 .user-card {
     background: var(--card-background-color);
     border: 1px solid var(--border-color);
-    border-radius: var(--border-radius-lg);
+    border-radius: var(--radius-xl);
     padding: var(--spacing-lg);
     display: flex;
     align-items: center;
@@ -616,7 +648,7 @@
 .stat-box {
     background: var(--card-background-color);
     border: 1px solid var(--border-color);
-    border-radius: var(--border-radius-lg);
+    border-radius: var(--radius-xl);
     padding: var(--spacing-xl);
     display: flex;
     flex-direction: column;
@@ -651,7 +683,7 @@
 .analytics-chart-container {
     background: var(--card-background-color);
     border: 1px solid var(--border-color);
-    border-radius: var(--border-radius-lg);
+    border-radius: var(--radius-xl);
     padding: var(--spacing-xl);
     margin-bottom: var(--spacing-2xl);
 }
@@ -709,7 +741,7 @@
 .analytics-popular {
     background: var(--card-background-color);
     border: 1px solid var(--border-color);
-    border-radius: var(--border-radius-lg);
+    border-radius: var(--radius-xl);
     padding: var(--spacing-xl);
 }
 
@@ -791,7 +823,7 @@
 .editor-toolbar {
     background: var(--card-background-color);
     border: 1px solid var(--border-color);
-    border-radius: var(--border-radius-lg);
+    border-radius: var(--radius-xl);
     padding: var(--spacing-md) var(--spacing-lg);
     margin-bottom: var(--spacing-lg);
     display: flex;
@@ -838,7 +870,7 @@
     width: 300px;
     background: var(--card-background-color);
     border: 1px solid var(--border-color);
-    border-radius: var(--border-radius-lg);
+    border-radius: var(--radius-xl);
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -960,7 +992,7 @@
     flex: 1;
     background: var(--card-background-color);
     border: 1px solid var(--border-color);
-    border-radius: var(--border-radius-lg);
+    border-radius: var(--radius-xl);
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -1170,7 +1202,7 @@
     position: fixed;
     background: var(--card-background-color);
     border: 1px solid var(--border-color);
-    border-radius: var(--border-radius-lg);
+    border-radius: var(--radius-xl);
     box-shadow: var(--shadow-2xl);
     z-index: 10001;
     min-width: 320px;
@@ -1274,7 +1306,7 @@
     right: var(--spacing-xl);
     background: var(--card-background-color);
     border: 1px solid var(--border-color);
-    border-radius: var(--border-radius-lg);
+    border-radius: var(--radius-xl);
     padding: var(--spacing-lg);
     box-shadow: var(--shadow-lg);
     z-index: 9999;
@@ -1314,7 +1346,7 @@
     bottom: 0;
     background: rgba(var(--accent-color-rgb), 0.1);
     border: 3px dashed var(--accent-color);
-    border-radius: var(--border-radius-lg);
+    border-radius: var(--radius-xl);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1360,7 +1392,7 @@
 .setting-item {
     background: var(--card-background-color);
     border: 1px solid var(--border-color);
-    border-radius: var(--border-radius-lg);
+    border-radius: var(--radius-xl);
     padding: var(--spacing-lg);
 }
 
@@ -1445,7 +1477,7 @@
 
 .modal-content {
     background: var(--card-background-color);
-    border-radius: var(--border-radius-lg);
+    border-radius: var(--radius-2xl);
     max-width: 500px;
     width: 100%;
     max-height: 90vh;

@@ -15,6 +15,142 @@
         isSidebarCollapsed: localStorage.getItem('sidebarCollapsed') === 'true'
     };
 
+    // Token refresh timer
+    let tokenRefreshInterval = null;
+
+    // ==================== TOKEN MANAGEMENT ====================
+    /**
+     * Check if token is expiring soon (within 5 minutes)
+     */
+    function isTokenExpiringSoon() {
+        const expiresAt = localStorage.getItem('tokenExpiresAt');
+        if (!expiresAt) return true;
+
+        const expirationTime = new Date(expiresAt).getTime();
+        const currentTime = Date.now();
+        const fiveMinutes = 5 * 60 * 1000; // 5 minutes in milliseconds
+
+        return (expirationTime - currentTime) <= fiveMinutes;
+    }
+
+    /**
+     * Check if token is expired
+     */
+    function isTokenExpired() {
+        const expiresAt = localStorage.getItem('tokenExpiresAt');
+        if (!expiresAt) return true;
+
+        const expirationTime = new Date(expiresAt).getTime();
+        return Date.now() >= expirationTime;
+    }
+
+    /**
+     * Refresh the authentication token
+     */
+    async function refreshToken() {
+        const token = localStorage.getItem('authToken');
+        if (!token) return false;
+
+        try {
+            const response = await fetch('/api/refresh', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+
+                // Update stored token and expiration
+                localStorage.setItem('authToken', data.token);
+                localStorage.setItem('tokenExpiresAt', data.expiresAt);
+                localStorage.setItem('tokenExpiresIn', data.expiresIn);
+
+                console.log('Token refreshed successfully');
+                return true;
+            } else {
+                console.error('Token refresh failed:', await response.text());
+                return false;
+            }
+        } catch (error) {
+            console.error('Token refresh error:', error);
+            return false;
+        }
+    }
+
+    /**
+     * Start automatic token refresh timer
+     * Checks every minute if token needs refresh
+     */
+    function startTokenRefreshTimer() {
+        // Clear any existing timer
+        stopTokenRefreshTimer();
+
+        // Check immediately
+        checkAndRefreshToken();
+
+        // Set interval to check every minute
+        tokenRefreshInterval = setInterval(() => {
+            checkAndRefreshToken();
+        }, 60 * 1000); // Check every 60 seconds
+    }
+
+    /**
+     * Stop the token refresh timer
+     */
+    function stopTokenRefreshTimer() {
+        if (tokenRefreshInterval) {
+            clearInterval(tokenRefreshInterval);
+            tokenRefreshInterval = null;
+        }
+    }
+
+    /**
+     * Check if token needs refresh and refresh if necessary
+     */
+    async function checkAndRefreshToken() {
+        // If token is expired, force logout
+        if (isTokenExpired()) {
+            console.log('Token expired, forcing logout');
+            await handleLogout();
+            return;
+        }
+
+        // If token is expiring soon, refresh it
+        if (isTokenExpiringSoon()) {
+            console.log('Token expiring soon, refreshing...');
+            const success = await refreshToken();
+            if (!success) {
+                console.log('Token refresh failed, forcing logout');
+                await handleLogout();
+            }
+        }
+    }
+
+    /**
+     * Make an authenticated API call with automatic token refresh
+     */
+    async function authenticatedFetch(url, options = {}) {
+        // Check if token needs refresh before making the call
+        if (isTokenExpiringSoon()) {
+            await refreshToken();
+        }
+
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+            throw new Error('No authentication token');
+        }
+
+        // Add authorization header
+        const headers = {
+            ...options.headers,
+            'Authorization': `Bearer ${token}`
+        };
+
+        return fetch(url, { ...options, headers });
+    }
+
 // ==================== INITIALIZATION ====================
 document.addEventListener('DOMContentLoaded', () => {
     checkAuthentication();
@@ -47,14 +183,22 @@ async function checkAuthentication() {
             const data = await response.json();
             state.isAuthenticated = true;
             state.currentUser = data.user;
+
+            // Start token refresh timer
+            startTokenRefreshTimer();
+
             showSettingsPage();
         } else {
             localStorage.removeItem('authToken');
+            localStorage.removeItem('tokenExpiresAt');
+            localStorage.removeItem('tokenExpiresIn');
             showLoginPage();
         }
     } catch (error) {
         console.error('Authentication check failed:', error);
         localStorage.removeItem('authToken');
+        localStorage.removeItem('tokenExpiresAt');
+        localStorage.removeItem('tokenExpiresIn');
         showLoginPage();
     }
 }
@@ -81,6 +225,9 @@ function showSettingsPage() {
     if (loginPage) loginPage.style.display = 'none';
     if (settingsPage) settingsPage.style.display = 'flex';
 
+    // Inject header and footer
+    injectHeaderAndFooter();
+
     // Update username display
     const usernameDisplay = document.getElementById('currentUsername');
     if (usernameDisplay && state.currentUser) {
@@ -94,6 +241,27 @@ function showSettingsPage() {
 
     // Load content for current tab
     loadTabContent(state.currentTab);
+}
+
+/**
+ * Inject header and footer into settings page
+ */
+function injectHeaderAndFooter() {
+    // Inject header
+    const headerContainer = document.getElementById('settingsHeader');
+    if (headerContainer && window.getHeaderHTML) {
+        headerContainer.innerHTML = window.getHeaderHTML();
+        // Initialize header interactions if needed
+        if (window.initHeaderInteractions) {
+            window.initHeaderInteractions();
+        }
+    }
+
+    // Inject footer
+    const footerContainer = document.getElementById('settingsFooter');
+    if (footerContainer && window.getFooterHTML) {
+        footerContainer.innerHTML = window.getFooterHTML();
+    }
 }
 
 /**
@@ -125,10 +293,15 @@ async function handleLogin(event) {
         const data = await response.json();
 
         if (response.ok) {
-            // Store token
+            // Store token and expiration information
             localStorage.setItem('authToken', data.token);
+            localStorage.setItem('tokenExpiresAt', data.expiresAt);
+            localStorage.setItem('tokenExpiresIn', data.expiresIn);
             state.isAuthenticated = true;
             state.currentUser = data.user;
+
+            // Start token refresh timer
+            startTokenRefreshTimer();
 
             // Show settings page
             showSettingsPage();
@@ -151,6 +324,9 @@ async function handleLogin(event) {
  * Handle logout
  */
 async function handleLogout() {
+    // Stop token refresh timer
+    stopTokenRefreshTimer();
+
     const token = localStorage.getItem('authToken');
 
     if (token) {
@@ -168,6 +344,8 @@ async function handleLogout() {
 
     // Clear local storage and state
     localStorage.removeItem('authToken');
+    localStorage.removeItem('tokenExpiresAt');
+    localStorage.removeItem('tokenExpiresIn');
     state.isAuthenticated = false;
     state.currentUser = null;
 
@@ -2644,12 +2822,36 @@ function initializeThemeToggle() {
     // Update button based on current theme
     const updateThemeButton = () => {
         const isDark = document.body.classList.contains('dark-theme');
-        const icon = themeToggle.querySelector('.theme-icon');
+
+        // Create SVG icon
+        const moonSVG = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 16 16" fill="currentColor" class="theme-icon">
+                <path d="M11.5556 10.4445C8.48717 10.4445 6.00005 7.95743 6.00005 4.88899C6.00005 3.68721 6.38494 2.57877 7.03294 1.66943C4.04272 2.22766 1.77783 4.84721 1.77783 8.0001C1.77783 11.5592 4.66317 14.4445 8.22228 14.4445C11.2196 14.4445 13.7316 12.3948 14.4525 9.62321C13.6081 10.1414 12.6187 10.4445 11.5556 10.4445Z"/>
+            </svg>
+        `;
+
+        const sunSVG = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="theme-icon">
+                <path d="M8 1.11133V2.00022 M12.8711 3.12891L12.2427 3.75735 M14.8889 8H14 M12.8711 12.8711L12.2427 12.2427 M8 14.8889V14 M3.12891 12.8711L3.75735 12.2427 M1.11133 8H2.00022 M3.12891 3.12891L3.75735 3.75735 M8.00043 11.7782C10.0868 11.7782 11.7782 10.0868 11.7782 8.00043C11.7782 5.91402 10.0868 4.22266 8.00043 4.22266C5.91402 4.22266 4.22266 5.91402 4.22266 8.00043C4.22266 10.0868 5.91402 11.7782 8.00043 11.7782Z"/>
+            </svg>
+        `;
+
+        const iconHTML = isDark ? sunSVG : moonSVG;
         const text = themeToggle.querySelector('span');
 
-        if (icon) {
-            icon.className = isDark ? 'fas fa-sun theme-icon' : 'fas fa-moon theme-icon';
+        // Update icon
+        const iconContainer = themeToggle.querySelector('.theme-icon-container');
+        if (iconContainer) {
+            iconContainer.innerHTML = iconHTML;
+        } else {
+            const oldIcon = themeToggle.querySelector('.theme-icon');
+            if (oldIcon) {
+                oldIcon.outerHTML = iconHTML;
+            } else {
+                themeToggle.insertAdjacentHTML('afterbegin', iconHTML);
+            }
         }
+
         if (text) {
             text.textContent = isDark ? 'Light Mode' : 'Dark Mode';
         }
@@ -2661,6 +2863,11 @@ function initializeThemeToggle() {
         const isDark = document.body.classList.contains('dark-theme');
         localStorage.setItem('theme', isDark ? 'dark' : 'light');
         updateThemeButton();
+
+        // Re-render analytics chart if it exists (to update colors)
+        if (analyticsData && document.getElementById('analyticsChart')) {
+            renderAnalyticsChart(analyticsData);
+        }
     });
 
     // Initial state

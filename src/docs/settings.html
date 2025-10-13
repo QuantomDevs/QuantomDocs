@@ -75,13 +75,17 @@
     <!-- MAIN SETTINGS PAGE -->
     <!-- This page is shown when the user is authenticated -->
     <div id="settingsPage" class="settings-page" style="display: none;">
-        <!-- Sidebar Navigation -->
-        <aside id="settingsSidebar" class="settings-sidebar">
-            <!-- User Profile Section at the top -->
+        <!-- Header (injected from common.js) -->
+        <div id="settingsHeader"></div>
+
+        <div class="settings-page-content-wrapper">
+            <!-- Sidebar Navigation -->
+            <aside id="settingsSidebar" class="settings-sidebar">
+                <!-- User Profile Section at the top -->
             <div class="sidebar-user-section">
                 <button id="userMenuToggle" class="user-menu-toggle">
                     <div class="user-info">
-                        <i class="fas fa-user-circle user-avatar"></i>
+                        <img src="/shared/images/favicon/favicon.png" alt="User Avatar" class="user-avatar">
                         <span id="currentUsername" class="username">Admin</span>
                     </div>
                     <i class="fas fa-chevron-down dropdown-icon"></i>
@@ -121,55 +125,59 @@
                     3. Create corresponding content in the main-content area
                     4. The JavaScript will handle tab switching automatically
                 -->
-                <button class="nav-tab active" data-tab="overview">
-                    <i class="fas fa-home"></i>
-                    <span>Overview</span>
-                </button>
-                <button class="nav-tab" data-tab="editor">
-                    <i class="fas fa-edit"></i>
-                    <span>Editor</span>
-                </button>
-                <button class="nav-tab" data-tab="analytics">
-                    <i class="fas fa-chart-line"></i>
-                    <span>Analytics</span>
-                </button>
-                <button class="nav-tab" data-tab="settings">
-                    <i class="fas fa-cog"></i>
-                    <span>Settings</span>
-                </button>
-                <button class="nav-tab" data-tab="themes">
-                    <i class="fas fa-palette"></i>
-                    <span>Themes</span>
-                </button>
+                <div class="nav-main-tabs">
+                    <button class="nav-tab active" data-tab="overview">
+                        <i class="fas fa-home"></i>
+                        <span>Overview</span>
+                    </button>
+                    <button class="nav-tab" data-tab="editor">
+                        <i class="fas fa-edit"></i>
+                        <span>Editor</span>
+                    </button>
+                    <button class="nav-tab" data-tab="analytics">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Analytics</span>
+                    </button>
+                    <button class="nav-tab" data-tab="settings">
+                        <i class="fas fa-cog"></i>
+                        <span>Settings</span>
+                    </button>
+                    <button class="nav-tab" data-tab="themes">
+                        <i class="fas fa-palette"></i>
+                        <span>Themes</span>
+                    </button>
 
-                <!-- Divider -->
-                <div class="nav-divider"></div>
+                    <!-- Divider -->
+                    <div class="nav-divider"></div>
 
-                <button class="nav-tab" data-tab="authentication">
-                    <i class="fas fa-shield-alt"></i>
-                    <span>Authentication</span>
-                </button>
+                    <button class="nav-tab" data-tab="authentication">
+                        <i class="fas fa-shield-alt"></i>
+                        <span>Authentication</span>
+                    </button>
+                </div>
 
-                <!-- Divider -->
-                <div class="nav-divider"></div>
+                <!-- External Links at Bottom -->
+                <div class="nav-bottom-tabs">
+                    <!-- Divider -->
+                    <div class="nav-divider"></div>
 
-                <!-- External Links -->
-                <a href="https://docs.quantom.dev" target="_blank" rel="noopener noreferrer" class="nav-tab nav-link">
-                    <i class="fas fa-book"></i>
-                    <span>Documentation</span>
-                    <i class="fas fa-external-link-alt external-icon"></i>
-                </a>
-                <a href="https://discord.gg/f46gXT69Fd" target="_blank" rel="noopener noreferrer" class="nav-tab nav-link">
-                    <i class="fab fa-discord"></i>
-                    <span>Support</span>
-                    <i class="fas fa-external-link-alt external-icon"></i>
-                </a>
+                    <a href="https://docs.quantom.dev" target="_blank" rel="noopener noreferrer" class="nav-tab nav-link">
+                        <i class="fas fa-book"></i>
+                        <span>Documentation</span>
+                        <i class="fas fa-external-link-alt external-icon"></i>
+                    </a>
+                    <a href="https://discord.gg/f46gXT69Fd" target="_blank" rel="noopener noreferrer" class="nav-tab nav-link">
+                        <i class="fab fa-discord"></i>
+                        <span>Support</span>
+                        <i class="fas fa-external-link-alt external-icon"></i>
+                    </a>
+                </div>
             </nav>
 
             <!-- Theme Toggle at Bottom -->
             <div class="sidebar-footer">
                 <button id="themeToggleSidebar" class="theme-toggle-btn">
-                    <i class="fas fa-moon theme-icon"></i>
+                    <span class="theme-icon-container"></span>
                     <span>Dark Mode</span>
                 </button>
             </div>
@@ -344,6 +352,10 @@
                 </div>
             </div>
         </main>
+        </div>
+
+        <!-- Footer (injected from common.js) -->
+        <div id="settingsFooter"></div>
     </div>
 
     <!-- Change Password Modal -->

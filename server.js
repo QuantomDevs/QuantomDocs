@@ -6,6 +6,8 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const rateLimit = require('express-rate-limit');
+const { fileTypeFromBuffer } = require('file-type');
+const DOMPurify = require('isomorphic-dompurify');
 
 const app = express();
 const HOST = '0.0.0.0'; // Bind to all network interfaces
@@ -42,12 +44,22 @@ app.use((req, res, next) => {
 app.use('/shared', express.static(path.join(__dirname, 'src/shared')));
 app.use('/main', express.static(path.join(__dirname, 'src/main')));
 app.use('/docs', express.static(path.join(__dirname, 'src/docs')));
+app.use('/legal', express.static(path.join(__dirname, 'src/legal')));
 
 // Rate limiting
 const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: 5, // limit each IP to 5 requests per windowMs
     message: { error: 'Too many login attempts, please try again later' }
+});
+
+// Upload rate limiting (5 uploads per minute per IP)
+const uploadLimiter = rateLimit({
+    windowMs: 60 * 1000, // 1 minute
+    max: 5, // limit each IP to 5 uploads per minute
+    message: { error: 'Too many upload attempts, please try again later' },
+    standardHeaders: true,
+    legacyHeaders: false
 });
 
 // Multer configuration for file uploads
@@ -225,6 +237,246 @@ const trackVisit = (urlPath, isMarkdownFile = false) => {
     }
 };
 
+// Token blacklist helper functions
+const tokenBlacklistPath = path.join(__dirname, 'src', 'docs', 'config', 'token-blacklist.json');
+
+const readBlacklist = () => {
+    try {
+        if (fs.existsSync(tokenBlacklistPath)) {
+            const data = fs.readFileSync(tokenBlacklistPath, 'utf8');
+            return JSON.parse(data);
+        }
+        return {
+            blacklistedTokens: [],
+            lastCleanup: null
+        };
+    } catch (error) {
+        console.error('Error reading token blacklist:', error);
+        return { blacklistedTokens: [], lastCleanup: null };
+    }
+};
+
+const writeBlacklist = (data) => {
+    try {
+        fs.writeFileSync(tokenBlacklistPath, JSON.stringify(data, null, 2));
+        return true;
+    } catch (error) {
+        console.error('Error writing token blacklist:', error);
+        return false;
+    }
+};
+
+const addToBlacklist = (token, expiresAt) => {
+    try {
+        const blacklist = readBlacklist();
+
+        // Add token with expiration timestamp
+        blacklist.blacklistedTokens.push({
+            token,
+            blacklistedAt: new Date().toISOString(),
+            expiresAt
+        });
+
+        // Cleanup expired tokens (older than 48 hours)
+        const now = Date.now();
+        blacklist.blacklistedTokens = blacklist.blacklistedTokens.filter(item => {
+            if (!item.expiresAt) return false;
+            return new Date(item.expiresAt).getTime() > now;
+        });
+
+        blacklist.lastCleanup = new Date().toISOString();
+
+        return writeBlacklist(blacklist);
+    } catch (error) {
+        console.error('Error adding to blacklist:', error);
+        return false;
+    }
+};
+
+const isTokenBlacklisted = (token) => {
+    try {
+        const blacklist = readBlacklist();
+        return blacklist.blacklistedTokens.some(item => item.token === token);
+    } catch (error) {
+        console.error('Error checking blacklist:', error);
+        return false;
+    }
+};
+
+// ==================== File Upload Security Functions ====================
+
+/**
+ * Validate file type using magic bytes (file signature)
+ * Prevents MIME type spoofing attacks
+ * @param {Buffer} fileBuffer - File buffer to validate
+ * @param {string} declaredMimeType - MIME type from multer
+ * @returns {Promise<{valid: boolean, detectedType: string|null, error: string|null}>}
+ */
+async function validateFileType(fileBuffer, declaredMimeType) {
+    try {
+        const fileTypeResult = await fileTypeFromBuffer(fileBuffer);
+
+        if (!fileTypeResult) {
+            return {
+                valid: false,
+                detectedType: null,
+                error: 'Could not determine file type'
+            };
+        }
+
+        // Allowed image types
+        const allowedMimeTypes = {
+            'image/png': ['image/png'],
+            'image/jpeg': ['image/jpeg', 'image/jpg'],
+            'image/jpg': ['image/jpeg', 'image/jpg'],
+            'image/gif': ['image/gif'],
+            'image/svg+xml': ['image/svg+xml'] // SVG requires additional sanitization
+        };
+
+        const detectedMime = fileTypeResult.mime;
+
+        // Check if detected type matches declared type
+        if (!allowedMimeTypes[declaredMimeType]) {
+            return {
+                valid: false,
+                detectedType: detectedMime,
+                error: `Declared MIME type ${declaredMimeType} is not allowed`
+            };
+        }
+
+        if (!allowedMimeTypes[declaredMimeType].includes(detectedMime)) {
+            return {
+                valid: false,
+                detectedType: detectedMime,
+                error: `File signature mismatch. Declared: ${declaredMimeType}, Detected: ${detectedMime}`
+            };
+        }
+
+        return {
+            valid: true,
+            detectedType: detectedMime,
+            error: null
+        };
+    } catch (error) {
+        console.error('File type validation error:', error);
+        return {
+            valid: false,
+            detectedType: null,
+            error: 'File type validation failed'
+        };
+    }
+}
+
+/**
+ * Sanitize SVG content to remove potentially malicious scripts
+ * Prevents XSS attacks through SVG files
+ * @param {string} svgContent - SVG file content as string
+ * @returns {string} - Sanitized SVG content
+ */
+function sanitizeSVG(svgContent) {
+    try {
+        // DOMPurify configuration for SVG
+        const config = {
+            USE_PROFILES: { svg: true, svgFilters: true },
+            ADD_TAGS: ['use'],
+            ADD_ATTR: ['target'],
+            FORBID_TAGS: ['script', 'iframe', 'object', 'embed', 'a'],
+            FORBID_ATTR: ['onerror', 'onload', 'onclick', 'onmouseover', 'onmouseout', 'onmousemove', 'onmouseenter', 'onmouseleave'],
+            ALLOW_DATA_ATTR: false
+        };
+
+        const sanitized = DOMPurify.sanitize(svgContent, config);
+
+        // Additional check: ensure no script tags remain
+        if (sanitized.toLowerCase().includes('<script')) {
+            console.warn('SVG sanitization warning: script tag detected after sanitization');
+            return svgContent.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+        }
+
+        return sanitized;
+    } catch (error) {
+        console.error('SVG sanitization error:', error);
+        // Return empty SVG on error to prevent potential XSS
+        return '<svg xmlns="http://www.w3.org/2000/svg"></svg>';
+    }
+}
+
+/**
+ * Sanitize and validate filename
+ * Prevents path traversal and special character attacks
+ * @param {string} filename - Original filename
+ * @returns {{valid: boolean, sanitized: string, error: string|null}}
+ */
+function sanitizeFilename(filename) {
+    try {
+        // Remove any path components
+        const basename = path.basename(filename);
+
+        // Check for dangerous patterns
+        const dangerousPatterns = [
+            /\.\./,           // Parent directory traversal
+            /^\./, // Hidden files
+            /[<>:"|?*\x00-\x1f]/,  // Windows invalid chars
+            /^\s+|\s+$/,      // Leading/trailing whitespace
+            /^(con|prn|aux|nul|com[0-9]|lpt[0-9])(\..*)?$/i // Windows reserved names
+        ];
+
+        for (const pattern of dangerousPatterns) {
+            if (pattern.test(basename)) {
+                return {
+                    valid: false,
+                    sanitized: '',
+                    error: `Filename contains invalid pattern: ${pattern}`
+                };
+            }
+        }
+
+        // Extract extension
+        const ext = path.extname(basename).toLowerCase();
+        const nameWithoutExt = path.basename(basename, ext);
+
+        // Validate extension
+        const allowedExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.svg'];
+        if (!allowedExtensions.includes(ext)) {
+            return {
+                valid: false,
+                sanitized: '',
+                error: `File extension ${ext} is not allowed`
+            };
+        }
+
+        // Sanitize filename: only alphanumeric, dash, underscore
+        const sanitizedName = nameWithoutExt
+            .replace(/[^a-zA-Z0-9-_]/g, '_')  // Replace invalid chars with underscore
+            .replace(/_{2,}/g, '_')             // Replace multiple underscores with single
+            .substring(0, 100);                 // Limit length
+
+        // Ensure filename is not empty after sanitization
+        if (!sanitizedName || sanitizedName.length === 0) {
+            return {
+                valid: false,
+                sanitized: '',
+                error: 'Filename is empty after sanitization'
+            };
+        }
+
+        const finalFilename = `${sanitizedName}${ext}`;
+
+        return {
+            valid: true,
+            sanitized: finalFilename,
+            error: null
+        };
+    } catch (error) {
+        console.error('Filename sanitization error:', error);
+        return {
+            valid: false,
+            sanitized: '',
+            error: 'Filename sanitization failed'
+        };
+    }
+}
+
 // JWT verification middleware
 const verifyToken = (req, res, next) => {
     const authHeader = req.headers.authorization;
@@ -234,11 +486,17 @@ const verifyToken = (req, res, next) => {
         return res.status(401).json({ error: 'Access token required' });
     }
 
+    // Check if token is blacklisted
+    if (isTokenBlacklisted(token)) {
+        return res.status(401).json({ error: 'Token has been revoked' });
+    }
+
     jwt.verify(token, JWT_SECRET, (err, user) => {
         if (err) {
             return res.status(403).json({ error: 'Invalid or expired token' });
         }
         req.user = user;
+        req.token = token; // Store token for potential blacklisting
         next();
     });
 };
@@ -271,16 +529,22 @@ app.post('/api/login', authLimiter, async (req, res) => {
             return res.status(401).json({ error: 'Invalid credentials' });
         }
 
-        // Create JWT token
+        // Create JWT token with expiration
+        const expiresIn = '24h';
         const token = jwt.sign(
             { username: user.username, role: user.role },
             JWT_SECRET,
-            { expiresIn: '24h' }
+            { expiresIn }
         );
+
+        // Calculate expiration timestamp (24 hours from now)
+        const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
 
         res.json({
             success: true,
             token,
+            expiresAt,
+            expiresIn: 24 * 60 * 60, // seconds
             user: {
                 username: user.username,
                 role: user.role
@@ -300,8 +564,59 @@ app.get('/api/verify', verifyToken, (req, res) => {
     });
 });
 
+// Logout endpoint - blacklists the current token
 app.post('/api/logout', verifyToken, (req, res) => {
-    res.json({ success: true, message: 'Logged out successfully' });
+    try {
+        const token = req.token;
+
+        // Decode token to get expiration
+        const decoded = jwt.decode(token);
+        const expiresAt = decoded.exp ? new Date(decoded.exp * 1000).toISOString() : null;
+
+        // Add token to blacklist
+        if (addToBlacklist(token, expiresAt)) {
+            res.json({ success: true, message: 'Logged out successfully' });
+        } else {
+            res.status(500).json({ error: 'Failed to logout properly' });
+        }
+    } catch (error) {
+        console.error('Logout error:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Token refresh endpoint
+app.post('/api/refresh', verifyToken, (req, res) => {
+    try {
+        const oldToken = req.token;
+        const user = req.user;
+
+        // Create new JWT token with same user data
+        const expiresIn = '24h';
+        const newToken = jwt.sign(
+            { username: user.username, role: user.role },
+            JWT_SECRET,
+            { expiresIn }
+        );
+
+        // Calculate expiration timestamp
+        const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+
+        // Blacklist the old token
+        const decoded = jwt.decode(oldToken);
+        const oldExpiresAt = decoded.exp ? new Date(decoded.exp * 1000).toISOString() : null;
+        addToBlacklist(oldToken, oldExpiresAt);
+
+        res.json({
+            success: true,
+            token: newToken,
+            expiresAt,
+            expiresIn: 24 * 60 * 60 // seconds
+        });
+    } catch (error) {
+        console.error('Token refresh error:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
 });
 
 // Downloads Management Routes
@@ -1162,36 +1477,23 @@ app.post('/api/files/:product/move', verifyToken, (req, res) => {
     }
 });
 
-// Upload image file
-app.post('/api/files/:product/upload', verifyToken, (req, res) => {
+// Upload image file with enhanced security
+app.post('/api/files/:product/upload', verifyToken, uploadLimiter, async (req, res) => {
     try {
         const { product } = req.params;
+        const uploadPath = path.join(__dirname, 'src', 'docs', 'content', product, 'images');
 
-        // Configure multer for image uploads
-        const imageStorage = multer.diskStorage({
-            destination: function (req, file, cb) {
-                // Create uploads directory inside product content
-                const uploadPath = path.join(__dirname, 'src', 'docs', 'content', product, 'images');
+        // Ensure directory exists
+        if (!fs.existsSync(uploadPath)) {
+            fs.mkdirSync(uploadPath, { recursive: true });
+        }
 
-                // Ensure directory exists
-                if (!fs.existsSync(uploadPath)) {
-                    fs.mkdirSync(uploadPath, { recursive: true });
-                }
-
-                cb(null, uploadPath);
-            },
-            filename: function (req, file, cb) {
-                const timestamp = Date.now();
-                const ext = path.extname(file.originalname);
-                const basename = path.basename(file.originalname, ext).replace(/[^a-zA-Z0-9]/g, '_');
-                cb(null, `${basename}_${timestamp}${ext}`);
-            }
-        });
-
-        const imageUpload = multer({
-            storage: imageStorage,
+        // Configure multer for temporary storage (memory)
+        const memoryUpload = multer({
+            storage: multer.memoryStorage(),
             limits: {
-                fileSize: 5 * 1024 * 1024 // 5MB limit
+                fileSize: 5 * 1024 * 1024, // 5MB limit
+                files: 1 // Only one file at a time
             },
             fileFilter: function (req, file, cb) {
                 const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/svg+xml'];
@@ -1204,34 +1506,87 @@ app.post('/api/files/:product/upload', verifyToken, (req, res) => {
             }
         }).single('file');
 
-        imageUpload(req, res, function (err) {
+        // Handle file upload to memory
+        memoryUpload(req, res, async function (err) {
             if (err instanceof multer.MulterError) {
                 if (err.code === 'LIMIT_FILE_SIZE') {
+                    console.warn(`Upload rejected: File size exceeds 5MB limit. User: ${req.user.username}, Product: ${product}`);
                     return res.status(400).json({ error: 'File size exceeds 5MB limit' });
                 }
+                console.warn(`Upload rejected: Multer error. Code: ${err.code}, User: ${req.user.username}`);
                 return res.status(400).json({ error: err.message });
             } else if (err) {
+                console.warn(`Upload rejected: ${err.message}. User: ${req.user.username}, Product: ${product}`);
                 return res.status(400).json({ error: err.message });
             }
 
             if (!req.file) {
+                console.warn(`Upload rejected: No file uploaded. User: ${req.user.username}, Product: ${product}`);
                 return res.status(400).json({ error: 'No file uploaded' });
             }
 
-            // Return relative path for markdown
-            const relativePath = `/docs/content/${product}/images/${req.file.filename}`;
+            try {
+                const fileBuffer = req.file.buffer;
+                const originalFilename = req.file.originalname;
+                const declaredMimeType = req.file.mimetype;
 
-            res.json({
-                success: true,
-                filename: req.file.filename,
-                path: relativePath,
-                originalName: req.file.originalname,
-                size: req.file.size
-            });
+                // Step 1: Sanitize and validate filename
+                const filenameSanitization = sanitizeFilename(originalFilename);
+                if (!filenameSanitization.valid) {
+                    console.warn(`Upload rejected: Invalid filename. Original: ${originalFilename}, Error: ${filenameSanitization.error}, User: ${req.user.username}`);
+                    return res.status(400).json({ error: `Invalid filename: ${filenameSanitization.error}` });
+                }
+
+                // Step 2: Validate file type using magic bytes (skip for SVG as it's text-based)
+                if (declaredMimeType !== 'image/svg+xml') {
+                    const validation = await validateFileType(fileBuffer, declaredMimeType);
+                    if (!validation.valid) {
+                        console.error(`Upload rejected: File type validation failed. Original: ${originalFilename}, Declared: ${declaredMimeType}, Detected: ${validation.detectedType}, Error: ${validation.error}, User: ${req.user.username}`);
+                        return res.status(400).json({ error: `Security: ${validation.error}` });
+                    }
+                }
+
+                // Step 3: Generate safe filename with timestamp
+                const timestamp = Date.now();
+                const ext = path.extname(filenameSanitization.sanitized);
+                const nameWithoutExt = path.basename(filenameSanitization.sanitized, ext);
+                const finalFilename = `${nameWithoutExt}_${timestamp}${ext}`;
+                const filePath = path.join(uploadPath, finalFilename);
+
+                // Step 4: Handle SVG files separately (sanitization required)
+                if (declaredMimeType === 'image/svg+xml') {
+                    const svgContent = fileBuffer.toString('utf8');
+                    const sanitizedSVG = sanitizeSVG(svgContent);
+
+                    // Write sanitized SVG
+                    fs.writeFileSync(filePath, sanitizedSVG, 'utf8');
+                    console.info(`SVG uploaded and sanitized: ${finalFilename}, User: ${req.user.username}, Product: ${product}, Size: ${Buffer.byteLength(sanitizedSVG)} bytes`);
+                } else {
+                    // Write binary image file
+                    fs.writeFileSync(filePath, fileBuffer);
+                    console.info(`Image uploaded: ${finalFilename}, User: ${req.user.username}, Product: ${product}, Type: ${declaredMimeType}, Size: ${fileBuffer.length} bytes`);
+                }
+
+                // Return relative path for markdown
+                const relativePath = `/docs/content/${product}/images/${finalFilename}`;
+
+                res.json({
+                    success: true,
+                    filename: finalFilename,
+                    path: relativePath,
+                    originalName: originalFilename,
+                    size: fs.statSync(filePath).size,
+                    sanitized: filenameSanitization.sanitized !== originalFilename
+                });
+
+            } catch (processingError) {
+                console.error(`Upload processing error: ${processingError.message}, User: ${req.user.username}, Product: ${product}`, processingError.stack);
+                return res.status(500).json({ error: 'Failed to process uploaded file' });
+            }
         });
 
     } catch (error) {
-        console.error('Upload image error:', error);
+        console.error(`Upload endpoint error: ${error.message}, User: ${req.user.username || 'unknown'}`, error.stack);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
@@ -1267,13 +1622,13 @@ app.get('/settings', (req, res) => {
 
 // Legal section - main entry point
 app.get('/legal', (req, res) => {
-    res.sendFile(path.join(__dirname, 'src', 'main', 'legal.html'));
+    res.sendFile(path.join(__dirname, 'src', 'legal', 'index.html'));
 });
 
 // Legal section - all nested routes (e.g., /legal/terms-of-service, /legal/privacy-policy)
-// The legal.html handles client-side routing based on the URL path
+// The legal/index.html handles client-side routing based on the URL path
 app.get('/legal/*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'src', 'main', 'legal.html'));
+    res.sendFile(path.join(__dirname, 'src', 'legal', 'index.html'));
 });
 
 // Docs section - main entry point

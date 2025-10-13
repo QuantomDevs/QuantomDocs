@@ -1,68 +1,22 @@
 /**
  * DOCS SEARCH STYLES
- * Adapted from search-popup.css for documentation search
+ * Uses common.css variables for unified design system
  */
 
 /* ===========================
-   1. CSS VARIABLEN (Angepasst an Dark Theme)
-   =========================== */
-:root {
-    /* Search Button in Header */
-    --docs-search-btn-bg: var(--bg-tertiary);
-    --docs-search-btn-hover-bg: var(--bg-quaternary);
-    --docs-search-btn-text: var(--text-secondary);
-    --docs-search-btn-border: var(--border-secondary);
-
-    /* Popup Hintergrundfarben */
-    --docs-popup-overlay-bg: rgba(0, 0, 0, 0.7);
-    --docs-popup-bg: var(--bg-secondary);
-    --docs-popup-border-color: var(--border-primary);
-
-    /* Suchfeld Farben */
-    --docs-search-input-bg: var(--bg-tertiary);
-    --docs-search-input-border: var(--border-secondary);
-    --docs-search-input-focus-border: var(--accent-color);
-    --docs-search-input-text: var(--text-primary);
-    --docs-search-input-placeholder: var(--text-secondary);
-
-    /* Suchergebnis Farben */
-    --docs-result-item-bg: var(--bg-tertiary);
-    --docs-result-item-hover-bg: var(--bg-quaternary);
-    --docs-result-item-border: var(--border-secondary);
-    --docs-result-title-text: var(--text-primary);
-    --docs-result-subtitle-text: var(--text-secondary);
-    --docs-result-category-text: var(--accent-color);
-
-    /* Icon Farben */
-    --docs-icon-color: var(--text-secondary);
-
-    /* Schatten */
-    --docs-popup-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
-    --docs-result-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-
-    /* Abstände */
-    --docs-popup-padding: 22px;
-    --docs-popup-border-radius: 12px;
-
-    /* Animationen */
-    --docs-transition-speed: 0.2s;
-    --docs-expand-animation-speed: 0.3s;
-}
-
-/* ===========================
-   2. SEARCH BUTTON IN HEADER
+   SEARCH BUTTON IN HEADER
    =========================== */
 .docs-search-button {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 8px;
-    padding: 8px 16px;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm) var(--spacing-md);
     background: var(--bg-primary);
-    border: 1px solid var(--docs-search-btn-border);
+    border: 1px solid var(--border-secondary);
     border-radius: var(--radius-2xl);
-    color: var(--docs-search-btn-text);
-    font-size: 0.9rem;
+    color: var(--text-secondary);
+    font-size: var(--font-size-md);
     cursor: pointer;
     transition: var(--transition-fast);
     min-height: 54px;
@@ -89,15 +43,15 @@
     padding: 2px 6px;
     background: var(--bg-quaternary);
     border: 1px solid var(--border-tertiary);
-    border-radius: 4px;
-    font-size: 0.75rem;
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-sm);
     color: var(--text-tertiary);
     font-family: var(--font-code);
     margin-left: auto;
 }
 
 /* ===========================
-   3. SEARCH POPUP OVERLAY
+   SEARCH POPUP OVERLAY
    =========================== */
 .docs-search-overlay {
     display: none;
@@ -106,14 +60,14 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: var(--docs-popup-overlay-bg);
+    background-color: var(--search-overlay-bg);
     backdrop-filter: blur(0px);
     z-index: 10000;
     justify-content: center;
     align-items: flex-start;
     padding-top: 10vh;
     opacity: 0;
-    transition: opacity var(--docs-transition-speed) ease, backdrop-filter var(--docs-transition-speed) ease;
+    transition: opacity var(--transition-fast) ease, backdrop-filter var(--transition-fast) ease;
 }
 
 .docs-search-overlay.active {
@@ -123,18 +77,18 @@
 }
 
 /* ===========================
-   4. SEARCH POPUP CONTAINER
+   SEARCH POPUP CONTAINER
    =========================== */
 .docs-search-popup {
-    background-color: var(--docs-popup-bg);
-    border-radius: var(--docs-popup-border-radius);
-    border: 1px solid var(--docs-popup-border-color);
-    box-shadow: var(--docs-popup-shadow);
+    background-color: var(--bg-primary);
+    border-radius: var(--radius-2xl);
+    border: 1px solid var(--border-primary);
+    box-shadow: var(--search-popup-shadow);
     width: 90%;
     max-width: 800px;
     overflow: hidden;
     transform: scale(0.95);
-    transition: all var(--docs-expand-animation-speed) cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all var(--transition-normal) cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .docs-search-overlay.active .docs-search-popup {
@@ -143,23 +97,23 @@
 
 .docs-search-popup.expanded {
     max-height: 80vh;
-    animation: expandDocsPopup var(--docs-expand-animation-speed) cubic-bezier(0.4, 0, 0.2, 1);
+    animation: expandDocsPopup var(--transition-normal) cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* ===========================
-   5. SEARCH INPUT CONTAINER
+   SEARCH INPUT CONTAINER
    =========================== */
 .docs-search-input-container {
     display: flex;
     align-items: center;
-    padding: var(--docs-popup-padding);
-    gap: 12px;
-    background-color: var(--docs-popup-bg);
-    border-bottom: 2px solid var(--docs-search-input-border);
+    padding: var(--spacing-lg);
+    gap: var(--spacing-md);
+    background-color: var(--bg-primary);
+    border-bottom: 2px solid var(--border-secondary);
 }
 
 .docs-search-icon {
-    color: var(--docs-icon-color);
+    color: var(--text-secondary);
     display: flex;
     align-items: center;
     flex-shrink: 0;
@@ -169,73 +123,73 @@
     flex: 1;
     border: none;
     outline: none;
-    font-size: 1rem;
-    color: var(--docs-search-input-text);
+    font-size: var(--font-size-md);
+    color: var(--text-primary);
     background-color: transparent;
-    padding: 0.5rem 1rem;
+    padding: var(--spacing-sm) var(--spacing-md);
 }
 
 .docs-search-input::placeholder {
-    color: var(--docs-search-input-placeholder);
+    color: var(--text-secondary);
 }
 
 .docs-search-shortcut {
-    padding: 4px 8px;
+    padding: var(--spacing-xs) var(--spacing-sm);
     background: var(--bg-quaternary);
     border: 1px solid var(--border-tertiary);
-    border-radius: 4px;
-    font-size: 0.75rem;
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-sm);
     color: var(--text-tertiary);
     font-family: var(--font-code);
     flex-shrink: 0;
 }
 
 /* ===========================
-   6. SEARCH RESULTS
+   SEARCH RESULTS
    =========================== */
 .docs-search-results {
     max-height: 0;
     overflow-y: auto;
     opacity: 0;
-    transition: all var(--docs-expand-animation-speed) cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all var(--transition-normal) cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .docs-search-results.visible {
     max-height: calc(50vh - 100px);
     opacity: 1;
-    padding: 12px;
+    padding: var(--spacing-md);
 }
 
 /* ===========================
-   7. RESULT ITEMS
+   RESULT ITEMS
    =========================== */
 .docs-result-category {
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: var(--docs-result-category-text);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+    color: var(--accent-color);
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    padding: 12px 16px 8px;
+    padding: var(--spacing-md) var(--spacing-md) var(--spacing-sm);
 }
 
 .docs-result-item {
     display: flex;
     align-items: flex-start;
     width: 100%;
-    gap: 0.75rem;
-    padding: 12px 16px;
-    background-color: var(--docs-result-item-bg);
-    border: 1px solid var(--docs-result-item-border);
+    gap: var(--spacing-md);
+    padding: var(--spacing-md) var(--spacing-md);
+    background-color: var(--bg-tertiary);
+    border: 1px solid var(--border-secondary);
     border-radius: var(--radius-lg);
     cursor: pointer;
-    transition: all 0.15s ease;
-    margin-bottom: 0.5rem;
+    transition: all var(--transition-fast);
+    margin-bottom: var(--spacing-sm);
     overflow: hidden;
 }
 
 .docs-result-item:hover,
 .docs-result-item.active {
-    background-color: var(--docs-result-item-hover-bg);
+    background-color: var(--bg-quaternary);
     border-color: var(--accent-color);
     transform: translateX(4px);
 }
@@ -249,7 +203,7 @@
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    color: var(--docs-icon-color);
+    color: var(--text-secondary);
 }
 
 .docs-result-content {
@@ -258,25 +212,25 @@
 }
 
 .docs-result-title {
-    font-weight: 600;
-    color: var(--docs-result-title-text);
-    font-size: 0.95rem;
-    margin-bottom: 6px;
+    font-weight: var(--font-weight-semibold);
+    color: var(--text-primary);
+    font-size: var(--font-size-md);
+    margin-bottom: var(--spacing-xs);
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: var(--spacing-sm);
 }
 
 .docs-result-breadcrumb {
-    font-size: 0.75rem;
-    color: var(--docs-result-category-text);
-    margin-bottom: 4px;
+    font-size: var(--font-size-sm);
+    color: var(--accent-color);
+    margin-bottom: var(--spacing-xs);
 }
 
 .docs-result-preview {
-    font-size: 0.85rem;
-    color: var(--docs-result-subtitle-text);
-    line-height: 1.5;
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+    line-height: var(--line-height-md);
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
@@ -284,41 +238,41 @@
 }
 
 .docs-result-preview mark {
-    background-color: rgba(217, 119, 87, 0.2);
+    background-color: var(--search-highlight-bg);
     color: var(--accent-color);
-    font-weight: 600;
+    font-weight: var(--font-weight-semibold);
     padding: 0 2px;
     border-radius: 2px;
 }
 
 /* ===========================
-   8. EMPTY STATE
+   EMPTY STATE
    =========================== */
 .docs-empty-state {
     text-align: center;
-    padding: 3rem 2rem;
-    color: var(--docs-result-subtitle-text);
+    padding: var(--spacing-2xl) var(--spacing-xl);
+    color: var(--text-secondary);
 }
 
 .docs-empty-state-icon {
-    font-size: 3rem;
-    margin-bottom: 1rem;
-    opacity: 0.5;
+    font-size: var(--font-size-4xl);
+    margin-bottom: var(--spacing-md);
+    opacity: var(--opacity-hover);
 }
 
 .docs-empty-state-text {
-    font-size: 1rem;
-    margin-bottom: 0.5rem;
+    font-size: var(--font-size-md);
+    margin-bottom: var(--spacing-sm);
     color: var(--text-primary);
 }
 
 .docs-empty-state-hint {
-    font-size: 0.875rem;
-    color: var(--docs-icon-color);
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
 }
 
 /* ===========================
-   9. ANIMATIONS
+   ANIMATIONS
    =========================== */
 @keyframes expandDocsPopup {
     from {
@@ -354,7 +308,7 @@
 .docs-result-item:nth-child(5) { animation-delay: 0.2s; }
 
 /* ===========================
-   10. SCROLLBAR STYLING
+   SCROLLBAR STYLING
    =========================== */
 .docs-search-results::-webkit-scrollbar {
     width: 8px;
@@ -374,11 +328,11 @@
 }
 
 /* ===========================
-   11. RESPONSIVE DESIGN
+   RESPONSIVE DESIGN
    =========================== */
 @media (max-width: 768px) {
     .docs-search-button {
-        padding: 8px 12px;
+        padding: var(--spacing-sm) var(--spacing-md);
     }
 
     .docs-search-button span:not(.shortcut-hint) {
@@ -391,7 +345,7 @@
     }
 
     .docs-search-input-container {
-        padding: 16px;
+        padding: var(--spacing-md);
     }
 
     .docs-search-shortcut {
