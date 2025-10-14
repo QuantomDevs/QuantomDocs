@@ -34,7 +34,7 @@ __pycache__/
 # Project specific
 .claude/
 CLAUDE.md
-.project-informations/
+project-informations/
 src/docs/config/users.json
 src/docs/config/analytics.json
 trash/
