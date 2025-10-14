@@ -333,27 +333,50 @@ window.navigateToProduct = (productId) => {
 const injectFooter = () => {
     const footerHTML = `
         <div class="footer-content">
-            <div class="footer-bottom">
-                <div class="footer-left">
-                    <img src="/shared/images/favicon/favicon.png" alt="Quantom Logo" class="footer-logo-img">
-                    <span class="footer-brand">Quantom Systems</span>
+            <div class="footer-main">
+                <div class="footer-brand-column">
+                    <a href="/main" class="footer-logo-link">
+                        <img src="/shared/images/favicon/favicon.png" alt="Quantom Logo" class="footer-logo-img">
+                        <span class="footer-brand">Quantom Systems</span>
+                    </a>
+                    <div class="footer-socials">
+                        <a href="https://instagram.com/Snenjih" class="social-icon" title="Instagram">
+                            <i class="fab fa-instagram"></i>
+                        </a>
+                        <a href="https://x.com/Snenjih" class="social-icon" title="Twitter/X">
+                            <i class="fab fa-twitter"></i>
+                        </a>
+                        <a href="https://github.com/Snenjih" class="social-icon" title="GitHub">
+                            <i class="fab fa-github"></i>
+                        </a>
+                        <a href="https://discord.gg/5gdthYHqSv" class="social-icon" title="Discord">
+                            <i class="fab fa-discord"></i>
+                        </a>
+                    </div>
                 </div>
-                <div class="footer-center">
-                    <a href="/legal" class="footer-legal-link">Legal</a>
-                </div>
-                <div class="footer-right">
-                    <a href="https://instagram.com/Snenjih" class="social-icon" title="Instagram">
-                        <i class="fab fa-instagram"></i>
-                    </a>
-                    <a href="https://x.com/Snenjih" class="social-icon" title="Twitter/X">
-                        <i class="fab fa-twitter"></i>
-                    </a>
-                    <a href="https://github.com/Snenjih" class="social-icon" title="GitHub">
-                        <i class="fab fa-github"></i>
-                    </a>
-                    <a href="https://discord.gg/5gdthYHqSv" class="social-icon" title="Discord">
-                        <i class="fab fa-discord"></i>
-                    </a>
+
+                <div class="footer-links-grid">
+                    <div class="footer-column">
+                        <h4>Explore</h4>
+                        <a href="/startups">Startups</a>
+                        <a href="/enterprise">Enterprise</a>
+                        <a href="/switch">Switch</a>
+                    </div>
+                    <div class="footer-column">
+                        <h4>Resources</h4>
+                        <a href="/customers">Customers</a>
+                        <a href="/blog">Blog</a>
+                        <a href="/pricing">Pricing</a>
+                        <a href="/contact">Contact Support</a>
+                        <a href="/requests">Feature Requests</a>
+                        <a href="/status">Status</a>
+                    </div>
+                    <div class="footer-column">
+                        <h4>Legal</h4>
+                        <a href="/legal/privacy-policy">Privacy Policy</a>
+                        <a href="/legal/terms-of-service">Terms of Service</a>
+                        <a href="/legal/impressum">Impressum</a>
+                    </div>
                 </div>
             </div>
         </div>
