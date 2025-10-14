@@ -8,6 +8,12 @@
 # Environment variables
 .env
 config.ini
+# dotenv environment variable files
+.env
+.env.development.local
+.env.test.local
+.env.production.local
+.env.local
 
 # Logs
 *.log
@@ -28,7 +34,7 @@ __pycache__/
 # Project specific
 .claude/
 CLAUDE.md
-project-informations/
+.project-informations/
 src/docs/config/users.json
 src/docs/config/analytics.json
 trash/
