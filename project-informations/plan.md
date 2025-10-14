@@ -91,7 +91,7 @@ This TODO section serves as the central tracking system for the QuantomDocs proj
 **Status**: Not Completed
 
 **Tasks**: Complete the following tasks:
-- **New config Settings**:
+- **New config Settings**: You need to add a few new settings to the config
 - **New Page**: i want you to add / create a new page caled "download" it should be created in src/main this page is supposed to be dynmaic to the download that will be opend. It should have its own css and js files, the functionality of it should be
 - **Downloads Modal**: I want you to remove the downloads pop up / modal from the "downloads" page completly the full functionality and functions to it also the css and html
 
@@ -105,6 +105,7 @@ This TODO section serves as the central tracking system for the QuantomDocs proj
 **Tasks**: Complete the following tasks:
 - **Analyse**: Analyse the Strcture and functions of the downloads page.
 - **Settings Page**: Add a new Tab to the settings called Downloads there I want you to add the functions: To add new downloads, edit existing ones, delete exesting, view previews. Important notice: I want you to make it so that it is dynmaic to what can be configured while adding or editing that means i want you to make it so that it dynamic to what can be done based on the existing config.
+- **Categories**: You also should add the functions to add new, edit existing, remove categories for the downloads
 
 
 
