@@ -61,7 +61,7 @@
       "path": "quantom",
       "icon": "🚀",
       "showInDocs": true,
-      "firstSide": "quantom/getting-started/Installation.md"
+      "firstSide": "quantom/01-Getting-Started/Installation.md"
     },
     {
       "id": "test",

@@ -568,8 +568,7 @@ nav {
     margin-left: auto;
     align-items: center;
     justify-content: center;
-    border-top: 1px solid var(--border-color);
-    background-color: var(--background-color);
+    border-top: 1px solid rgb((38 40 39)/.2);
     height: 400px;
 }
 
