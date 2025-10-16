@@ -1,6 +1,6 @@
 /* Index Page Body Background */
 body {
-    background: linear-gradient(150deg, #060504 40%, var(--bg-secondary) 60%);
+
 }
 
 /* Enhanced Hero Section */
@@ -12,34 +12,38 @@ body {
     margin-top: 80px;
     padding: var(--spacing-2xl) var(--spacing-md);
     text-align: center;
+
+    position: relative; 
+    overflow: hidden;
 }
 
 .hero::before {
   /* Dieses Pseudo-Element enthält alle Hintergrund-Effekte */
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: -1; /* Legt das Element HINTER den Text */
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1; /* Legt das Element HINTER den Text */
 
-  /* 
-    Hintergründe werden gestapelt. Der erste ist obenauf.
-    1. Ebene: Der schwarze Verlauf von transparent zu schwarz.
-    2. Ebene: Das eigentliche Hintergrundbild.
-  */
-  background:
+    
+    background:
     /* Verlauf für den Übergang zu Schwarz */
-    linear-gradient(to bottom, rgba(0,0,0,0) 70%, rgba(0,0,0,2)),
+    linear-gradient(to bottom, rgba(0,0,0,0) 70%, rgba(0,0,0,1)),
+    linear-gradient(to top, rgba(0,0,0,0) 70%, rgba(0,0,0,1)),
     /* Das Bild */
-    url(../../shared/images/wallpapers/background-wallpaper-1.png) no-repeat center center/cover;
+    url(../../shared/images/wallpapers/background-wallpaper-1.png) no-repeat;
 
-  /* Effekte, die auf ALLES im ::before-Element angewendet werden (also Bild + Verlauf) */
-  filter: brightness(0.5) blur(4px);
+    background-size: cover;
+    background-position: center center;
 
-  /* Skalierung, um unschöne Blur-Ränder zu vermeiden */
-  transform: scale(1.05); 
+    /* Effekte, die auf ALLES im ::before-Element angewendet werden (also Bild + Verlauf) */
+    filter: brightness(0.5) blur(4px);
+
+    /* Skalierung, um unschöne Blur-Ränder zu vermeiden */
+    transform: scale(1.05); 
+
 }
 
 .hero-content {

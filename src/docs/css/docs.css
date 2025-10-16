@@ -363,7 +363,7 @@ body.no-scroll {
     font-size: 0.9rem;
     cursor: pointer;
     transition: all 0.2s ease;
-    margin-bottom: var(--spacing-md);
+    margin-bottom: var(--spacing-xl);
 }
 
 .docs-search-button-sidebar:hover {
@@ -1291,7 +1291,6 @@ body.no-scroll {
     position: relative;
     display: flex;
     align-items: stretch;
-    background: var(--card-background-color);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-xl);
     overflow: visible;
@@ -1376,7 +1375,7 @@ html[data-theme="light"] .split-button-arrow:hover {
     position: absolute;
     top: calc(100% + 8px);
     right: 0;
-    background: var(--card-background-color);
+    background: var(--bg-primary);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-2xl);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
@@ -1417,6 +1416,17 @@ html[data-theme="light"] .split-button-arrow:hover {
     border: 1px solid var(--border-color);
     border-radius: var(--spacing-sm);
     padding: 6px;
+    height: 2rem;
+    width: 2rem;
+}
+
+.dropdown-item svg {
+    color: var(--accent-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--spacing-sm);
+    padding: 6px;
+    height: 2rem;
+    width: 2rem;
 }
 
 .dropdown-item-text {
@@ -1432,7 +1442,7 @@ html[data-theme="light"] .split-button-arrow:hover {
 
 .dropdown-item-description {
     color: var(--secondary-text-color);
-    font-size: 0.85em;
+    font-size: 0.75em;
     line-height: 1.4;
 }
 

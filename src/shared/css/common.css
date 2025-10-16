@@ -44,11 +44,11 @@
     --border-secondary: #333333;
     --border-tertiary: #2a2a2a;
     --border-color: #404040;
-    --border-accent: var(--swatch--clay);
+    --border-accent: var(--accent-color);
     --text-primary: #f5f5f5;
     --text-secondary: #a8a8a8;
     --text-tertiary: #8a8a8a;
-    --text-accent: var(--swatch--clay);
+    --text-accent: var(--accent-color);
     --text-success: #3fb950;
     --text-warning: #f97316;
     --text-error: #f85149;
