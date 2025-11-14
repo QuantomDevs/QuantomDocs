@@ -64,13 +64,13 @@
       "firstSide": "quantom/01-Getting-Started/Installation.md"
     },
     {
-      "id": "test",
+      "id": "Terminus",
       "name": "Test",
-      "description": "High-performance Minecraft server software optimized for large networks",
-      "path": "test",
+      "description": "Terminus is a modern lightweight web based Terminal and remote file browser client.",
+      "path": "terminus",
       "icon": "🚀",
       "showInDocs": true,
-      "firstSide": "quantom/getting-started/Installation.md"
+      "firstSide": "terminus/01-Getting-Started/Installation.md"
     }
   ]
 }

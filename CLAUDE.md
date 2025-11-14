@@ -697,7 +697,102 @@ QuantomDocs - Static documentation website for Quantom Minecraft server software
 
 ---
 
-**Phase 2 Complete** (2025-10-11 to 2025-10-12): Phase 2.1 (Header Rework), Phase 2.2 (Docs Rework), Phase 2.3 (Global Infrastructure), Phase 2.4 (Search Bar Rework), and Phase 2.5 (Settings Page Rework) all completed. Ready for Phase 3 (Bug Fixes & Critical Issues).
+**Phase 2 Complete** (2025-10-11 to 2025-10-12): Phase 2.1 (Header Rework), Phase 2.2 (Docs Rework), Phase 2.3 (Global Infrastructure), Phase 2.4 (Search Bar Rework), and Phase 2.5 (Settings Page Rework) all completed. Ready for Phase 2.1 - Downloads Page Rework.
+
+---
+
+### Phase 2.1 - Downloads Page Rework (COMPLETED 2025-10-16)
+**Goal**: Rework the Downloads Page to a modern design with individual download pages, GitHub API integration, and removal of modal system.
+
+**Status**: ✅ Completed
+
+**Implementation Summary**:
+
+**Files Created**:
+- `src/main/download.html` - Individual download page with dynamic content loading
+- `src/main/css/download.css` - Modern responsive styling using common.css variables
+- `src/main/js/download.js` - GitHub API integration with lazy loading (493 lines)
+
+**Files Modified**:
+- `src/main/config/downloads.json` - Added `repos` array to each category for GitHub integration
+- `src/main/downloads.html` - Removed modal HTML completely
+- `src/main/js/downloads.js` - Removed modal functions, changed card click to navigate to `/download/{id}`
+- `src/main/css/downloads.css` - Removed modal CSS styles
+- `server.js` (line 1621-1623) - Added `/download/:id` route
+
+**Changes Implemented**:
+
+1. **Config Structure Enhancement**:
+   - Added `repos: []` array to all 5 categories (mc-plugins, templates, websites, apps, designs)
+   - Each repo entry contains `id` and `repoUrl` for GitHub integration
+   - Backward compatible with existing `projects` structure
+
+2. **Modal System Removal**:
+   - Removed 400+ lines of modal code from downloads.js
+   - Removed modal HTML structure from downloads.html
+   - Removed modal CSS styles from downloads.css
+   - Removed admin functions (moved to Phase 2.2 - Settings)
+   - Changed project card onclick from `openProjectModal()` to `window.location.href='/download/{id}'`
+
+3. **New Download Page Features**:
+   - **Header Section**: Project icon, title, description, tags display
+   - **Download Actions**: Big download button with icon, name, and version (uses `var(--spacing-xl)`)
+   - **GitHub Integration**: "View Source Code" button (only for repos)
+   - **Older Builds Section**: List of changelogs/releases with commits, hashes, timestamps
+   - **Loading States**: Loading spinner, error handling, empty states
+   - **Responsive Design**: Mobile-friendly layout (768px, 480px breakpoints)
+
+4. **GitHub API Integration**:
+   - **Lazy Loading**: Initial page load fast, builds list loaded after 500ms
+   - **Repo Info**: `fetchGitHubRepoInfo()` gets name, description, topics
+   - **Latest Release**: `fetchGitHubLatestRelease()` for main download button
+   - **All Releases**: `fetchGitHubReleases()` for older builds list (lazy loaded)
+   - **Commits**: Release notes parsed and displayed with GitHub commit links
+   - **Direct Downloads**: Asset download URLs from GitHub releases
+   - **Error Handling**: Graceful fallbacks for API failures, missing releases
+
+5. **Dual Mode Support**:
+   - **Config Projects**: Uses existing `changelogs` structure from downloads.json
+   - **GitHub Repos**: Fetches data dynamically via GitHub API
+   - Automatic detection based on project type (repos vs projects)
+   - Consistent UI regardless of data source
+
+**Technical Details**:
+- All CSS uses variables from common.css (spacing, colors, typography, radius)
+- Download button padding: `var(--spacing-xl)` as specified
+- Matches docs page design with `var(--bg-secondary)`, `var(--border-primary)`, rounded corners
+- Header/footer injection via common.js
+- "Back to Downloads" button at top
+- Tags displayed under description
+- GitHub API calls are non-blocking and lazy loaded for performance
+- Clean URL structure: `/download/quantom-core`
+
+**API Endpoints Used**:
+- `https://api.github.com/repos/{owner}/{repo}` - Repository info
+- `https://api.github.com/repos/{owner}/{repo}/releases/latest` - Latest release
+- `https://api.github.com/repos/{owner}/{repo}/releases?per_page=20` - All releases
+- Rate limit: 60 requests/hour for unauthenticated requests (sufficient for typical usage)
+
+**Testing Results**:
+- ✅ Server running on http://localhost:5005
+- ✅ Health check returns 200 OK
+- ✅ Downloads page loads (200 OK)
+- ✅ Download detail page loads (200 OK)
+- ✅ Project cards navigate to download pages
+- ✅ GitHub API integration functional
+- ✅ Lazy loading works as expected
+- ✅ Responsive design tested on multiple screen sizes
+- ✅ Error handling works correctly
+- ✅ No console errors
+
+**Impact**:
+- **Better UX**: Dedicated page for each download with more space and information
+- **GitHub Integration**: Automatic updates from GitHub releases (no manual config editing)
+- **Modern Design**: Clean, professional layout matching site design system
+- **SEO Friendly**: Each download has its own URL (shareable, bookmarkable)
+- **Performance**: Lazy loading ensures fast initial page load
+- **Maintainability**: Single source of truth for GitHub repos (no duplicate config)
+- **Scalability**: Easy to add new projects (just add ID and repo URL to config)
 
 ---
 

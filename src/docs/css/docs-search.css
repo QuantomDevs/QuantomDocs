@@ -1,54 +1,8 @@
 /**
- * DOCS SEARCH STYLES
- * Uses common.css variables for unified design system
+ * DOCS SEARCH STYLES - REBUILT
+ * Replicates the new design while integrating into the existing structure.
+ * Uses common.css variables for a unified design system.
  */
-
-/* ===========================
-   SEARCH BUTTON IN HEADER
-   =========================== */
-.docs-search-button {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--spacing-sm);
-    padding: var(--spacing-sm) var(--spacing-md);
-    background: var(--bg-primary);
-    border: 1px solid var(--border-secondary);
-    border-radius: var(--radius-2xl);
-    color: var(--text-secondary);
-    font-size: var(--font-size-md);
-    cursor: pointer;
-    transition: var(--transition-fast);
-    min-height: 54px;
-    width: 600px;
-    max-width: 100%;
-}
-
-.docs-search-button:hover {
-    background: var(--bg-secondary);
-    border-color: var(--accent-color);
-    color: var(--text-primary);
-}
-
-.docs-search-button svg {
-    flex-shrink: 0;
-}
-
-.docs-search-button > span:first-of-type {
-    flex: 1;
-    text-align: left;
-}
-
-.docs-search-button .shortcut-hint {
-    padding: 2px 6px;
-    background: var(--bg-quaternary);
-    border: 1px solid var(--border-tertiary);
-    border-radius: var(--radius-sm);
-    font-size: var(--font-size-sm);
-    color: var(--text-tertiary);
-    font-family: var(--font-code);
-    margin-left: auto;
-}
 
 /* ===========================
    SEARCH POPUP OVERLAY
@@ -60,18 +14,17 @@
     left: 0;
     width: 100%;
     height: 100%;
+    z-index: 10000;
     background-color: var(--search-overlay-bg);
     backdrop-filter: blur(0px);
-    z-index: 10000;
-    justify-content: center;
-    align-items: flex-start;
-    padding-top: 10vh;
     opacity: 0;
     transition: opacity var(--transition-fast) ease, backdrop-filter var(--transition-fast) ease;
+    padding: var(--spacing-4xl); /* Padding for the container */
+    overflow-y: auto; /* Allow scrolling on small screens */
 }
 
 .docs-search-overlay.active {
-    display: flex;
+    display: block; /* Use block instead of flex for simpler centering */
     opacity: 1;
     backdrop-filter: blur(4px);
 }
@@ -81,296 +34,219 @@
    =========================== */
 .docs-search-popup {
     background-color: var(--bg-primary);
-    border-radius: var(--radius-2xl);
-    border: 1px solid var(--border-primary);
+    border: 1px solid var(--border-secondary);
+    border-radius: 1rem; /* 16px, as in the target design */
     box-shadow: var(--search-popup-shadow);
-    width: 90%;
-    max-width: 800px;
+    width: 100%;
+    max-width: 640px;
+    margin: 0 auto; /* Horizontal centering */
     overflow: hidden;
     transform: scale(0.95);
-    transition: all var(--transition-normal) cubic-bezier(0.4, 0, 0.2, 1);
+    transition: transform var(--transition-normal) cubic-bezier(0.4, 0, 0.2, 1);
+    max-height: 500px;
+    margin-top: 100px;
+    position: sticky;
 }
 
 .docs-search-overlay.active .docs-search-popup {
     transform: scale(1);
 }
 
-.docs-search-popup.expanded {
-    max-height: 80vh;
-    animation: expandDocsPopup var(--transition-normal) cubic-bezier(0.4, 0, 0.2, 1);
-}
-
 /* ===========================
    SEARCH INPUT CONTAINER
    =========================== */
 .docs-search-input-container {
-    display: flex;
-    align-items: center;
-    padding: var(--spacing-lg);
-    gap: var(--spacing-md);
-    background-color: var(--bg-primary);
-    border-bottom: 2px solid var(--border-secondary);
+    position: relative;
+    padding: 0.375rem; /* p-1.5 in Tailwind */
+    height: 3.5rem; /* h-14 in Tailwind */
+    border-bottom: 1px solid var(--border-secondary);
 }
 
 .docs-search-icon {
-    color: var(--text-secondary);
-    display: flex;
-    align-items: center;
-    flex-shrink: 0;
+    position: absolute;
+    left: 1.25rem; /* left-5 in Tailwind */
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-tertiary);
+    opacity: 0.5;
+    transition: opacity var(--transition-fast);
+    pointer-events: none; /* Icon should not be clickable */
 }
 
 .docs-search-input {
-    flex: 1;
-    border: none;
+    width: 100%;
+    height: 100%;
+    border: 1px solid var(--border-tertiary);
+    border-radius: 0.75rem; /* rounded-xl in Tailwind */
+    background-color: transparent;
     outline: none;
+    padding: 0 2.75rem; /* pl-11 in Tailwind */
     font-size: var(--font-size-md);
     color: var(--text-primary);
-    background-color: transparent;
-    padding: var(--spacing-sm) var(--spacing-md);
+    transition: border-color var(--transition-fast);
 }
 
 .docs-search-input::placeholder {
     color: var(--text-secondary);
 }
 
-.docs-search-shortcut {
-    padding: var(--spacing-xs) var(--spacing-sm);
-    background: var(--bg-quaternary);
-    border: 1px solid var(--border-tertiary);
-    border-radius: var(--radius-sm);
-    font-size: var(--font-size-sm);
-    color: var(--text-tertiary);
-    font-family: var(--font-code);
-    flex-shrink: 0;
+.docs-search-input:focus {
+    border-color: var(--accent-color);
+}
+
+.docs-search-input:focus ~ .docs-search-icon {
+    opacity: 1;
 }
 
 /* ===========================
    SEARCH RESULTS
    =========================== */
 .docs-search-results {
-    max-height: 0;
+    max-height: calc(100vh - 10rem);
     overflow-y: auto;
-    opacity: 0;
-    transition: all var(--transition-normal) cubic-bezier(0.4, 0, 0.2, 1);
+    padding: 0 0.375rem; /* mx-1.5 in Tailwind */
 }
 
 .docs-search-results.visible {
-    max-height: calc(50vh - 100px);
-    opacity: 1;
-    padding: var(--spacing-md);
+    padding-bottom: 0.5rem; /* mb-2 for last item */
+}
+
+/* ===========================
+   RESULT CATEGORY
+   =========================== */
+.docs-result-category {
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+    padding: var(--spacing-sm) var(--spacing-md);
 }
 
 /* ===========================
    RESULT ITEMS
    =========================== */
-.docs-result-category {
-    font-size: var(--font-size-sm);
-    font-weight: var(--font-weight-semibold);
-    color: var(--accent-color);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    padding: var(--spacing-md) var(--spacing-md) var(--spacing-sm);
-}
-
 .docs-result-item {
     display: flex;
-    align-items: flex-start;
-    width: 100%;
+    align-items: center;
     gap: var(--spacing-md);
-    padding: var(--spacing-md) var(--spacing-md);
-    background-color: var(--bg-tertiary);
-    border: 1px solid var(--border-secondary);
-    border-radius: var(--radius-lg);
+    padding: var(--spacing-sm) var(--spacing-sm);
+    border-radius: 0.75rem; /* rounded-xl */
     cursor: pointer;
-    transition: all var(--transition-fast);
-    margin-bottom: var(--spacing-sm);
-    overflow: hidden;
+    transition: background-color var(--transition-fast);
+    text-decoration: none;
+    color: inherit;
+    margin: 0 var(--spacing-xs) var(--spacing-xs);
 }
 
 .docs-result-item:hover,
 .docs-result-item.active {
-    background-color: var(--bg-quaternary);
-    border-color: var(--accent-color);
-    transform: translateX(4px);
+    background-color: var(--bg-secondary);
 }
 
 .docs-result-icon {
-    width: 40px;
-    height: 40px;
-    background-color: var(--bg-quaternary);
-    border-radius: var(--radius-md);
-    display: flex;
-    align-items: center;
-    justify-content: center;
     flex-shrink: 0;
     color: var(--text-secondary);
+    width: 1rem; /* h-4 w-4 */
+    height: 1rem;
+}
+
+.docs-result-icon svg {
+    width: 100%;
+    height: 100%;
 }
 
 .docs-result-content {
     flex: 1;
-    min-width: 0;
-}
-
-.docs-result-title {
-    font-weight: var(--font-weight-semibold);
-    color: var(--text-primary);
-    font-size: var(--font-size-md);
-    margin-bottom: var(--spacing-xs);
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-sm);
+    min-width: 0; /* Prevents text overflow issues in flexbox */
 }
 
 .docs-result-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    font-size: var(--font-size-xs);
+    color: var(--text-secondary);
+    margin-bottom: 2px;
+}
+
+.docs-result-breadcrumb svg {
+    width: 1rem;
+    height: 1rem;
+    flex-shrink: 0;
+}
+
+.docs-result-title {
     font-size: var(--font-size-sm);
-    color: var(--accent-color);
-    margin-bottom: var(--spacing-xs);
+    color: var(--text-primary);
+    font-weight: var(--font-weight-medium);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .docs-result-preview {
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-xs);
     color: var(--text-secondary);
-    line-height: var(--line-height-md);
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
+    white-space: nowrap;
     overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.4;
 }
 
 .docs-result-preview mark {
-    background-color: var(--search-highlight-bg);
-    color: var(--accent-color);
+    background-color: transparent;
+    color: var(--text-primary);
     font-weight: var(--font-weight-semibold);
-    padding: 0 2px;
-    border-radius: 2px;
+    padding: 0;
+}
+
+.docs-result-arrow {
+    flex-shrink: 0;
+    color: var(--text-tertiary);
+    opacity: 0;
+    transition: opacity var(--transition-fast);
+}
+
+.docs-result-item:hover .docs-result-arrow,
+.docs-result-item.active .docs-result-arrow {
+    opacity: 1;
 }
 
 /* ===========================
-   EMPTY STATE
+   EMPTY STATE (from your original CSS, slightly adapted)
    =========================== */
 .docs-empty-state {
     text-align: center;
     padding: var(--spacing-2xl) var(--spacing-xl);
     color: var(--text-secondary);
 }
-
 .docs-empty-state-icon {
     font-size: var(--font-size-4xl);
     margin-bottom: var(--spacing-md);
     opacity: var(--opacity-hover);
 }
-
 .docs-empty-state-text {
     font-size: var(--font-size-md);
     margin-bottom: var(--spacing-sm);
     color: var(--text-primary);
 }
-
 .docs-empty-state-hint {
     font-size: var(--font-size-sm);
     color: var(--text-secondary);
 }
 
-/* ===========================
-   ANIMATIONS
-   =========================== */
-@keyframes expandDocsPopup {
-    from {
-        transform: scale(1);
-    }
-    50% {
-        transform: scale(1.02);
-    }
-    to {
-        transform: scale(1);
-    }
-}
-
-@keyframes fadeInDocs {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.docs-result-item {
-    animation: fadeInDocs 0.2s ease forwards;
-}
-
-.docs-result-item:nth-child(1) { animation-delay: 0s; }
-.docs-result-item:nth-child(2) { animation-delay: 0.05s; }
-.docs-result-item:nth-child(3) { animation-delay: 0.1s; }
-.docs-result-item:nth-child(4) { animation-delay: 0.15s; }
-.docs-result-item:nth-child(5) { animation-delay: 0.2s; }
 
 /* ===========================
-   SCROLLBAR STYLING
+   SCROLLBAR STYLING (from your original CSS)
    =========================== */
 .docs-search-results::-webkit-scrollbar {
     width: 8px;
 }
-
 .docs-search-results::-webkit-scrollbar-track {
     background: transparent;
 }
-
 .docs-search-results::-webkit-scrollbar-thumb {
     background-color: var(--border-primary);
     border-radius: 4px;
 }
-
 .docs-search-results::-webkit-scrollbar-thumb:hover {
     background-color: var(--border-accent);
-}
-
-/* ===========================
-   RESPONSIVE DESIGN
-   =========================== */
-@media (max-width: 768px) {
-    .docs-search-button {
-        padding: var(--spacing-sm) var(--spacing-md);
-    }
-
-    .docs-search-button span:not(.shortcut-hint) {
-        display: none;
-    }
-
-    .docs-search-popup {
-        width: 95%;
-        max-width: none;
-    }
-
-    .docs-search-input-container {
-        padding: var(--spacing-md);
-    }
-
-    .docs-search-shortcut {
-        display: none;
-    }
-}
-
-/* Mobile Search Button - Convert to Icon Only (< 700px) */
-@media (max-width: 699px) {
-    .docs-search-button {
-        width: 44px;
-        height: 44px;
-        min-height: 44px;
-        padding: 0;
-        justify-content: center;
-        border-radius: 50%;
-    }
-
-    .docs-search-button > span:first-of-type,
-    .docs-search-button .shortcut-hint {
-        display: none;
-    }
-
-    .docs-search-button svg {
-        width: 20px;
-        height: 20px;
-    }
 }

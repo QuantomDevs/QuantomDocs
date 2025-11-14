@@ -1616,6 +1616,12 @@ app.get('/downloads', (req, res) => {
     res.sendFile(path.join(__dirname, 'src', 'main', 'downloads.html'));
 });
 
+// Download page - dynamic route for individual download pages (e.g., /download/quantom-core)
+// The download.html handles loading project data based on the ID in the URL
+app.get('/download/:id', (req, res) => {
+    res.sendFile(path.join(__dirname, 'src', 'main', 'download.html'));
+});
+
 app.get('/settings', (req, res) => {
     res.sendFile(path.join(__dirname, 'src', 'docs', 'settings.html'));
 });

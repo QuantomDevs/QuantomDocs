@@ -34,10 +34,10 @@
     --light-green-hover-rgb: rgba(38,189,108, 0.1);
 
     /* Dark theme colors (default) */
-    --bg-primary: #0a0d0d;
+    --bg-primary: #09090B;
     --bg-secondary: #1F1E1D;
     --bg-tertiary: #2F2E2D;
-    --bg-quaternary: var(--swatch--gray-950);
+    --bg-quaternary: #0A0D0D;
     --markdown-background: var(--bg-quaternary);
     --color-canvas-default: #0A0D0D;
     --border-primary: #404040;
@@ -204,7 +204,7 @@ body {
     color: var(--text-color);
     background-color: var(--background-color);
     font-size: var(--font-size-md);
-    line-height: var(--line-height-md);
+    line-height: var(--line-height-sm);
     min-height: 100vh;
     transition: background-color 0.3s ease, color 0.3s ease;
 }

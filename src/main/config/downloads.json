@@ -5,6 +5,12 @@
       "name": "MC Plugins",
       "icon": "fas fa-cube",
       "description": "Minecraft server plugins and modifications",
+      "repos": [
+        {
+        "id": "CloudNet",
+        "repoUrl": "https://github.com/CloudNetService/CloudNet"
+      }
+    ],
       "projects": [
         {
           "id": "quantom-core",
@@ -88,6 +94,7 @@
       "name": "Templates",
       "icon": "fas fa-code",
       "description": "Ready-to-use code templates and project starters",
+      "repos": [],
       "projects": [
         {
           "id": "nextjs-starter",
@@ -161,6 +168,7 @@
       "name": "Websites",
       "icon": "fas fa-globe",
       "description": "Complete website projects and demos",
+      "repos": [],
       "projects": [
         {
           "id": "portfolio-site",
@@ -234,6 +242,7 @@
       "name": "Apps",
       "icon": "fas fa-mobile-alt",
       "description": "Mobile and desktop applications",
+      "repos": [],
       "projects": [
         {
           "id": "task-manager",
@@ -307,6 +316,7 @@
       "name": "Designs",
       "icon": "fas fa-palette",
       "description": "UI/UX designs, mockups, and design resources",
+      "repos": [],
       "projects": [
         {
           "id": "ui-kit",
