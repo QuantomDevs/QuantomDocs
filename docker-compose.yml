@@ -1,0 +1,19 @@
+---
+services:
+  quantomdocs:
+    container_name: quantomdocs
+    image: ghcr.io/quantomdevs/quantomdocs:latest
+    ports:
+      - 5005:5005
+    environment:
+      - NODE_ENV=production
+      - JWT_SECRET=${JWT_SECRET:-quantom_secret_key_2025}
+      - PORT=5005
+      - HOST=0.0.0.0
+    volumes:
+      - ./content:/app/content
+      - ./data:/app/data
+      - ./src/main/downloads:/app/src/main/downloads
+    restart: unless-stopped
+    labels:
+      - com.centurylinklabs.watchtower.enable="true"

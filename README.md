@@ -68,6 +68,38 @@ QuantomDocs is a comprehensive static documentation and download management webs
 - **404 Configuration:** JSON-configurable 404 page with markdown support
 - **Customizable Header/Footer:** Dynamic content loading
 
+## 🐳 Quick Start with Docker
+
+The fastest way to get QuantomDocs running is using Docker:
+
+### Using Docker Compose (Recommended)
+
+1. **Download the `docker-compose.yml` file** from the [latest release](https://github.com/QuantomDevs/QuantomDocs/releases/latest)
+
+2. **Create a `.env` file** (optional):
+   ```env
+   JWT_SECRET=your_secret_key_here
+   ```
+
+3. **Run the container:**
+   ```bash
+   docker-compose up -d
+   ```
+
+4. **Access the application** at `http://localhost:5005`
+
+### Using Docker CLI
+
+```bash
+docker run -d \
+  --name quantomdocs \
+  -p 5005:5005 \
+  -v ./content:/app/content \
+  -v ./data:/app/data \
+  -e JWT_SECRET=your_secret_key \
+  ghcr.io/quantomdevs/quantomdocs:latest
+```
+
 ## 🚀 Architecture Overview
 
 The project follows a hybrid architecture combining:
@@ -229,6 +261,11 @@ QuantomDocs/
 
 ### Prerequisites
 
+#### For Docker (Recommended)
+- **Docker** 20.10 or higher
+- **Docker Compose** 2.0 or higher
+
+#### For Manual Installation
 - **Node.js** 16.x or higher
 - **npm** 8.x or higher
 - **Python** 3.11 or higher (for Python tools)
@@ -236,9 +273,15 @@ QuantomDocs/
 
 ### Installation
 
+#### Method 1: Docker (Recommended)
+
+See [Quick Start with Docker](#-quick-start-with-docker) above.
+
+#### Method 2: Manual Installation
+
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/yourusername/QuantomDocs.git
+   git clone https://github.com/QuantomDevs/QuantomDocs.git
    cd QuantomDocs
    ```
 
@@ -376,13 +419,46 @@ See `/docs/quantom/getting-started/component-test` for examples.
 
 ### Environment Variables
 
-Create a `.env` file for sensitive configuration:
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `NODE_ENV` | Environment mode | `production` |
+| `PORT` | Server port | `5005` |
+| `HOST` | Server host | `0.0.0.0` |
+| `JWT_SECRET` | Secret key for JWT tokens | `quantom_secret_key_2025` |
+| `JWT_EXPIRES_IN` | JWT expiration time | `24h` |
+
+**For Docker:** Set environment variables in `.env` file or `docker-compose.yml`
+
+**For Manual Installation:** Create a `.env` file in the root directory:
 
 ```env
 PORT=5005
 JWT_SECRET=your-secret-key-here
 JWT_EXPIRES_IN=24h
 NODE_ENV=development
+```
+
+## 🔨 Development
+
+### Running in Development Mode
+
+```bash
+npm run dev
+```
+
+This uses nodemon for automatic reloading on file changes.
+
+### Building Docker Image Locally
+
+```bash
+docker build -t quantomdocs:local .
+docker run -p 5005:5005 quantomdocs:local
+```
+
+### Docker Compose for Development
+
+```bash
+docker-compose up --build
 ```
 
 ## 🤝 Contributing

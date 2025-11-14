@@ -229,30 +229,37 @@ const injectHeader = async () => {
     // Check if we're on the docs page to show search bar and adjust logo text
     const isDocsPage = window.location.pathname.includes('/docs');
 
-    // Load product buttons if on docs page
-    let productButtonsHTML = '';
-    if (isDocsPage) {
-        try {
-            const response = await fetch('/docs/config/docs-config.json');
-            const config = await response.json();
-            const products = config.products.filter(p => p.showInDocs);
+    // Load products for dropdown menu (used on both main and docs pages)
+    let docsDropdownHTML = '';
+    let products = [];
+    try {
+        const response = await fetch('/docs/config/docs-config.json');
+        const config = await response.json();
+        products = config.products.filter(p => p.showInDocs);
 
-            // Get current product from URL
-            const pathParts = window.location.pathname.split('/').filter(p => p);
-            const currentProduct = pathParts.length > 1 ? pathParts[1] : null;
+        // Generate product cards for dropdown
+        const productCardsHTML = products.map(product => `
+            <a href="/docs/${product.id}" class="product-dropdown-card" data-product-id="${product.id}">
+                <span class="product-icon">${product.icon}</span>
+                <span class="product-name">${product.name}</span>
+            </a>
+        `).join('');
 
-            productButtonsHTML = `
-                ${products.map(product => `
-                            <button class="product-nav-btn ${currentProduct === product.id ? 'active' : ''}"
-                                    data-product-id="${product.id}"
-                                    onclick="navigateToProduct('${product.id}')">
-                                ${product.name}
-                            </button>
-                        `).join('')}
-            `;
-        } catch (error) {
-            console.error('Failed to load products for header:', error);
-        }
+        docsDropdownHTML = `
+            <div class="docs-dropdown-container">
+                <button class="nav-link docs-dropdown-btn" id="docs-dropdown-btn">
+                    Documentation
+                    <i class="fas fa-chevron-down dropdown-arrow"></i>
+                </button>
+                <div class="docs-dropdown-menu" id="docs-dropdown-menu" style="display: none;">
+                    ${productCardsHTML}
+                </div>
+            </div>
+        `;
+    } catch (error) {
+        console.error('Failed to load products for header dropdown:', error);
+        // Fallback to simple link if config loading fails
+        docsDropdownHTML = `<a href="/docs" class="nav-link">Documentation</a>`;
     }
 
     let mainButtonsHTML = '';
@@ -260,9 +267,12 @@ const injectHeader = async () => {
         mainButtonsHTML = `
                 <a href="/main" class="nav-link">Home</a>
                 <a href="/downloads" class="nav-link">Download</a>
-                <a href="/docs" class="nav-link">Documentation</a>
+                ${docsDropdownHTML}
                 <a href="https://discord.gg/f46gXT69Fd" class="nav-link" target="_blank">Discord</a>
         `;
+    } else {
+        // On docs page, show the dropdown in place of product buttons
+        mainButtonsHTML = docsDropdownHTML;
     }
 
     // Search button is now in the sidebar on docs pages, so we don't show it in the header
@@ -283,8 +293,11 @@ const injectHeader = async () => {
         <button id="mobileMenuToggle" class="mobile-menu-toggle-btn"><i class="fas fa-bars"></i></button>
     ` : '';
 
+    // Add centered class for main page navigation
+    const navClass = isDocsPage ? '' : 'nav-centered';
+
     const headerHTML = `
-        <div class="header-content">
+        <div class="header-content ${isDocsPage ? '' : 'header-main-page'}">
             ${docsMenuButtonHTML}
             <a href="/main" class="logo-container">
                 <img src="/shared/images/favicon/favicon.png" alt="Quantom Logo" class="logo-img">
@@ -292,9 +305,8 @@ const injectHeader = async () => {
             </a>
             ${mobileMenuButtonHTML}
             ${searchBarHTML}
-            <nav id="mainNav">
+            <nav id="mainNav" class="${navClass}">
                 ${mainButtonsHTML}
-                ${productButtonsHTML}
                 <div class="icon-links">
                     <a href="/settings" class="special-button">Sign Up</a>
                     <button id="theme-toggle-btn" class="icon-link theme-toggle" title="Toggle dark/light mode">
@@ -318,9 +330,80 @@ const injectHeader = async () => {
             themeToggle.addEventListener('click', toggleTheme);
         }
 
+        // Add dropdown event listeners
+        initDocsDropdown();
+
         // Dispatch event to notify docs.js that header is ready
         if (isDocsPage) {
             window.dispatchEvent(new Event('headerInjected'));
+        }
+    }
+};
+
+// Initialize Documentation Dropdown Menu
+const initDocsDropdown = () => {
+    const dropdownBtn = document.getElementById('docs-dropdown-btn');
+    const dropdownMenu = document.getElementById('docs-dropdown-menu');
+
+    if (!dropdownBtn || !dropdownMenu) return;
+
+    let isOpen = false;
+
+    // Toggle dropdown on button click
+    const toggleDropdown = (e) => {
+        e.stopPropagation();
+        isOpen = !isOpen;
+
+        if (isOpen) {
+            dropdownMenu.style.display = 'grid';
+            dropdownBtn.classList.add('active');
+            // Animate dropdown arrow
+            const arrow = dropdownBtn.querySelector('.dropdown-arrow');
+            if (arrow) arrow.style.transform = 'rotate(180deg)';
+        } else {
+            dropdownMenu.style.display = 'none';
+            dropdownBtn.classList.remove('active');
+            // Reset dropdown arrow
+            const arrow = dropdownBtn.querySelector('.dropdown-arrow');
+            if (arrow) arrow.style.transform = 'rotate(0deg)';
+        }
+    };
+
+    // Close dropdown when clicking outside
+    const closeDropdown = (e) => {
+        if (!dropdownBtn.contains(e.target) && !dropdownMenu.contains(e.target)) {
+            isOpen = false;
+            dropdownMenu.style.display = 'none';
+            dropdownBtn.classList.remove('active');
+            const arrow = dropdownBtn.querySelector('.dropdown-arrow');
+            if (arrow) arrow.style.transform = 'rotate(0deg)';
+        }
+    };
+
+    dropdownBtn.addEventListener('click', toggleDropdown);
+    document.addEventListener('click', closeDropdown);
+
+    // Optional: Show dropdown on hover (desktop only)
+    if (window.innerWidth > 768) {
+        dropdownBtn.addEventListener('mouseenter', () => {
+            if (!isOpen) {
+                isOpen = true;
+                dropdownMenu.style.display = 'grid';
+                dropdownBtn.classList.add('active');
+                const arrow = dropdownBtn.querySelector('.dropdown-arrow');
+                if (arrow) arrow.style.transform = 'rotate(180deg)';
+            }
+        });
+
+        const dropdownContainer = dropdownBtn.closest('.docs-dropdown-container');
+        if (dropdownContainer) {
+            dropdownContainer.addEventListener('mouseleave', () => {
+                isOpen = false;
+                dropdownMenu.style.display = 'none';
+                dropdownBtn.classList.remove('active');
+                const arrow = dropdownBtn.querySelector('.dropdown-arrow');
+                if (arrow) arrow.style.transform = 'rotate(0deg)';
+            });
         }
     }
 };

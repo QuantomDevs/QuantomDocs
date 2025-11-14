@@ -9,6 +9,23 @@
     },
     "rightSidebarSectionGap": true
   },
+  "header": {
+    "navigation": {
+      "dropdownEnabled": true,
+      "showProductIcons": true,
+      "productDisplayOrder": "alphabetical",
+      "customOrder": ["quantom", "Terminus"],
+      "gridColumns": 2,
+      "dropdownAnimation": "fade",
+      "dropdownPosition": "below",
+      "buttonAlignment": {
+        "mainPage": "center",
+        "docsPage": "left"
+      },
+      "showButtonLabels": true,
+      "compactMode": false
+    }
+  },
   "errorPages": {
     "404": {
       "redirect": {

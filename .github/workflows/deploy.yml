@@ -1,0 +1,87 @@
+name: Deploy QuantomDocs
+
+on:
+  push:
+    branches: [ main ]
+  release:
+    types: [ created ]
+
+jobs:
+  publish:
+    permissions:
+      contents: write
+      packages: write
+      attestations: write
+      id-token: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Fetch all tags
+        run: git fetch --all --tags
+
+      - name: Version Check
+        uses: thebongy/version-check@v2
+        with:
+          file: package.json
+          tagFormat: v${version}
+          failBuild: false
+        id: version_check
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          platforms: linux/amd64,linux/arm64
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set repository name to lowercase
+        run: |
+          echo "REPO_LOWER=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+
+      - name: Build and Push Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          platforms: linux/amd64,linux/arm64
+          tags: |
+            ghcr.io/${{ env.REPO_LOWER }}:latest
+            ghcr.io/${{ env.REPO_LOWER }}:v${{ steps.version_check.outputs.rawVersion }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Create Release
+        if: steps.version_check.outputs.versionChanged == 'true'
+        run: |
+          CURR_TAG="v${{ steps.version_check.outputs.rawVersion }}"
+          gh release create "$CURR_TAG" \
+            --title "QuantomDocs $CURR_TAG" \
+            --notes "Release $CURR_TAG - Docker Image: ghcr.io/${{ env.REPO_LOWER }}:$CURR_TAG" \
+            --generate-notes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload docker-compose to Release
+        if: steps.version_check.outputs.versionChanged == 'true'
+        uses: AButler/upload-release-assets@v2.0
+        with:
+          files: 'docker-compose.yml'
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          release-tag: "v${{ steps.version_check.outputs.rawVersion }}"

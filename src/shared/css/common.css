@@ -319,6 +319,22 @@ nav {
     align-items: center;
 }
 
+/* Centered navigation for main page */
+.header-main-page {
+    justify-content: center !important;
+}
+
+.nav-centered {
+    flex: 1;
+    justify-content: center;
+    gap: var(--spacing-lg);
+}
+
+.nav-centered .icon-links {
+    position: absolute;
+    right: clamp(20px, 5vw, 50px);
+}
+
 .nav-link {
     color: var(--text-secondary);
     text-decoration: none;
@@ -408,6 +424,83 @@ nav {
 
 .product-nav-btn.active {
     color: var(--text-primary);
+}
+
+/* Documentation Dropdown Styles */
+.docs-dropdown-container {
+    position: relative;
+    display: inline-block;
+}
+
+.docs-dropdown-btn {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: var(--font-secondary);
+}
+
+.docs-dropdown-btn.active {
+    color: var(--accent-color);
+}
+
+.dropdown-arrow {
+    font-size: 0.75rem;
+    transition: transform var(--transition-fast);
+}
+
+.docs-dropdown-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-primary);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-md);
+    box-shadow: 0 8px 24px var(--shadow-elevated);
+    z-index: var(--z-dropdown);
+    min-width: 300px;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-sm);
+}
+
+.product-dropdown-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-md);
+    background: var(--bg-tertiary);
+    border: 2px solid var(--border-secondary);
+    border-radius: var(--radius-md);
+    text-decoration: none;
+    transition: all var(--transition-fast);
+    min-height: 100px;
+    cursor: pointer;
+}
+
+.product-dropdown-card:hover {
+    background: var(--bg-quaternary);
+    border-color: var(--accent-color);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.product-icon {
+    font-size: 2rem;
+    line-height: 1;
+}
+
+.product-name {
+    color: var(--text-primary);
+    font-weight: var(--font-weight-semibold);
+    font-size: var(--font-size-sm);
+    text-align: center;
 }
 
 
@@ -1096,6 +1189,21 @@ nav {
 
     .mobile-menu-toggle-btn {
         display: flex !important; /* Show mobile toggle */
+    }
+
+    /* Dropdown adjustments for mobile */
+    .docs-dropdown-menu {
+        left: 0;
+        right: 0;
+        transform: none;
+        min-width: auto;
+        width: calc(100vw - 2rem);
+        margin: 0 1rem;
+        grid-template-columns: 1fr;
+    }
+
+    .product-dropdown-card {
+        min-height: 80px;
     }
 
     .container {
