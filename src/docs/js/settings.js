@@ -155,6 +155,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     checkAuthentication();
     initializeEventListeners();
+    initializeMobileSettings();
     initializeThemeToggle();
 });
 
@@ -2808,6 +2809,70 @@ async function handleChangePassword() {
         saveBtn.disabled = false;
         saveBtn.innerHTML = 'Save Password';
     }
+}
+
+// ==================== MOBILE SETTINGS ====================
+/**
+ * Initialize mobile settings sidebar toggle
+ */
+function initializeMobileSettings() {
+    const sidebar = document.querySelector('.settings-sidebar');
+    const sidebarHeader = sidebar?.querySelector('.sidebar-user-section');
+
+    if (!sidebar || !sidebarHeader) return;
+
+    // Add toggle button if not exists
+    if (!sidebarHeader.querySelector('.settings-sidebar-toggle')) {
+        const toggle = document.createElement('button');
+        toggle.className = 'settings-sidebar-toggle';
+        toggle.innerHTML = '<i class="fas fa-bars"></i>';
+        toggle.setAttribute('aria-label', 'Toggle settings menu');
+        toggle.style.display = 'none'; // Hidden by default, shown via CSS on mobile
+        sidebarHeader.appendChild(toggle);
+
+        toggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            sidebar.classList.toggle('collapsed');
+            const icon = toggle.querySelector('i');
+            if (icon) {
+                icon.classList.toggle('fa-bars');
+                icon.classList.toggle('fa-times');
+            }
+        });
+    }
+
+    // Auto-collapse on mobile on initial load
+    if (window.innerWidth <= 768) {
+        sidebar.classList.add('collapsed');
+    }
+
+    // Close sidebar when selecting a tab on mobile
+    document.querySelectorAll('.nav-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            if (window.innerWidth <= 768) {
+                sidebar.classList.add('collapsed');
+                const toggle = sidebar.querySelector('.settings-sidebar-toggle i');
+                if (toggle) {
+                    toggle.classList.remove('fa-times');
+                    toggle.classList.add('fa-bars');
+                }
+            }
+        });
+    });
+
+    // Handle window resize
+    const handleResize = () => {
+        if (window.innerWidth > 768) {
+            sidebar.classList.remove('collapsed');
+        }
+    };
+
+    // Debounce resize handler
+    let resizeTimeout;
+    window.addEventListener('resize', () => {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(handleResize, 250);
+    });
 }
 
 // ==================== THEME TOGGLE ====================
