@@ -308,10 +308,250 @@ function extractTextFromMarkdown(markdown) {
 // ===========================
 
 /**
+ * Parse search query for boolean operators
+ * @param {string} query - Raw search query
+ * @returns {Object} Parsed query object
+ */
+function parseSearchQuery(query) {
+    const tokens = [];
+    let current = '';
+    let inQuotes = false;
+
+    for (let i = 0; i < query.length; i++) {
+        const char = query[i];
+
+        if (char === '"') {
+            inQuotes = !inQuotes;
+            if (!inQuotes && current) {
+                tokens.push({ type: 'phrase', value: current.toLowerCase() });
+                current = '';
+            }
+        } else if (char === ' ' && !inQuotes) {
+            if (current) {
+                addSearchToken(tokens, current);
+                current = '';
+            }
+        } else {
+            current += char;
+        }
+    }
+
+    if (current) {
+        addSearchToken(tokens, current);
+    }
+
+    return buildSearchExpression(tokens);
+}
+
+/**
+ * Add a token to the search tokens array
+ * @param {Array} tokens - Array of tokens
+ * @param {string} text - Text to tokenize
+ */
+function addSearchToken(tokens, text) {
+    const upper = text.toUpperCase();
+    if (upper === 'AND' || upper === 'OR' || upper === 'NOT') {
+        tokens.push({ type: 'operator', value: upper });
+    } else if (text.endsWith('*')) {
+        tokens.push({ type: 'wildcard', value: text.slice(0, -1).toLowerCase() });
+    } else if (text.includes(':')) {
+        const [field, value] = text.split(':');
+        tokens.push({ type: 'field', field: field.toLowerCase(), value: value.toLowerCase() });
+    } else {
+        tokens.push({ type: 'term', value: text.toLowerCase() });
+    }
+}
+
+/**
+ * Build search expression from tokens
+ * @param {Array} tokens - Array of tokens
+ * @returns {Object} Search expression
+ */
+function buildSearchExpression(tokens) {
+    const expr = {
+        operator: 'AND',
+        terms: []
+    };
+
+    let currentOperator = 'AND';
+
+    tokens.forEach(token => {
+        if (token.type === 'operator') {
+            currentOperator = token.value;
+        } else {
+            expr.terms.push({
+                ...token,
+                operator: currentOperator
+            });
+        }
+    });
+
+    return expr;
+}
+
+/**
+ * Match a document against search expression
+ * @param {Object} entry - Document entry
+ * @param {Object} expression - Search expression
+ * @returns {boolean} Whether document matches
+ */
+function matchSearchExpression(entry, expression) {
+    if (expression.terms.length === 0) return true;
+
+    let result = expression.operator === 'AND';
+
+    for (const term of expression.terms) {
+        let match = false;
+
+        switch (term.type) {
+            case 'term':
+                match = matchTerm(entry, term.value);
+                break;
+            case 'phrase':
+                match = matchPhrase(entry, term.value);
+                break;
+            case 'wildcard':
+                match = matchWildcard(entry, term.value);
+                break;
+            case 'field':
+                match = matchField(entry, term.field, term.value);
+                break;
+        }
+
+        if (term.operator === 'AND') {
+            result = result && match;
+        } else if (term.operator === 'OR') {
+            result = result || match;
+        } else if (term.operator === 'NOT') {
+            result = result && !match;
+        }
+    }
+
+    return result;
+}
+
+/**
+ * Match a term in document
+ * @param {Object} entry - Document entry
+ * @param {string} term - Search term
+ * @returns {boolean} Whether term matches
+ */
+function matchTerm(entry, term) {
+    const searchText = `${entry.name} ${entry.category} ${entry.content}`.toLowerCase();
+    return searchText.includes(term);
+}
+
+/**
+ * Match a phrase in document
+ * @param {Object} entry - Document entry
+ * @param {string} phrase - Search phrase
+ * @returns {boolean} Whether phrase matches
+ */
+function matchPhrase(entry, phrase) {
+    const searchText = `${entry.name} ${entry.category} ${entry.content}`.toLowerCase();
+    return searchText.includes(phrase);
+}
+
+/**
+ * Match wildcard pattern in document
+ * @param {Object} entry - Document entry
+ * @param {string} prefix - Wildcard prefix
+ * @returns {boolean} Whether wildcard matches
+ */
+function matchWildcard(entry, prefix) {
+    const searchText = `${entry.name} ${entry.category} ${entry.content}`.toLowerCase();
+    const words = searchText.split(/\s+/);
+    return words.some(word => word.startsWith(prefix));
+}
+
+/**
+ * Match a specific field in document
+ * @param {Object} entry - Document entry
+ * @param {string} field - Field name
+ * @param {string} value - Field value to match
+ * @returns {boolean} Whether field matches
+ */
+function matchField(entry, field, value) {
+    const fieldValue = entry[field];
+    if (!fieldValue) return false;
+    return fieldValue.toLowerCase().includes(value);
+}
+
+/**
+ * Calculate Levenshtein distance for spelling suggestions
+ * @param {string} a - First string
+ * @param {string} b - Second string
+ * @returns {number} Edit distance
+ */
+function levenshteinDistance(a, b) {
+    const matrix = [];
+
+    for (let i = 0; i <= b.length; i++) {
+        matrix[i] = [i];
+    }
+
+    for (let j = 0; j <= a.length; j++) {
+        matrix[0][j] = j;
+    }
+
+    for (let i = 1; i <= b.length; i++) {
+        for (let j = 1; j <= a.length; j++) {
+            if (b.charAt(i - 1) === a.charAt(j - 1)) {
+                matrix[i][j] = matrix[i - 1][j - 1];
+            } else {
+                matrix[i][j] = Math.min(
+                    matrix[i - 1][j - 1] + 1,
+                    matrix[i][j - 1] + 1,
+                    matrix[i - 1][j] + 1
+                );
+            }
+        }
+    }
+
+    return matrix[b.length][a.length];
+}
+
+/**
+ * Get spelling suggestions for query
+ * @param {string} query - Search query
+ * @returns {Array} Spelling corrections
+ */
+function getSpellingSuggestions(query) {
+    const allTerms = allDocsEntries.flatMap(doc =>
+        `${doc.name} ${doc.category}`.toLowerCase().split(/\s+/)
+    );
+
+    const uniqueTerms = [...new Set(allTerms)];
+    const corrections = [];
+    const queryWords = query.toLowerCase().split(/\s+/);
+
+    queryWords.forEach(word => {
+        if (word.length < 3) return;
+
+        const similar = uniqueTerms
+            .map(term => ({
+                term,
+                distance: levenshteinDistance(word, term)
+            }))
+            .filter(({ distance }) => distance > 0 && distance <= 2)
+            .sort((a, b) => a.distance - b.distance);
+
+        if (similar.length > 0) {
+            corrections.push({
+                original: word,
+                suggestion: similar[0].term
+            });
+        }
+    });
+
+    return corrections;
+}
+
+/**
  * Handle search input and display results
  */
 function handleDocsSearch() {
-    const query = docsSearchInput.value.trim().toLowerCase();
+    const query = docsSearchInput.value.trim();
 
     console.log('[Search] Query:', query);
     console.log('[Search] Index loaded:', searchIndexLoaded);
@@ -326,16 +566,20 @@ function handleDocsSearch() {
         return;
     }
 
-    // Filter docs entries
-    const filteredEntries = allDocsEntries.filter(entry => {
-        const nameMatch = entry.name.toLowerCase().includes(query);
-        const categoryMatch = entry.category.toLowerCase().includes(query);
-        const contentMatch = entry.content.toLowerCase().includes(query);
+    // Parse query for boolean operators
+    const searchExpression = parseSearchQuery(query);
 
-        return nameMatch || categoryMatch || contentMatch;
+    // Filter docs entries using advanced matching
+    const filteredEntries = allDocsEntries.filter(entry => {
+        return matchSearchExpression(entry, searchExpression);
     });
 
     console.log('[Search] Filtered results:', filteredEntries.length);
+
+    // Track search analytics
+    if (window.searchAnalytics) {
+        window.searchAnalytics.trackQuery(query, filteredEntries.length);
+    }
 
     // Display filtered results
     displayDocsResults(filteredEntries, query);

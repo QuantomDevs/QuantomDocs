@@ -1124,6 +1124,182 @@ app.get('/api/docs/:product/:superCategory/:category/:file', (req, res) => {
     }
 });
 
+// Image upload configuration for editor
+const imageStorage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        const uploadPath = path.join(__dirname, 'src', 'docs', 'images');
+
+        // Ensure directory exists
+        if (!fs.existsSync(uploadPath)) {
+            fs.mkdirSync(uploadPath, { recursive: true });
+        }
+
+        cb(null, uploadPath);
+    },
+    filename: function (req, file, cb) {
+        const timestamp = Date.now();
+        const ext = path.extname(file.originalname).toLowerCase();
+        const originalName = path.basename(file.originalname, ext).replace(/[^a-zA-Z0-9-]/g, '_');
+        cb(null, `${timestamp}_${originalName}${ext}`);
+    }
+});
+
+const imageUpload = multer({
+    storage: imageStorage,
+    limits: {
+        fileSize: 5 * 1024 * 1024 // 5MB limit for images
+    },
+    fileFilter: function (req, file, cb) {
+        const allowedTypes = ['.jpg', '.jpeg', '.png', '.gif', '.svg', '.webp'];
+        const ext = path.extname(file.originalname).toLowerCase();
+
+        if (allowedTypes.includes(ext)) {
+            cb(null, true);
+        } else {
+            cb(new Error('Invalid image type. Allowed: JPG, PNG, GIF, SVG, WEBP'));
+        }
+    }
+});
+
+// Image upload endpoint for editor
+app.post('/api/upload-image', uploadLimiter, imageUpload.single('image'), async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ error: 'No image file provided' });
+        }
+
+        // Validate file type
+        const buffer = fs.readFileSync(req.file.path);
+        const fileType = await fileTypeFromBuffer(buffer);
+
+        const allowedMimes = ['image/jpeg', 'image/png', 'image/gif', 'image/svg+xml', 'image/webp'];
+
+        if (!fileType || !allowedMimes.includes(fileType.mime)) {
+            // Delete the uploaded file
+            fs.unlinkSync(req.file.path);
+            return res.status(400).json({ error: 'Invalid image file type' });
+        }
+
+        // Return the URL to the uploaded image
+        const imageUrl = `/docs/images/${req.file.filename}`;
+
+        res.json({
+            success: true,
+            url: imageUrl,
+            filename: req.file.filename
+        });
+
+    } catch (error) {
+        console.error('Image upload error:', error);
+
+        // Clean up file if it was uploaded
+        if (req.file && fs.existsSync(req.file.path)) {
+            fs.unlinkSync(req.file.path);
+        }
+
+        res.status(500).json({ error: 'Image upload failed' });
+    }
+});
+
+// Document save endpoint for editor
+app.post('/api/docs/save', verifyToken, (req, res) => {
+    try {
+        const { product, superCategory, category, fileName, content } = req.body;
+
+        if (!product || !superCategory || !category || !fileName || content === undefined) {
+            return res.status(400).json({ error: 'Missing required fields' });
+        }
+
+        // Validate fileName
+        if (!/^[a-z0-9-_]+$/.test(fileName)) {
+            return res.status(400).json({ error: 'Invalid file name format' });
+        }
+
+        // Construct file path
+        const requestedPath = path.join(product, superCategory, category, `${fileName}.md`);
+        const validation = validatePath(requestedPath, 'content');
+
+        if (!validation.valid) {
+            logSecurityEvent('Unauthorized file write attempt', {
+                requestedPath,
+                ip: req.ip,
+                error: validation.error
+            });
+            return res.status(403).json({ error: 'Access denied' });
+        }
+
+        // Ensure directory exists
+        const dir = path.dirname(validation.resolvedPath);
+        if (!fs.existsSync(dir)) {
+            fs.mkdirSync(dir, { recursive: true });
+        }
+
+        // Write file
+        fs.writeFileSync(validation.resolvedPath, content, 'utf-8');
+
+        res.json({
+            success: true,
+            message: 'Document saved successfully',
+            path: requestedPath
+        });
+
+    } catch (error) {
+        console.error('Document save error:', error);
+        res.status(500).json({ error: 'Failed to save document' });
+    }
+});
+
+// Search analytics endpoint
+app.post('/api/analytics/search', (req, res) => {
+    try {
+        const { query, resultsCount } = req.body;
+
+        if (!query) {
+            return res.status(400).json({ error: 'Query is required' });
+        }
+
+        const analyticsDir = path.join(__dirname, 'data', 'analytics');
+        const searchLogPath = path.join(analyticsDir, 'search-queries.json');
+
+        // Ensure directory exists
+        if (!fs.existsSync(analyticsDir)) {
+            fs.mkdirSync(analyticsDir, { recursive: true });
+        }
+
+        // Load existing data or create new
+        let searchData = { queries: [] };
+        if (fs.existsSync(searchLogPath)) {
+            try {
+                searchData = JSON.parse(fs.readFileSync(searchLogPath, 'utf-8'));
+            } catch (error) {
+                console.error('Error reading search log:', error);
+            }
+        }
+
+        // Add new query
+        searchData.queries.push({
+            query,
+            resultsCount: resultsCount || 0,
+            timestamp: new Date().toISOString(),
+            ip: req.ip
+        });
+
+        // Keep only last 10000 queries
+        if (searchData.queries.length > 10000) {
+            searchData.queries = searchData.queries.slice(-10000);
+        }
+
+        // Save back to file
+        fs.writeFileSync(searchLogPath, JSON.stringify(searchData, null, 2), 'utf-8');
+
+        res.json({ success: true });
+
+    } catch (error) {
+        console.error('Search analytics error:', error);
+        res.status(500).json({ error: 'Failed to log search query' });
+    }
+});
+
 // User Management Routes
 app.get('/api/users', verifyToken, (req, res) => {
     try {

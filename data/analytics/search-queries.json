@@ -1,0 +1,28 @@
+{
+  "queries": [
+    {
+      "query": "test search",
+      "resultsCount": 5,
+      "timestamp": "2025-11-15T10:47:10.225Z",
+      "ip": "127.0.0.1"
+    },
+    {
+      "query": "j",
+      "resultsCount": 22,
+      "timestamp": "2025-11-15T10:53:46.752Z",
+      "ip": "192.168.178.52"
+    },
+    {
+      "query": "ji",
+      "resultsCount": 0,
+      "timestamp": "2025-11-15T10:53:46.871Z",
+      "ip": "192.168.178.52"
+    },
+    {
+      "query": "j",
+      "resultsCount": 22,
+      "timestamp": "2025-11-15T10:53:47.406Z",
+      "ip": "192.168.178.52"
+    }
+  ]
+}

@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 
 // Hash the password "Fring779!"
-const password = 'Fring779!';
+const password = '123456789W';
 const saltRounds = 12;
 
 async function hashPassword() {

@@ -190,8 +190,11 @@ async function loadSearchModule() {
         // Zeige Loading Indicator
         showLoadingIndicator('Initializing search...');
 
-        // Lade Search Modul mit absolutem Pfad
-        await loadScript('/docs/js/docs-search.js', 'docs-search-js');
+        // Lade Search Modul und Analytics parallel mit absoluten Pfaden
+        await Promise.all([
+            loadScript('/docs/js/search-analytics.js', 'search-analytics-js'),
+            loadScript('/docs/js/docs-search.js', 'docs-search-js')
+        ]);
 
         loadedResources.docsSearch = true;
 
