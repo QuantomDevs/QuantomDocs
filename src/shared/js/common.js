@@ -237,12 +237,17 @@ const injectHeader = async () => {
         const config = await response.json();
         products = config.products.filter(p => p.showInDocs);
 
-        // Generate product cards for dropdown
-        const productCardsHTML = products.map(product => `
-            <a href="/docs/${product.id}" class="product-dropdown-card" data-product-id="${product.id}">
-                <span class="product-icon">${product.icon}</span>
-                <span class="product-name">${product.name}</span>
-            </a>
+        // Generate product items for dropdown
+        const productItemsHTML = products.map(product => `
+            <li>
+                <a href="/docs/${product.id}" class="dropdown-item" data-product-id="${product.id}">
+                    <span class="dropdown-icon">${product.icon}</span>
+                    <div class="dropdown-content">
+                        <h3>${product.name}</h3>
+                        <p>${product.description || 'Learn more about ' + product.name}</p>
+                    </div>
+                </a>
+            </li>
         `).join('');
 
         docsDropdownHTML = `
@@ -251,8 +256,15 @@ const injectHeader = async () => {
                     Documentation
                     <i class="fas fa-chevron-down dropdown-arrow"></i>
                 </button>
-                <div class="docs-dropdown-menu" id="docs-dropdown-menu" style="display: none;">
-                    ${productCardsHTML}
+                <div class="docs-dropdown-menu" id="docs-dropdown-menu">
+                    <div class="dropdown-grid">
+                        <div class="dropdown-section">
+                            <p class="dropdown-category">Products</p>
+                            <ul class="dropdown-list">
+                                ${productItemsHTML}
+                            </ul>
+                        </div>
+                    </div>
                 </div>
             </div>
         `;
@@ -348,32 +360,61 @@ const initDocsDropdown = () => {
     if (!dropdownBtn || !dropdownMenu) return;
 
     let isOpen = false;
+    let closeTimeout = null;
 
-    // Toggle dropdown on button click
-    const toggleDropdown = (e) => {
-        e.stopPropagation();
-        isOpen = !isOpen;
-
-        if (isOpen) {
-            dropdownMenu.style.display = 'grid';
+    const openDropdown = () => {
+        if (closeTimeout) {
+            clearTimeout(closeTimeout);
+            closeTimeout = null;
+        }
+        if (!isOpen) {
+            isOpen = true;
+            dropdownMenu.setAttribute('data-state', 'open');
             dropdownBtn.classList.add('active');
-            // Animate dropdown arrow
             const arrow = dropdownBtn.querySelector('.dropdown-arrow');
             if (arrow) arrow.style.transform = 'rotate(180deg)';
-        } else {
-            dropdownMenu.style.display = 'none';
+        }
+    };
+
+    const scheduleClose = () => {
+        if (closeTimeout) {
+            clearTimeout(closeTimeout);
+        }
+        closeTimeout = setTimeout(() => {
+            isOpen = false;
+            dropdownMenu.setAttribute('data-state', 'closed');
             dropdownBtn.classList.remove('active');
-            // Reset dropdown arrow
             const arrow = dropdownBtn.querySelector('.dropdown-arrow');
             if (arrow) arrow.style.transform = 'rotate(0deg)';
+            closeTimeout = null;
+        }, 500);
+    };
+
+    // Toggle dropdown on click
+    const toggleDropdown = (e) => {
+        e.stopPropagation();
+        if (closeTimeout) {
+            clearTimeout(closeTimeout);
+            closeTimeout = null;
         }
+        isOpen = !isOpen;
+
+        dropdownMenu.setAttribute('data-state', isOpen ? 'open' : 'closed');
+        dropdownBtn.classList.toggle('active', isOpen);
+
+        const arrow = dropdownBtn.querySelector('.dropdown-arrow');
+        if (arrow) arrow.style.transform = isOpen ? 'rotate(180deg)' : 'rotate(0deg)';
     };
 
     // Close dropdown when clicking outside
     const closeDropdown = (e) => {
-        if (!dropdownBtn.contains(e.target) && !dropdownMenu.contains(e.target)) {
+        if (!dropdownBtn.contains(e.target) && !dropdownMenu.contains(e.target) && isOpen) {
+            if (closeTimeout) {
+                clearTimeout(closeTimeout);
+                closeTimeout = null;
+            }
             isOpen = false;
-            dropdownMenu.style.display = 'none';
+            dropdownMenu.setAttribute('data-state', 'closed');
             dropdownBtn.classList.remove('active');
             const arrow = dropdownBtn.querySelector('.dropdown-arrow');
             if (arrow) arrow.style.transform = 'rotate(0deg)';
@@ -383,27 +424,12 @@ const initDocsDropdown = () => {
     dropdownBtn.addEventListener('click', toggleDropdown);
     document.addEventListener('click', closeDropdown);
 
-    // Optional: Show dropdown on hover (desktop only)
+    // Hover effect for desktop
     if (window.innerWidth > 768) {
-        dropdownBtn.addEventListener('mouseenter', () => {
-            if (!isOpen) {
-                isOpen = true;
-                dropdownMenu.style.display = 'grid';
-                dropdownBtn.classList.add('active');
-                const arrow = dropdownBtn.querySelector('.dropdown-arrow');
-                if (arrow) arrow.style.transform = 'rotate(180deg)';
-            }
-        });
-
         const dropdownContainer = dropdownBtn.closest('.docs-dropdown-container');
         if (dropdownContainer) {
-            dropdownContainer.addEventListener('mouseleave', () => {
-                isOpen = false;
-                dropdownMenu.style.display = 'none';
-                dropdownBtn.classList.remove('active');
-                const arrow = dropdownBtn.querySelector('.dropdown-arrow');
-                if (arrow) arrow.style.transform = 'rotate(0deg)';
-            });
+            dropdownContainer.addEventListener('mouseenter', openDropdown);
+            dropdownContainer.addEventListener('mouseleave', scheduleClose);
         }
     }
 };
