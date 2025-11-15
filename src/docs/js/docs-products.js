@@ -200,8 +200,10 @@ function buildSidebar(categories, productId, superCategory) {
     `;
 
     // Build super-category selector HTML
+    // Show selector if there are multiple super-categories
+    const showSelector = availableSuperCategories && availableSuperCategories.length > 1;
     const superCategorySelectorHTML = `
-        <div id="super-category-selector" class="super-category-selector" style="display: none;">
+        <div id="super-category-selector" class="super-category-selector" style="display: ${showSelector ? 'block' : 'none'};">
             <button id="super-category-btn" class="super-category-button">
                 <span class="super-category-name">Super Category Name</span>
                 <i class="fas fa-chevron-down super-category-icon"></i>
@@ -381,6 +383,11 @@ async function loadCategoriesForSuperCategory(productId, superCategory) {
         // Update sidebar with categories
         buildSidebar(data.categories, productId, superCategory);
 
+        // Render super-category selector if multiple categories exist
+        if (availableSuperCategories && availableSuperCategories.length > 1) {
+            renderSuperCategorySelector();
+        }
+
         // Reinitialize super-category selector events after sidebar rebuild
         initSuperCategorySelectorEvents();
 
@@ -404,12 +411,28 @@ async function loadMarkdownFile(filePath) {
         // Show loading skeleton
         showLoadingSkeleton();
 
-        const response = await fetch(`/docs/content/${filePath}`);
+        // Parse filePath: productId/superCategory/categoryId/fileName
+        const pathParts = filePath.split('/');
+        if (pathParts.length < 4) {
+            throw new Error(`Invalid file path format: ${filePath}`);
+        }
+
+        const productId = pathParts[0];
+        const superCategory = pathParts[1];
+        const categoryId = pathParts[2];
+        const fileName = pathParts[3];
+
+        // Use the new API endpoint
+        const apiUrl = `/api/docs/${productId}/${superCategory}/${categoryId}/${fileName}`;
+        const response = await fetch(apiUrl);
+
         if (!response.ok) {
             throw new Error(`Failed to load: ${filePath}`);
         }
 
-        const markdown = await response.text();
+        // Parse JSON response
+        const data = await response.json();
+        const markdown = data.content;
         const html = marked.parse(markdown);
 
         // Hide static getting started content
@@ -696,8 +719,8 @@ function updatePageHeaderControls(filePath) {
     try {
         // Parse file path: productId/categoryName/fileName.md
         const pathParts = filePath.split('/');
-        const categoryName = pathParts[1];
-        const markdownName = pathParts[2];
+        const categoryName = pathParts[2];
+        const markdownName = pathParts[3];
 
         // Format category name for display
         const categoryDisplayName = formatCategoryName(categoryName);

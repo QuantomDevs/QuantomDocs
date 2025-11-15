@@ -37,7 +37,7 @@
     --bg-primary: #09090B;
     --bg-secondary: #1F1E1D;
     --bg-tertiary: #2F2E2D;
-    --bg-quaternary: #0A0D0D;
+    --bg-quaternary: #0b0e0e;
     --bg-soft: lab(100% 0 0/.05);
     --markdown-background: var(--bg-quaternary);
     --color-canvas-default: #0A0D0D;
