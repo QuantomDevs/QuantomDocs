@@ -390,6 +390,89 @@ body.no-scroll {
     border: 1px solid var(--border-secondary);
 }
 
+/* Super-Category Selector */
+.super-category-selector {
+    width: 100%;
+    margin-bottom: var(--spacing-md);
+    position: relative;
+}
+
+.super-category-button {
+    width: 100%;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 var(--spacing-md);
+    background: var(--surface-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-md);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.super-category-button:hover {
+    background: var(--surface-hover);
+    border-color: var(--accent-color);
+}
+
+.super-category-name {
+    font-weight: 500;
+    color: var(--text-primary);
+    text-align: left;
+    flex: 1;
+}
+
+.super-category-icon {
+    color: var(--text-secondary);
+    transition: transform 0.2s ease;
+    margin-left: var(--spacing-sm);
+}
+
+.super-category-button.open .super-category-icon {
+    transform: rotate(180deg);
+}
+
+.super-category-dropdown {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    background: var(--surface-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-md);
+    box-shadow: var(--shadow-lg);
+    max-height: 300px;
+    overflow-y: auto;
+    z-index: 1000;
+    display: none;
+}
+
+.super-category-dropdown.show {
+    display: block;
+}
+
+.super-category-option {
+    padding: var(--spacing-sm) var(--spacing-md);
+    cursor: pointer;
+    transition: background 0.2s ease;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.super-category-option:last-child {
+    border-bottom: none;
+}
+
+.super-category-option:hover {
+    background: var(--surface-hover);
+}
+
+.super-category-option.active {
+    background: var(--accent-color-alpha);
+    color: var(--accent-color);
+    font-weight: 600;
+}
+
 /* Desktop sidebar styles (> 1024px) */
 @media (min-width: 1025px) {
     .sidebar-left {

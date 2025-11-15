@@ -203,48 +203,66 @@ async function buildSearchIndex() {
         // Build index for all products
         for (const product of products) {
             try {
-                // Fetch product structure from backend
+                // Fetch super-categories for this product
                 const apiBase = window.location.origin;
-                const structureResponse = await fetch(`${apiBase}/api/docs/products/${product.id}/structure`);
+                const scResponse = await fetch(`${apiBase}/api/docs/${product.id}/super-categories`);
 
-                if (!structureResponse.ok) {
-                    console.error(`Failed to fetch structure for ${product.id}: ${structureResponse.status}`);
+                if (!scResponse.ok) {
+                    console.error(`Failed to fetch super-categories for ${product.id}: ${scResponse.status}`);
                     continue;
                 }
 
-                const structure = await structureResponse.json();
+                const scData = await scResponse.json();
 
-                // Process each category and file
-                for (const category of structure.categories) {
-                    for (const file of category.files) {
-                        const entry = {
-                            productId: product.id,
-                            productName: product.name,
-                            name: file.displayName,
-                            category: category.displayName,
-                            type: 'md',
-                            file: file.path,
-                            id: null,
-                            content: ''
-                        };
+                // Process each super-category
+                for (const superCat of scData.superCategories) {
+                    // Get categories for this super-category
+                    const catResponse = await fetch(`${apiBase}/api/docs/${product.id}/${superCat.fullName}/categories`);
 
-                        // Load markdown content for searching
-                        try {
-                            const contentResponse = await fetch(`/docs/content/${file.path}`);
+                    if (!catResponse.ok) {
+                        console.error(`Failed to fetch categories for ${product.id}/${superCat.fullName}: ${catResponse.status}`);
+                        continue;
+                    }
 
-                            if (!contentResponse.ok) {
-                                console.error(`Failed to load ${file.path}: ${contentResponse.status}`);
-                                entry.content = ''; // Set empty content if fetch fails
-                            } else {
-                                const markdown = await contentResponse.text();
-                                entry.content = extractTextFromMarkdown(markdown);
+                    const catData = await catResponse.json();
+
+                    // Process each category and file
+                    for (const category of catData.categories) {
+                        for (const file of category.files) {
+                            const filePath = `${product.id}/${superCat.fullName}/${category.id}/${file}`;
+
+                            const entry = {
+                                productId: product.id,
+                                productName: product.name,
+                                superCategory: superCat.name,
+                                superCategoryFull: superCat.fullName,
+                                name: file.replace(/-/g, ' '),
+                                category: category.name,
+                                categoryId: category.id,
+                                type: 'md',
+                                file: filePath,
+                                id: null,
+                                content: ''
+                            };
+
+                            // Load markdown content for searching
+                            try {
+                                const contentResponse = await fetch(`/docs/content/${filePath}.md`);
+
+                                if (!contentResponse.ok) {
+                                    console.error(`Failed to load ${filePath}: ${contentResponse.status}`);
+                                    entry.content = ''; // Set empty content if fetch fails
+                                } else {
+                                    const markdown = await contentResponse.text();
+                                    entry.content = extractTextFromMarkdown(markdown);
+                                }
+                            } catch (error) {
+                                console.error(`Failed to load ${filePath}:`, error);
+                                entry.content = ''; // Set empty content on error
                             }
-                        } catch (error) {
-                            console.error(`Failed to load ${file.path}:`, error);
-                            entry.content = ''; // Set empty content on error
-                        }
 
-                        allDocsEntries.push(entry);
+                            allDocsEntries.push(entry);
+                        }
                     }
                 }
             } catch (error) {
@@ -413,10 +431,13 @@ function createDocsCategorySection(category, entries, query) {
 function createDocsResultItem(entry, query) {
     const icon = getDocsIcon(entry.type);
     const preview = getContentPreview(entry.content, query);
-    const breadcrumb = `${entry.productName} / ${entry.category} / ${entry.name}`;
+    // Include super-category in breadcrumb
+    const breadcrumb = entry.superCategory
+        ? `${entry.productName} > ${entry.superCategory} > ${entry.category}`
+        : `${entry.productName} / ${entry.category} / ${entry.name}`;
 
     return `
-        <div class="docs-result-item" data-entry='${JSON.stringify({productId: entry.productId, file: entry.file, id: entry.id, name: entry.name})}'>
+        <div class="docs-result-item" data-entry='${JSON.stringify({productId: entry.productId, file: entry.file, id: entry.id, name: entry.name, superCategory: entry.superCategoryFull, categoryId: entry.categoryId})}'>
             <div class="docs-result-icon">${icon}</div>
             <div class="docs-result-content">
                 <div class="docs-result-breadcrumb">${escapeHtml(breadcrumb)}</div>

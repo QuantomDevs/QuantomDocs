@@ -1055,3 +1055,176 @@ if (document.readyState === 'loading') {
 } else {
     initOfflineDetection();
 }
+
+// ============================================
+// Utility Functions for Performance and Cleanup
+// ============================================
+
+/**
+ * Throttle function - limits how often a function can be called
+ * @param {Function} func - Function to throttle
+ * @param {number} limit - Time limit in milliseconds
+ * @returns {Function} Throttled function
+ */
+function throttle(func, limit) {
+    let inThrottle;
+    return function(...args) {
+        if (!inThrottle) {
+            func.apply(this, args);
+            inThrottle = true;
+            setTimeout(() => inThrottle = false, limit);
+        }
+    };
+}
+
+/**
+ * Debounce function - delays execution until after wait time has elapsed
+ * @param {Function} func - Function to debounce
+ * @param {number} delay - Delay time in milliseconds
+ * @returns {Function} Debounced function
+ */
+function debounce(func, delay) {
+    let timeoutId;
+    return function(...args) {
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => func.apply(this, args), delay);
+    };
+}
+
+/**
+ * Timer Manager - Track and cleanup timeouts and intervals
+ */
+class TimerManager {
+    constructor() {
+        this.timeouts = new Set();
+        this.intervals = new Set();
+    }
+
+    setTimeout(callback, delay, ...args) {
+        const id = setTimeout(() => {
+            callback(...args);
+            this.timeouts.delete(id);
+        }, delay);
+        this.timeouts.add(id);
+        return id;
+    }
+
+    setInterval(callback, delay, ...args) {
+        const id = setInterval(callback, delay, ...args);
+        this.intervals.add(id);
+        return id;
+    }
+
+    clearTimeout(id) {
+        clearTimeout(id);
+        this.timeouts.delete(id);
+    }
+
+    clearInterval(id) {
+        clearInterval(id);
+        this.intervals.delete(id);
+    }
+
+    cleanup() {
+        this.timeouts.forEach(id => clearTimeout(id));
+        this.intervals.forEach(id => clearInterval(id));
+        this.timeouts.clear();
+        this.intervals.clear();
+    }
+}
+
+// Global timer manager instance
+window.timerManager = new TimerManager();
+
+window.addEventListener('beforeunload', () => {
+    window.timerManager.cleanup();
+});
+
+/**
+ * Safe DOM Query - Returns element or logs warning if not found
+ * @param {string} selector - CSS selector
+ * @param {Element} parent - Parent element (optional, defaults to document)
+ * @returns {Element|null} Found element or null
+ */
+function safeQuery(selector, parent = document) {
+    const element = parent.querySelector(selector);
+    if (!element) {
+        console.warn(`Element not found: ${selector}`);
+    }
+    return element;
+}
+
+/**
+ * Safe DOM Query All - Returns NodeList or empty array if none found
+ * @param {string} selector - CSS selector
+ * @param {Element} parent - Parent element (optional, defaults to document)
+ * @returns {NodeList|Array} Found elements or empty array
+ */
+function safeQueryAll(selector, parent = document) {
+    const elements = parent.querySelectorAll(selector);
+    if (elements.length === 0) {
+        console.warn(`No elements found: ${selector}`);
+    }
+    return elements;
+}
+
+/**
+ * Escape HTML to prevent XSS
+ * @param {string} text - Text to escape
+ * @returns {string} Escaped text
+ */
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+/**
+ * Format file size to human-readable format
+ * @param {number} bytes - File size in bytes
+ * @returns {string} Formatted size
+ */
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
+}
+
+/**
+ * Format date to localized string
+ * @param {Date|string} date - Date to format
+ * @returns {string} Formatted date
+ */
+function formatDate(date) {
+    if (typeof date === 'string') {
+        date = new Date(date);
+    }
+    return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    });
+}
+
+/**
+ * Copy text to clipboard
+ * @param {string} text - Text to copy
+ * @returns {Promise<boolean>} Success status
+ */
+async function copyToClipboard(text) {
+    try {
+        await navigator.clipboard.writeText(text);
+        if (typeof ErrorHandler !== 'undefined') {
+            ErrorHandler.showError('Copied to clipboard!', 'success', 2000);
+        }
+        return true;
+    } catch (error) {
+        console.error('Failed to copy to clipboard:', error);
+        if (typeof ErrorHandler !== 'undefined') {
+            ErrorHandler.showError('Failed to copy to clipboard', 'error');
+        }
+        return false;
+    }
+}

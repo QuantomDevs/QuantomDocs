@@ -5,6 +5,8 @@ let currentProduct = null;
 let currentCategory = null;
 let currentMarkdown = null;
 let currentFile = null;
+let currentSuperCategory = null;
+let availableSuperCategories = [];
 
 // Initialize the documentation page
 async function initDocsPage() {
@@ -153,26 +155,20 @@ async function loadProductDocs(productId, specificFile = null) {
         // Show docs containers
         showDocsContainers();
 
-        // Fetch product structure from backend
-        const apiBase = window.location.origin;
-        const response = await fetch(`${apiBase}/api/docs/products/${productId}/structure`);
-        if (!response.ok) {
-            throw new Error('Failed to fetch product structure');
-        }
+        // Store current product
+        currentProduct = productId;
 
-        const data = await response.json();
-        const categories = data.categories;
+        // Load super-categories for this product
+        await loadSuperCategories(productId);
 
-        // Build sidebar from structure
-        buildSidebar(categories, productId);
+        // Initialize super-category selector event listeners
+        initSuperCategorySelectorEvents();
 
-        // Load the specified file or first doc by default
+        // Load the specified file if provided
         if (specificFile) {
             loadMarkdownFile(specificFile);
             // Set active link in sidebar for the loaded file
             setActiveSidebarLink(specificFile);
-        } else if (categories.length > 0 && categories[0].files.length > 0) {
-            loadMarkdownFile(categories[0].files[0].path);
         }
     } catch (error) {
         console.error('Error loading product docs:', error);
@@ -189,7 +185,7 @@ async function loadProductDocs(productId, specificFile = null) {
 }
 
 // Build the left sidebar navigation from categories
-function buildSidebar(categories, productId) {
+function buildSidebar(categories, productId, superCategory) {
     const sidebar = document.querySelector('.sidebar-left');
 
     // Build search button HTML
@@ -203,15 +199,28 @@ function buildSidebar(categories, productId) {
         </button>
     `;
 
-    // Clear sidebar and add search button first
-    sidebar.innerHTML = searchButtonHTML;
+    // Build super-category selector HTML
+    const superCategorySelectorHTML = `
+        <div id="super-category-selector" class="super-category-selector" style="display: none;">
+            <button id="super-category-btn" class="super-category-button">
+                <span class="super-category-name">Super Category Name</span>
+                <i class="fas fa-chevron-down super-category-icon"></i>
+            </button>
+            <div id="super-category-dropdown" class="super-category-dropdown">
+                <!-- Dynamically populated -->
+            </div>
+        </div>
+    `;
+
+    // Clear sidebar and add elements
+    sidebar.innerHTML = searchButtonHTML + superCategorySelectorHTML;
 
     categories.forEach(category => {
         const categoryBlock = document.createElement('div');
         categoryBlock.className = 'nav-block';
 
         const categoryTitle = document.createElement('h4');
-        categoryTitle.textContent = category.displayName;
+        categoryTitle.textContent = category.name;
         categoryBlock.appendChild(categoryTitle);
 
         const fileList = document.createElement('ul');
@@ -219,8 +228,8 @@ function buildSidebar(categories, productId) {
             const li = document.createElement('li');
             const a = document.createElement('a');
             a.href = '#';
-            a.textContent = file.displayName;
-            a.setAttribute('data-file-path', file.path);
+            a.textContent = file.replace(/-/g, ' ');
+            a.setAttribute('data-file-path', `${productId}/${superCategory}/${category.id}/${file}`);
             a.onclick = (e) => {
                 e.preventDefault();
 
@@ -229,16 +238,15 @@ function buildSidebar(categories, productId) {
                 // Add active class to clicked link
                 a.classList.add('active');
 
-                // Update URL with clean path: /docs/quantom/getting-started/installation
-                // Convert: quantom/getting-started/Installation.md -> /docs/quantom/getting-started/installation
-                const pathParts = file.path.replace('.md', '').split('/');
+                // Update URL with clean path
+                const pathParts = [productId, superCategory, category.id, file];
                 const cleanPath = pathParts.map(part =>
                     part.split('-').map(word => word.toLowerCase()).join('-')
                 ).join('/');
                 const newUrl = `/docs/${cleanPath}`;
-                window.history.pushState({ product: productId, file: file.path }, '', newUrl);
+                window.history.pushState({ product: productId, superCategory, category: category.id, file }, '', newUrl);
 
-                loadMarkdownFile(file.path);
+                loadMarkdownFile(`${productId}/${superCategory}/${category.id}/${file}`);
             };
             li.appendChild(a);
             fileList.appendChild(li);
@@ -247,6 +255,145 @@ function buildSidebar(categories, productId) {
         categoryBlock.appendChild(fileList);
         sidebar.appendChild(categoryBlock);
     });
+}
+
+// Load super-categories for a product
+async function loadSuperCategories(productId) {
+    try {
+        const response = await fetch(`/api/docs/${productId}/super-categories`);
+        const data = await response.json();
+        availableSuperCategories = data.superCategories;
+
+        // Get selector element
+        const selector = document.getElementById('super-category-selector');
+
+        // Hide selector if only one super-category
+        if (availableSuperCategories.length <= 1) {
+            if (selector) selector.style.display = 'none';
+            currentSuperCategory = availableSuperCategories[0]?.fullName || null;
+
+            // Load categories for the single super-category
+            if (currentSuperCategory) {
+                await loadCategoriesForSuperCategory(productId, currentSuperCategory);
+            }
+            return;
+        }
+
+        if (selector) selector.style.display = 'block';
+
+        // Set default to first super-category (order 01)
+        currentSuperCategory = availableSuperCategories[0].fullName;
+
+        renderSuperCategorySelector();
+        await loadCategoriesForSuperCategory(productId, currentSuperCategory);
+    } catch (error) {
+        console.error('Failed to load super-categories:', error);
+    }
+}
+
+// Render super-category selector dropdown
+function renderSuperCategorySelector() {
+    const btn = document.getElementById('super-category-btn');
+    const dropdown = document.getElementById('super-category-dropdown');
+
+    if (!btn || !dropdown) return;
+
+    // Update button text
+    const selectedCat = availableSuperCategories.find(sc => sc.fullName === currentSuperCategory);
+    const nameElement = document.querySelector('.super-category-name');
+    if (nameElement && selectedCat) {
+        nameElement.textContent = selectedCat.name;
+    }
+
+    // Render dropdown options
+    dropdown.innerHTML = availableSuperCategories.map(sc => `
+        <div class="super-category-option ${sc.fullName === currentSuperCategory ? 'active' : ''}"
+             data-super-category="${sc.fullName}">
+            ${sc.name}
+        </div>
+    `).join('');
+
+    // Add event listeners to options
+    dropdown.querySelectorAll('.super-category-option').forEach(option => {
+        option.addEventListener('click', async () => {
+            const newSuperCat = option.dataset.superCategory;
+            if (newSuperCat !== currentSuperCategory) {
+                currentSuperCategory = newSuperCat;
+                renderSuperCategorySelector();
+                await loadCategoriesForSuperCategory(currentProduct, currentSuperCategory);
+                toggleSuperCategoryDropdown(false);
+            }
+        });
+    });
+}
+
+// Toggle super-category dropdown
+function toggleSuperCategoryDropdown(show) {
+    const btn = document.getElementById('super-category-btn');
+    const dropdown = document.getElementById('super-category-dropdown');
+
+    if (!btn || !dropdown) return;
+
+    if (show === undefined) {
+        show = !dropdown.classList.contains('show');
+    }
+
+    if (show) {
+        dropdown.classList.add('show');
+        btn.classList.add('open');
+    } else {
+        dropdown.classList.remove('show');
+        btn.classList.remove('open');
+    }
+}
+
+// Initialize super-category selector event listeners
+function initSuperCategorySelectorEvents() {
+    const btn = document.getElementById('super-category-btn');
+
+    if (!btn) return;
+
+    // Remove existing listeners by cloning and replacing
+    const newBtn = btn.cloneNode(true);
+    btn.parentNode.replaceChild(newBtn, btn);
+
+    // Button click handler
+    newBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleSuperCategoryDropdown();
+    });
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+        const selector = document.getElementById('super-category-selector');
+        if (selector && !selector.contains(e.target)) {
+            toggleSuperCategoryDropdown(false);
+        }
+    });
+}
+
+// Load categories for a super-category
+async function loadCategoriesForSuperCategory(productId, superCategory) {
+    try {
+        const response = await fetch(`/api/docs/${productId}/${superCategory}/categories`);
+        const data = await response.json();
+
+        // Update sidebar with categories
+        buildSidebar(data.categories, productId, superCategory);
+
+        // Reinitialize super-category selector events after sidebar rebuild
+        initSuperCategorySelectorEvents();
+
+        // Load first file if no file is currently loaded
+        if (!currentFile && data.categories.length > 0 && data.categories[0].files.length > 0) {
+            const firstCategory = data.categories[0];
+            const firstFile = firstCategory.files[0];
+            const filePath = `${productId}/${superCategory}/${firstCategory.id}/${firstFile}`;
+            loadMarkdownFile(filePath);
+        }
+    } catch (error) {
+        console.error('Failed to load categories:', error);
+    }
 }
 
 // Load and display markdown file

@@ -10,6 +10,116 @@ const { fileTypeFromBuffer } = require('file-type');
 const DOMPurify = require('isomorphic-dompurify');
 
 const app = express();
+
+// ==================== Path Validation & Security Functions ====================
+
+// Define safe base directories
+const SAFE_DIRECTORIES = {
+    content: path.join(__dirname, 'src', 'docs', 'content'),
+    uploads: path.join(__dirname, 'src', 'main', 'downloads'),
+    data: path.join(__dirname, 'data')
+};
+
+/**
+ * Validates that a file path is safe and within allowed directories
+ * @param {string} requestedPath - The path to validate
+ * @param {string} baseType - The base directory type ('content', 'uploads', 'data')
+ * @returns {Object} { valid: boolean, resolvedPath: string, error: string }
+ */
+function validatePath(requestedPath, baseType = 'content') {
+    const baseDir = SAFE_DIRECTORIES[baseType];
+
+    if (!baseDir) {
+        return {
+            valid: false,
+            error: `Invalid base directory type: ${baseType}`
+        };
+    }
+
+    try {
+        // Decode URI components to handle URL-encoded attacks
+        const decodedPath = decodeURIComponent(requestedPath);
+
+        // Check for obvious traversal attempts
+        const traversalPatterns = [
+            /\.\./g,           // Parent directory
+            /^~/,              // Home directory
+            /%2e%2e/gi,        // URL-encoded ..
+            /%252e%252e/gi,    // Double URL-encoded ..
+            /\\/g,             // Backslash (Windows-style)
+            /\/\//g            // Double slashes
+        ];
+
+        for (const pattern of traversalPatterns) {
+            if (pattern.test(decodedPath)) {
+                logSecurityEvent('Path traversal attempt detected', {
+                    requestedPath,
+                    pattern: pattern.toString()
+                });
+                return {
+                    valid: false,
+                    error: 'Invalid path: contains forbidden characters'
+                };
+            }
+        }
+
+        // Resolve to absolute path
+        const absolutePath = path.resolve(baseDir, decodedPath);
+
+        // Ensure the resolved path is within the base directory
+        const relativePath = path.relative(baseDir, absolutePath);
+
+        // If relative path starts with '..' or is absolute, it's outside the base
+        if (relativePath.startsWith('..') || path.isAbsolute(relativePath)) {
+            logSecurityEvent('Path traversal attempt detected', {
+                requestedPath,
+                absolutePath,
+                relativePath,
+                baseDir
+            });
+            return {
+                valid: false,
+                error: 'Access denied: path is outside allowed directory'
+            };
+        }
+
+        return {
+            valid: true,
+            resolvedPath: absolutePath
+        };
+
+    } catch (error) {
+        logSecurityEvent('Path validation error', {
+            requestedPath,
+            error: error.message
+        });
+        return {
+            valid: false,
+            error: 'Invalid path format'
+        };
+    }
+}
+
+/**
+ * Log security events for monitoring
+ */
+function logSecurityEvent(event, details) {
+    const timestamp = new Date().toISOString();
+    const logEntry = {
+        timestamp,
+        event,
+        ...details,
+        ip: details.ip || 'unknown'
+    };
+
+    // Log to console in development
+    if (process.env.NODE_ENV !== 'production') {
+        console.warn('[SECURITY]', JSON.stringify(logEntry, null, 2));
+    }
+
+    // In production, you might want to log to a file or monitoring service
+    // fs.appendFileSync('security.log', JSON.stringify(logEntry) + '\n');
+}
 const HOST = '0.0.0.0'; // Bind to all network interfaces
 const PORT = 5005;
 const JWT_SECRET = 'quantom_secret_key_2025'; // In production, use environment variable
@@ -813,7 +923,7 @@ app.post('/api/upload', verifyToken, upload.single('file'), (req, res) => {
     }
 });
 
-// Product structure discovery endpoint
+// Product structure discovery endpoint (legacy - will be deprecated)
 app.get('/api/docs/products/:productId/structure', (req, res) => {
     try {
         const { productId } = req.params;
@@ -873,6 +983,144 @@ app.get('/api/docs/products/:productId/structure', (req, res) => {
     } catch (error) {
         console.error('Error reading product structure:', error);
         res.status(500).json({ error: 'Failed to read product structure' });
+    }
+});
+
+// Get super-categories for a product
+app.get('/api/docs/:product/super-categories', (req, res) => {
+    try {
+        const productId = req.params.product;
+
+        const validation = validatePath(productId, 'content');
+
+        if (!validation.valid) {
+            logSecurityEvent('Unauthorized super-categories access attempt', {
+                productId,
+                ip: req.ip,
+                error: validation.error
+            });
+            return res.status(403).json({ error: 'Access denied' });
+        }
+
+        // Check if product directory exists
+        if (!fs.existsSync(validation.resolvedPath)) {
+            return res.status(404).json({ error: 'Product not found' });
+        }
+
+        const contentPath = validation.resolvedPath;
+
+        const folders = fs.readdirSync(contentPath, { withFileTypes: true })
+            .filter(dirent => dirent.isDirectory())
+            .filter(dirent => !dirent.name.startsWith('.')) // Ignore hidden folders
+            .map(dirent => {
+                const name = dirent.name;
+                const match = name.match(/^(\d+)-(.+)$/);
+                return {
+                    id: name,
+                    order: match ? parseInt(match[1]) : 999,
+                    name: match ? match[2] : name,
+                    fullName: name
+                };
+            })
+            .sort((a, b) => a.order - b.order);
+
+        res.json({ superCategories: folders });
+    } catch (error) {
+        console.error('Error reading super-categories:', error);
+        res.status(500).json({ error: 'Failed to load super-categories' });
+    }
+});
+
+// Get categories for a super-category
+app.get('/api/docs/:product/:superCategory/categories', (req, res) => {
+    try {
+        const { product, superCategory } = req.params;
+        const requestedPath = path.join(product, superCategory);
+
+        const validation = validatePath(requestedPath, 'content');
+
+        if (!validation.valid) {
+            logSecurityEvent('Unauthorized categories access attempt', {
+                requestedPath,
+                ip: req.ip,
+                error: validation.error
+            });
+            return res.status(403).json({ error: 'Access denied' });
+        }
+
+        // Check if super-category directory exists
+        if (!fs.existsSync(validation.resolvedPath)) {
+            return res.status(404).json({ error: 'Super-category not found' });
+        }
+
+        const superCatPath = validation.resolvedPath;
+
+        const categories = fs.readdirSync(superCatPath, { withFileTypes: true })
+            .filter(dirent => dirent.isDirectory())
+            .filter(dirent => !dirent.name.startsWith('.')) // Ignore hidden folders
+            .map(dirent => {
+                const name = dirent.name;
+                const match = name.match(/^(\d+)-(.+)$/);
+                const categoryPath = path.join(superCatPath, name);
+
+                // Read all markdown files in category
+                const files = fs.readdirSync(categoryPath)
+                    .filter(f => f.endsWith('.md'))
+                    .map(f => f.replace('.md', ''));
+
+                return {
+                    id: name,
+                    order: match ? parseInt(match[1]) : 999,
+                    name: match ? match[2] : name,
+                    files: files
+                };
+            })
+            .sort((a, b) => a.order - b.order);
+
+        res.json({ categories });
+    } catch (error) {
+        console.error('Error reading categories:', error);
+        res.status(500).json({ error: 'Failed to load categories' });
+    }
+});
+
+// Get markdown file from super-category structure
+app.get('/api/docs/:product/:superCategory/:category/:file', (req, res) => {
+    try {
+        const { product, superCategory, category, file } = req.params;
+        const requestedPath = path.join(product, superCategory, category, `${file}.md`);
+
+        const validation = validatePath(requestedPath, 'content');
+
+        if (!validation.valid) {
+            logSecurityEvent('Unauthorized file access attempt', {
+                requestedPath,
+                ip: req.ip,
+                error: validation.error
+            });
+            return res.status(403).json({ error: 'Access denied' });
+        }
+
+        // Check if file exists
+        if (!fs.existsSync(validation.resolvedPath)) {
+            return res.status(404).json({ error: 'File not found' });
+        }
+
+        const content = fs.readFileSync(validation.resolvedPath, 'utf-8');
+        const stats = fs.statSync(validation.resolvedPath);
+
+        res.json({
+            content,
+            category,
+            file,
+            metadata: {
+                size: content.length,
+                lastModified: stats.mtime
+            }
+        });
+    } catch (error) {
+        console.error('Error reading markdown file:', error);
+        res.status(500).json({ error: 'Failed to load file' });
     }
 });
 
@@ -1237,20 +1485,25 @@ app.get('/api/files/:product/content', verifyToken, (req, res) => {
             return res.status(400).json({ error: 'File path is required' });
         }
 
-        const fullPath = path.join(__dirname, 'src', 'docs', 'content', product, filePath);
+        const requestedPath = path.join(product, filePath);
+        const validation = validatePath(requestedPath, 'content');
 
-        // Security check: ensure path is within product directory
-        const productPath = path.join(__dirname, 'src', 'docs', 'content', product);
-        if (!fullPath.startsWith(productPath)) {
+        if (!validation.valid) {
+            logSecurityEvent('Unauthorized file read attempt', {
+                requestedPath,
+                ip: req.ip,
+                user: req.user?.username,
+                error: validation.error
+            });
             return res.status(403).json({ error: 'Access denied' });
         }
 
-        if (!fs.existsSync(fullPath)) {
+        if (!fs.existsSync(validation.resolvedPath)) {
             return res.status(404).json({ error: 'File not found' });
         }
 
-        const content = fs.readFileSync(fullPath, 'utf8');
-        const stats = fs.statSync(fullPath);
+        const content = fs.readFileSync(validation.resolvedPath, 'utf8');
+        const stats = fs.statSync(validation.resolvedPath);
 
         res.json({
             content,
@@ -1321,19 +1574,24 @@ app.put('/api/files/:product', verifyToken, (req, res) => {
             return res.status(400).json({ error: 'File path and content are required' });
         }
 
-        const fullPath = path.join(__dirname, 'src', 'docs', 'content', product, filePath);
-        const productPath = path.join(__dirname, 'src', 'docs', 'content', product);
+        const requestedPath = path.join(product, filePath);
+        const validation = validatePath(requestedPath, 'content');
 
-        // Security check
-        if (!fullPath.startsWith(productPath)) {
+        if (!validation.valid) {
+            logSecurityEvent('Unauthorized file update attempt', {
+                requestedPath,
+                ip: req.ip,
+                user: req.user?.username,
+                error: validation.error
+            });
             return res.status(403).json({ error: 'Access denied' });
         }
 
-        if (!fs.existsSync(fullPath)) {
+        if (!fs.existsSync(validation.resolvedPath)) {
             return res.status(404).json({ error: 'File not found' });
         }
 
-        fs.writeFileSync(fullPath, content, 'utf8');
+        fs.writeFileSync(validation.resolvedPath, content, 'utf8');
 
         res.json({
             success: true,
@@ -1356,24 +1614,29 @@ app.delete('/api/files/:product', verifyToken, (req, res) => {
             return res.status(400).json({ error: 'File path is required' });
         }
 
-        const fullPath = path.join(__dirname, 'src', 'docs', 'content', product, filePath);
-        const productPath = path.join(__dirname, 'src', 'docs', 'content', product);
+        const requestedPath = path.join(product, filePath);
+        const validation = validatePath(requestedPath, 'content');
 
-        // Security check
-        if (!fullPath.startsWith(productPath)) {
+        if (!validation.valid) {
+            logSecurityEvent('Unauthorized file deletion attempt', {
+                requestedPath,
+                ip: req.ip,
+                user: req.user?.username,
+                error: validation.error
+            });
             return res.status(403).json({ error: 'Access denied' });
         }
 
-        if (!fs.existsSync(fullPath)) {
+        if (!fs.existsSync(validation.resolvedPath)) {
             return res.status(404).json({ error: 'File or folder not found' });
         }
 
-        const stats = fs.statSync(fullPath);
+        const stats = fs.statSync(validation.resolvedPath);
 
         if (stats.isDirectory()) {
-            fs.rmSync(fullPath, { recursive: true, force: true });
+            fs.rmSync(validation.resolvedPath, { recursive: true, force: true });
         } else {
-            fs.unlinkSync(fullPath);
+            fs.unlinkSync(validation.resolvedPath);
         }
 
         res.json({

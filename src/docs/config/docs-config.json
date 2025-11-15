@@ -7,7 +7,15 @@
       "subSectionHeader": true,
       "subSubSectionHeader": false
     },
-    "rightSidebarSectionGap": true
+    "rightSidebarSectionGap": true,
+    "superCategories": {
+      "enabled": true,
+      "showSelectorWhenSingle": false,
+      "defaultSelection": "first",
+      "selectorPosition": "below-search",
+      "showBreadcrumbInContent": true,
+      "searchScope": "all"
+    }
   },
   "header": {
     "navigation": {

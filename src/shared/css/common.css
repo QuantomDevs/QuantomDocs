@@ -38,6 +38,7 @@
     --bg-secondary: #1F1E1D;
     --bg-tertiary: #2F2E2D;
     --bg-quaternary: #0A0D0D;
+    --bg-soft: lab(100% 0 0/.05);
     --markdown-background: var(--bg-quaternary);
     --color-canvas-default: #0A0D0D;
     --border-primary: #404040;
@@ -327,6 +328,7 @@ nav {
 .nav-centered {
     flex: 1;
     justify-content: center;
+    align-items: center;
     gap: var(--spacing-lg);
 }
 
@@ -456,9 +458,11 @@ nav {
     top: calc(100% + 8px);
     left: 50%;
     transform: translateX(-50%);
-    background: var(--bg-secondary);
-    border: 1px solid var(--border-primary);
-    border-radius: var(--radius-lg);
+    transition: 0.3s;
+    animation: exitToRight var(--transition-fast);
+    animation-duration: 0.3s;
+    background: var(--bg-primary);
+    border-radius: var(--radius-2xl);
     padding: var(--spacing-md);
     box-shadow: 0 8px 24px var(--shadow-elevated);
     z-index: var(--z-dropdown);
@@ -1587,4 +1591,173 @@ nav {
         flex-basis: 100%;
         margin-bottom: var(--spacing-xs);
     }
+}
+
+/* ============================================
+   TOAST NOTIFICATIONS
+   ============================================ */
+
+#toast-container {
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    z-index: 10000;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+.toast {
+    min-width: 300px;
+    max-width: 450px;
+    padding: var(--spacing-md);
+    background: var(--bg-secondary);
+    border-left: 4px solid;
+    border-radius: var(--radius-lg);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    animation: slideInToast 0.3s ease;
+}
+
+.toast-error {
+    border-color: var(--text-error);
+}
+
+.toast-error i {
+    color: var(--text-error);
+}
+
+.toast-warning {
+    border-color: var(--text-warning);
+}
+
+.toast-warning i {
+    color: var(--text-warning);
+}
+
+.toast-success {
+    border-color: var(--text-success);
+}
+
+.toast-success i {
+    color: var(--text-success);
+}
+
+.toast-info {
+    border-color: var(--text-info);
+}
+
+.toast-info i {
+    color: var(--text-info);
+}
+
+.toast i {
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
+.toast span {
+    flex: 1;
+    color: var(--text-primary);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-md);
+}
+
+.toast-close {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: var(--spacing-xs);
+    border-radius: var(--radius-sm);
+    transition: all var(--transition-fast);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.toast-close:hover {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+.toast-close i {
+    font-size: 0.9rem;
+}
+
+.toast-exit {
+    animation: slideOutToast 0.3s ease forwards;
+}
+
+@keyframes slideInToast {
+    from {
+        transform: translateX(400px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOutToast {
+    to {
+        transform: translateX(400px);
+        opacity: 0;
+    }
+}
+
+/* Mobile adjustments for toast notifications */
+@media (max-width: 768px) {
+    #toast-container {
+        top: 70px;
+        right: var(--spacing-sm);
+        left: var(--spacing-sm);
+    }
+
+    .toast {
+        min-width: auto;
+        max-width: 100%;
+    }
+
+    @keyframes slideInToast {
+        from {
+            transform: translateY(-100px);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+
+    @keyframes slideOutToast {
+        to {
+            transform: translateY(-100px);
+            opacity: 0;
+        }
+    }
+}
+
+/* Additional error state styles */
+.input-error {
+    border-color: var(--text-error) !important;
+}
+
+.field-error {
+    color: var(--text-error);
+    font-size: var(--font-size-sm);
+    margin-top: var(--spacing-xs);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+.field-error::before {
+    content: "\f06a";
+    font-family: "Font Awesome 5 Free";
+    font-weight: 900;
 }
