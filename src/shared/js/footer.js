@@ -86,7 +86,7 @@ class FooterManager {
                     <!-- Footer Bottom Section -->
                     <div class="footer-bottom">
                         <span class="footer-copyright">
-                            © 2025 <a href="/ablout-us" rel="noopener noreferrer">BRIGHT ZENITH PRIVATE LIMITED</a>. All rights reserved.
+                            © 2025 <a href="/ablout-us" rel="noopener noreferrer">Quantom Developers</a>. All rights reserved.
                         </span>
                     </div>
                 </div>
