@@ -156,6 +156,11 @@ app.use('/main', express.static(path.join(__dirname, 'src/main')));
 app.use('/docs', express.static(path.join(__dirname, 'src/docs')));
 app.use('/legal', express.static(path.join(__dirname, 'src/legal')));
 
+// Serve static files for downloads (CSS, JS, images) - BEFORE dynamic routes
+app.use('/download/css', express.static(path.join(__dirname, 'src/download/css')));
+app.use('/download/js', express.static(path.join(__dirname, 'src/download/js')));
+app.use('/download/images', express.static(path.join(__dirname, 'src/download/images')));
+
 // Rate limiting
 const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
@@ -900,6 +905,262 @@ app.delete('/api/downloads/:id', verifyToken, (req, res) => {
     } catch (error) {
         console.error('Delete error:', error);
         res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// ==================== Downloads Configuration API (Subphase 1.8) ====================
+
+/**
+ * Validates downloads configuration structure
+ * @param {Object} config - Configuration object to validate
+ * @returns {Object} { valid: boolean, errors: string[] }
+ */
+function validateDownloadsConfig(config) {
+    const errors = [];
+
+    // Check root structure
+    if (!config || typeof config !== 'object') {
+        errors.push('Configuration must be an object');
+        return { valid: false, errors };
+    }
+
+    // Validate defaultProductId
+    if (!config.hasOwnProperty('defaultProductId')) {
+        errors.push('Missing required field: defaultProductId');
+    } else if (config.defaultProductId && typeof config.defaultProductId !== 'string') {
+        errors.push('defaultProductId must be a string');
+    }
+
+    // Validate products array
+    if (!config.hasOwnProperty('products')) {
+        errors.push('Missing required field: products');
+        return { valid: false, errors };
+    }
+
+    if (!Array.isArray(config.products)) {
+        errors.push('products must be an array');
+        return { valid: false, errors };
+    }
+
+    // Track product IDs for uniqueness check
+    const productIds = new Set();
+    const validModuleTypes = ['productHeader', 'featureList', 'downloadGrid', 'imageBanner', 'textBlock'];
+    const validPositions = ['main', 'sidebar', 'full-width-top'];
+
+    // Validate each product
+    config.products.forEach((product, index) => {
+        if (!product.id) {
+            errors.push(`Product at index ${index}: missing required field 'id'`);
+        } else {
+            // Validate product ID format (lowercase, hyphens only, no spaces)
+            if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(product.id)) {
+                errors.push(`Product '${product.id}': ID must be lowercase with hyphens only (no spaces or special characters)`);
+            }
+
+            // Check for duplicate IDs
+            if (productIds.has(product.id)) {
+                errors.push(`Duplicate product ID: '${product.id}'`);
+            }
+            productIds.add(product.id);
+        }
+
+        if (!product.name) {
+            errors.push(`Product '${product.id || index}': missing required field 'name'`);
+        }
+
+        if (!product.hasOwnProperty('modules')) {
+            errors.push(`Product '${product.id || index}': missing required field 'modules'`);
+        } else if (!Array.isArray(product.modules)) {
+            errors.push(`Product '${product.id || index}': modules must be an array`);
+        } else {
+            // Track module IDs for uniqueness within product
+            const moduleIds = new Set();
+
+            // Validate each module
+            product.modules.forEach((module, moduleIndex) => {
+                const moduleRef = `Product '${product.id || index}', Module ${moduleIndex}`;
+
+                if (!module.moduleId) {
+                    errors.push(`${moduleRef}: missing required field 'moduleId'`);
+                } else {
+                    if (moduleIds.has(module.moduleId)) {
+                        errors.push(`${moduleRef}: duplicate moduleId '${module.moduleId}' in product`);
+                    }
+                    moduleIds.add(module.moduleId);
+                }
+
+                if (!module.type) {
+                    errors.push(`${moduleRef}: missing required field 'type'`);
+                } else if (!validModuleTypes.includes(module.type)) {
+                    errors.push(`${moduleRef}: invalid module type '${module.type}'. Must be one of: ${validModuleTypes.join(', ')}`);
+                }
+
+                if (!module.position) {
+                    errors.push(`${moduleRef}: missing required field 'position'`);
+                } else if (!validPositions.includes(module.position)) {
+                    errors.push(`${moduleRef}: invalid position '${module.position}'. Must be one of: ${validPositions.join(', ')}`);
+                }
+
+                if (!module.hasOwnProperty('content')) {
+                    errors.push(`${moduleRef}: missing required field 'content'`);
+                } else if (typeof module.content !== 'object') {
+                    errors.push(`${moduleRef}: content must be an object`);
+                }
+            });
+        }
+    });
+
+    // Validate that defaultProductId references an existing product
+    if (config.defaultProductId && !productIds.has(config.defaultProductId)) {
+        errors.push(`defaultProductId '${config.defaultProductId}' does not match any product ID`);
+    }
+
+    return {
+        valid: errors.length === 0,
+        errors
+    };
+}
+
+/**
+ * Creates a backup of the current downloads configuration
+ * @returns {boolean} Success status
+ */
+function createDownloadsConfigBackup() {
+    try {
+        const configPath = path.join(__dirname, 'src', 'download', 'config', 'downloads-config.json');
+        const backupsDir = path.join(__dirname, 'src', 'download', 'config', 'backups');
+
+        // Check if current config exists
+        if (!fs.existsSync(configPath)) {
+            console.log('No config file to backup');
+            return true;
+        }
+
+        // Ensure backups directory exists
+        if (!fs.existsSync(backupsDir)) {
+            fs.mkdirSync(backupsDir, { recursive: true });
+        }
+
+        // Generate backup filename with timestamp
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+        const backupFilename = `downloads-config.backup-${timestamp}.json`;
+        const backupPath = path.join(backupsDir, backupFilename);
+
+        // Copy current config to backup
+        fs.copyFileSync(configPath, backupPath);
+
+        // List all backups and keep only the 5 most recent
+        const backupFiles = fs.readdirSync(backupsDir)
+            .filter(file => file.startsWith('downloads-config.backup-'))
+            .sort()
+            .reverse();
+
+        // Delete old backups (keep only 5 most recent)
+        if (backupFiles.length > 5) {
+            backupFiles.slice(5).forEach(oldBackup => {
+                fs.unlinkSync(path.join(backupsDir, oldBackup));
+            });
+        }
+
+        logSecurityEvent('Downloads config backup created', { backupFilename });
+        return true;
+
+    } catch (error) {
+        console.error('Backup creation error:', error);
+        logSecurityEvent('Downloads config backup failed', { error: error.message });
+        return false;
+    }
+}
+
+// GET /api/downloads/config - Public endpoint to retrieve downloads configuration
+app.get('/api/downloads/config', async (req, res) => {
+    try {
+        const configPath = path.join(__dirname, 'src', 'download', 'config', 'downloads-config.json');
+
+        // Check if config file exists
+        if (!fs.existsSync(configPath)) {
+            // Return default empty structure if file doesn't exist
+            return res.json({
+                defaultProductId: null,
+                products: []
+            });
+        }
+
+        // Read configuration file
+        const configData = fs.readFileSync(configPath, 'utf8');
+        const config = JSON.parse(configData);
+
+        res.json(config);
+
+    } catch (error) {
+        console.error('Downloads config read error:', error);
+        logSecurityEvent('Downloads config read error', { error: error.message });
+
+        if (error instanceof SyntaxError) {
+            return res.status(500).json({
+                error: 'Configuration file is corrupted',
+                details: 'Please contact administrator'
+            });
+        }
+
+        res.status(500).json({ error: 'Failed to load downloads configuration' });
+    }
+});
+
+// PUT /api/downloads/config - Protected endpoint to save downloads configuration
+app.put('/api/downloads/config', verifyToken, async (req, res) => {
+    try {
+        const newConfig = req.body;
+
+        // Validate configuration structure
+        const validation = validateDownloadsConfig(newConfig);
+        if (!validation.valid) {
+            return res.status(400).json({
+                error: 'Configuration validation failed',
+                errors: validation.errors
+            });
+        }
+
+        // Create backup before saving
+        const backupCreated = createDownloadsConfigBackup();
+        if (!backupCreated) {
+            console.warn('Warning: Backup creation failed, but continuing with save');
+        }
+
+        // Write new configuration
+        const configPath = path.join(__dirname, 'src', 'download', 'config', 'downloads-config.json');
+        const configDir = path.dirname(configPath);
+
+        // Ensure directory exists
+        if (!fs.existsSync(configDir)) {
+            fs.mkdirSync(configDir, { recursive: true });
+        }
+
+        // Write with proper formatting (2-space indentation)
+        fs.writeFileSync(configPath, JSON.stringify(newConfig, null, 2), 'utf8');
+
+        logSecurityEvent('Downloads config updated', {
+            user: req.user.username,
+            productsCount: newConfig.products.length
+        });
+
+        res.json({
+            success: true,
+            message: 'Downloads configuration saved successfully',
+            config: newConfig
+        });
+
+    } catch (error) {
+        console.error('Downloads config save error:', error);
+        logSecurityEvent('Downloads config save error', {
+            user: req.user?.username,
+            error: error.message
+        });
+
+        res.status(500).json({
+            error: 'Failed to save downloads configuration',
+            details: error.message
+        });
     }
 });
 
@@ -2051,11 +2312,18 @@ app.get('/main', (req, res) => {
     res.sendFile(path.join(__dirname, 'src', 'main', 'index.html'));
 });
 
+// Downloads page (Subphase 1.8) - Dynamic downloads system
+// Serves the same HTML for both /downloads and /downloads/:productId
+// Client-side JavaScript handles loading the appropriate product based on URL
 app.get('/downloads', (req, res) => {
-    res.sendFile(path.join(__dirname, 'src', 'main', 'downloads.html'));
+    res.sendFile(path.join(__dirname, 'src', 'download', 'downloads.html'));
 });
 
-// Download page - dynamic route for individual download pages (e.g., /download/quantom-core)
+app.get('/downloads/:productId', (req, res) => {
+    res.sendFile(path.join(__dirname, 'src', 'download', 'downloads.html'));
+});
+
+// Old download page - dynamic route for individual download pages (e.g., /download/quantom-core)
 // The download.html handles loading project data based on the ID in the URL
 app.get('/download/:id', (req, res) => {
     res.sendFile(path.join(__dirname, 'src', 'main', 'download.html'));

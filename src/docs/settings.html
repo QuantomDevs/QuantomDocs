@@ -146,6 +146,10 @@
                         <i class="fas fa-palette"></i>
                         <span>Themes</span>
                     </button>
+                    <button class="nav-tab" data-tab="downloads">
+                        <i class="fas fa-download"></i>
+                        <span>Downloads</span>
+                    </button>
 
                     <!-- Divider -->
                     <div class="nav-divider"></div>
@@ -327,6 +331,47 @@
                         <h3>Theme Customization</h3>
                         <p>Customize colors, fonts, and visual styles for your documentation.</p>
                         <p class="empty-state-hint">Coming soon...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Downloads Tab Content -->
+            <div id="downloads-content" class="tab-content">
+                <div class="content-header">
+                    <h1>Downloads Management</h1>
+                    <p>Manage download products and their content modules</p>
+                </div>
+                <div class="content-body" id="downloadsContainer">
+                    <!-- Product List View -->
+                    <div id="downloads-product-list-view">
+                        <div class="action-bar">
+                            <button id="addProductBtn" class="btn btn-primary">
+                                <i class="fas fa-plus"></i>
+                                Add New Product
+                            </button>
+                        </div>
+                        <!-- Product list will be dynamically loaded -->
+                        <div id="downloadsProductList" class="downloads-products-list"></div>
+                    </div>
+
+                    <!-- Module Editor View (hidden by default) -->
+                    <div id="downloads-module-editor-view" style="display: none;">
+                        <div class="editor-header">
+                            <button id="backToProductsBtn" class="btn btn-outline">
+                                <i class="fas fa-arrow-left"></i>
+                                Back to Products
+                            </button>
+                            <h2 id="currentProductName"></h2>
+                        </div>
+                        <div id="moduleEditorContent" class="module-editor-content"></div>
+                    </div>
+
+                    <!-- Save Button (always visible) -->
+                    <div class="action-bar save-bar">
+                        <button id="saveDownloadsBtn" class="btn btn-success">
+                            <i class="fas fa-save"></i>
+                            Save All Changes
+                        </button>
                     </div>
                 </div>
             </div>
@@ -538,6 +583,108 @@
             <div class="progress-fill" id="progressFill" style="width: 0%"></div>
         </div>
         <span class="progress-text" id="progressText">Uploading: 0%</span>
+    </div>
+
+    <!-- Downloads Management Modals -->
+    <!-- Add/Edit Product Modal -->
+    <div id="productModal" class="custom-modal" style="display: none;">
+        <div class="modal-overlay"></div>
+        <div class="modal-container">
+            <div class="modal-header">
+                <h2 id="productModalTitle">Add New Product</h2>
+                <button class="modal-close-btn" onclick="closeProductModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="productForm">
+                    <div class="form-group">
+                        <label for="productName">
+                            Product Name <span class="required">*</span>
+                        </label>
+                        <input type="text" id="productName" class="form-input" placeholder="e.g., QuantomOS Desktop" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="productId">
+                            Product ID (URL-safe) <span class="required">*</span>
+                        </label>
+                        <input type="text" id="productId" class="form-input" placeholder="e.g., quantomos-desktop" required>
+                        <small class="form-hint">Lowercase letters, numbers, and hyphens only</small>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline" onclick="closeProductModal()">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="submitProductForm()">
+                    <i class="fas fa-plus"></i> Create Product
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Module Modal -->
+    <div id="moduleModal" class="custom-modal" style="display: none;">
+        <div class="modal-overlay"></div>
+        <div class="modal-container modal-large">
+            <div class="modal-header">
+                <h2>Add Module</h2>
+                <button class="modal-close-btn" onclick="closeModuleModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="moduleForm">
+                    <!-- Basic Module Info -->
+                    <div class="form-section">
+                        <h3>Basic Information</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="moduleId">
+                                    Module ID <span class="required">*</span>
+                                </label>
+                                <input type="text" id="moduleId" class="form-input" placeholder="e.g., header-1" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="moduleType">
+                                    Module Type <span class="required">*</span>
+                                </label>
+                                <select id="moduleType" class="form-select" onchange="updateModuleFields()" required>
+                                    <option value="">Select type...</option>
+                                    <option value="productHeader">Product Header</option>
+                                    <option value="featureList">Feature List</option>
+                                    <option value="downloadGrid">Download Grid</option>
+                                    <option value="imageBanner">Image Banner</option>
+                                    <option value="textBlock">Text Block</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="modulePosition">
+                                    Position <span class="required">*</span>
+                                </label>
+                                <select id="modulePosition" class="form-select" required>
+                                    <option value="">Select position...</option>
+                                    <option value="full-width-top">Full Width Top</option>
+                                    <option value="main">Main Content</option>
+                                    <option value="sidebar">Sidebar</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Dynamic Module Content Fields -->
+                    <div class="form-section" id="moduleContentFields" style="display: none;">
+                        <h3>Module Content</h3>
+                        <div id="moduleFieldsContainer"></div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline" onclick="closeModuleModal()">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="submitModuleForm()">
+                    <i class="fas fa-plus"></i> Add Module
+                </button>
+            </div>
+        </div>
     </div>
 
     <!-- Marked.js for markdown parsing -->

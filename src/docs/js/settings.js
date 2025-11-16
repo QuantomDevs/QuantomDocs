@@ -515,6 +515,9 @@ function loadTabContent(tabName) {
         case 'editor':
             loadEditorTab();
             break;
+        case 'downloads':
+            loadDownloadsTab();
+            break;
         case 'overview':
             // Future: load overview data
             break;
@@ -2992,6 +2995,795 @@ function showConfirmation(title, message) {
         }
     });
 }
+
+// ==================== DOWNLOADS MANAGEMENT TAB (Subphase 1.8) ====================
+
+// Global state for downloads configuration
+let downloadsConfig = null;
+let currentEditingProduct = null;
+
+/**
+ * Simple notification function for downloads tab
+ * @param {string} message - Notification message
+ * @param {string} type - Notification type (success, error, warning)
+ */
+function showNotification(message, type) {
+    const prefix = type === 'error' ? '❌ Error: ' : type === 'success' ? '✅ Success: ' : 'ℹ️ ';
+    console.log(`${prefix}${message}`);
+
+    // For errors, show alert
+    if (type === 'error') {
+        alert(message);
+    } else {
+        // For success messages, just log to console
+        console.log(message);
+    }
+}
+
+/**
+ * Simple confirm modal using browser confirm dialog
+ * @param {string} title - Modal title
+ * @param {string} message - Modal message
+ * @returns {Promise<boolean>} User's confirmation
+ */
+function showConfirmModal(title, message) {
+    return Promise.resolve(confirm(`${title}\n\n${message}`));
+}
+
+/**
+ * Simple custom modal using browser prompts
+ * @param {Object} config - Modal configuration
+ * @returns {Promise<Object|null>} Form data or null if cancelled
+ */
+async function showCustomModal(config) {
+    const data = {};
+
+    for (const field of config.fields) {
+        let value;
+
+        if (field.type === 'select') {
+            // For select fields, show options
+            const optionsText = field.options.map((opt, idx) => `${idx + 1}. ${opt.label}`).join('\n');
+            const selection = prompt(`${field.label}:\n\n${optionsText}\n\nEnter number (1-${field.options.length}):`);
+
+            if (selection === null) return null; // User cancelled
+
+            const index = parseInt(selection) - 1;
+            if (index >= 0 && index < field.options.length) {
+                value = field.options[index].value;
+            } else {
+                alert('Invalid selection');
+                return null;
+            }
+        } else if (field.type === 'textarea') {
+            value = prompt(`${field.label}${field.placeholder ? ' (' + field.placeholder + ')' : ''}:`);
+        } else {
+            value = prompt(`${field.label}${field.placeholder ? ' (' + field.placeholder + ')' : ''}:`);
+        }
+
+        if (value === null) return null; // User cancelled
+
+        if (field.required && !value) {
+            alert(`${field.label} is required`);
+            return null;
+        }
+
+        data[field.id] = value || '';
+    }
+
+    // Call onConfirm if provided
+    if (config.onConfirm) {
+        const result = await config.onConfirm(data);
+        if (result === false) {
+            return null; // Validation failed
+        }
+    }
+
+    return data;
+}
+
+/**
+ * Load the downloads management tab
+ */
+async function loadDownloadsTab() {
+    try {
+        // Fetch current configuration
+        const response = await fetch('/api/downloads/config');
+        if (!response.ok) throw new Error('Failed to load configuration');
+
+        downloadsConfig = await response.json();
+        renderProductList();
+        attachDownloadsEventListeners();
+
+    } catch (error) {
+        console.error('Error loading downloads tab:', error);
+        showNotification('Failed to load downloads configuration', 'error');
+    }
+}
+
+/**
+ * Render the product list
+ */
+function renderProductList() {
+    const listContainer = document.getElementById('downloadsProductList');
+    if (!listContainer) return;
+
+    if (!downloadsConfig || !downloadsConfig.products || downloadsConfig.products.length === 0) {
+        listContainer.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-inbox fa-3x"></i>
+                <h3>No Products Yet</h3>
+                <p>Click "Add New Product" to create your first download product.</p>
+            </div>
+        `;
+        return;
+    }
+
+    const productsHtml = downloadsConfig.products.map(product => `
+        <div class="product-card" data-product-id="${escapeHtml(product.id)}">
+            <div class="product-card-header">
+                <div class="product-info">
+                    <h3>${escapeHtml(product.name)}</h3>
+                    <span class="product-id-badge">ID: ${escapeHtml(product.id)}</span>
+                    ${product.id === downloadsConfig.defaultProductId ?
+                        '<span class="badge badge-success">Default</span>' : ''}
+                </div>
+                <div class="product-actions">
+                    <button class="btn btn-sm btn-outline" onclick="editProduct('${escapeHtml(product.id)}')">
+                        <i class="fas fa-edit"></i> Edit
+                    </button>
+                    ${product.id !== downloadsConfig.defaultProductId ? `
+                        <button class="btn btn-sm btn-outline" onclick="setDefaultProduct('${escapeHtml(product.id)}')">
+                            <i class="fas fa-star"></i> Set Default
+                        </button>
+                    ` : ''}
+                    <button class="btn btn-sm btn-outline btn-danger" onclick="deleteProduct('${escapeHtml(product.id)}')">
+                        <i class="fas fa-trash"></i> Delete
+                    </button>
+                </div>
+            </div>
+            <div class="product-card-body">
+                <p class="product-module-count">
+                    <i class="fas fa-puzzle-piece"></i>
+                    ${product.modules ? product.modules.length : 0} modules
+                </p>
+            </div>
+        </div>
+    `).join('');
+
+    listContainer.innerHTML = productsHtml;
+}
+
+/**
+ * Attach event listeners for downloads tab
+ */
+function attachDownloadsEventListeners() {
+    const addProductBtn = document.getElementById('addProductBtn');
+    const saveDownloadsBtn = document.getElementById('saveDownloadsBtn');
+    const backToProductsBtn = document.getElementById('backToProductsBtn');
+
+    if (addProductBtn) {
+        addProductBtn.onclick = showAddProductModal;
+    }
+
+    if (saveDownloadsBtn) {
+        saveDownloadsBtn.onclick = saveDownloadsConfiguration;
+    }
+
+    if (backToProductsBtn) {
+        backToProductsBtn.onclick = () => {
+            document.getElementById('downloads-product-list-view').style.display = 'block';
+            document.getElementById('downloads-module-editor-view').style.display = 'none';
+            currentEditingProduct = null;
+        };
+    }
+}
+
+/**
+ * Show modal to add a new product
+ */
+function showAddProductModal() {
+    const modal = document.getElementById('productModal');
+    const form = document.getElementById('productForm');
+
+    // Reset form
+    form.reset();
+    document.getElementById('productModalTitle').textContent = 'Add New Product';
+
+    // Show modal
+    modal.style.display = 'flex';
+
+    // Add click outside to close
+    setTimeout(() => {
+        const overlay = modal.querySelector('.modal-overlay');
+        overlay.onclick = closeProductModal;
+    }, 0);
+
+    // Add ESC key to close
+    const handleEsc = (e) => {
+        if (e.key === 'Escape') {
+            closeProductModal();
+            document.removeEventListener('keydown', handleEsc);
+        }
+    };
+    document.addEventListener('keydown', handleEsc);
+}
+
+/**
+ * Close product modal
+ */
+function closeProductModal() {
+    const modal = document.getElementById('productModal');
+    modal.style.display = 'none';
+
+    // Clean up event listeners
+    const overlay = modal.querySelector('.modal-overlay');
+    if (overlay) overlay.onclick = null;
+}
+
+/**
+ * Submit product form
+ */
+function submitProductForm() {
+    const productName = document.getElementById('productName').value.trim();
+    const productId = document.getElementById('productId').value.toLowerCase().trim();
+
+    // Validate
+    if (!productName || !productId) {
+        showNotification('Please fill in all required fields', 'error');
+        return;
+    }
+
+    // Validate product ID format
+    if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(productId)) {
+        showNotification('Product ID must be lowercase with hyphens only (no spaces or special characters)', 'error');
+        return;
+    }
+
+    // Check for duplicate ID
+    if (downloadsConfig.products.some(p => p.id === productId)) {
+        showNotification('A product with this ID already exists', 'error');
+        return;
+    }
+
+    // Add new product
+    downloadsConfig.products.push({
+        id: productId,
+        name: productName,
+        modules: []
+    });
+
+    // Set as default if this is the first product
+    if (downloadsConfig.products.length === 1) {
+        downloadsConfig.defaultProductId = productId;
+    }
+
+    renderProductList();
+    closeProductModal();
+    console.log('✅ Success: Product created successfully');
+}
+
+/**
+ * Edit a product (opens module editor)
+ */
+function editProduct(productId) {
+    const product = downloadsConfig.products.find(p => p.id === productId);
+    if (!product) {
+        showNotification('Product not found', 'error');
+        return;
+    }
+
+    currentEditingProduct = product;
+
+    // Show module editor view
+    document.getElementById('downloads-product-list-view').style.display = 'none';
+    document.getElementById('downloads-module-editor-view').style.display = 'block';
+    document.getElementById('currentProductName').textContent = product.name;
+
+    renderModuleEditor(product);
+}
+
+/**
+ * Render module editor (simplified version)
+ */
+function renderModuleEditor(product) {
+    const container = document.getElementById('moduleEditorContent');
+    if (!container) return;
+
+    const modulesHtml = product.modules.map((module, index) => `
+        <div class="module-item" data-module-index="${index}">
+            <div class="module-header">
+                <h4>
+                    <i class="fas fa-puzzle-piece"></i>
+                    ${module.type} - ${module.position}
+                </h4>
+                <div class="module-actions">
+                    <button class="btn btn-sm btn-danger" onclick="removeModule(${index})">
+                        <i class="fas fa-trash"></i> Remove
+                    </button>
+                </div>
+            </div>
+            <div class="module-content">
+                <pre>${escapeHtml(JSON.stringify(module.content, null, 2))}</pre>
+            </div>
+        </div>
+    `).join('');
+
+    container.innerHTML = `
+        <div class="module-editor">
+            <div class="module-editor-header">
+                <h3>Product Modules</h3>
+                <button class="btn btn-primary" onclick="showAddModuleModal()">
+                    <i class="fas fa-plus"></i> Add Module
+                </button>
+            </div>
+            <div class="modules-list">
+                ${product.modules.length === 0 ? `
+                    <div class="empty-state">
+                        <i class="fas fa-puzzle-piece fa-2x"></i>
+                        <p>No modules yet. Add your first module to get started.</p>
+                    </div>
+                ` : modulesHtml}
+            </div>
+        </div>
+    `;
+}
+
+/**
+ * Show modal to add a module
+ */
+function showAddModuleModal() {
+    if (!currentEditingProduct) return;
+
+    const modal = document.getElementById('moduleModal');
+    const form = document.getElementById('moduleForm');
+
+    // Reset form
+    form.reset();
+    document.getElementById('moduleContentFields').style.display = 'none';
+    document.getElementById('moduleFieldsContainer').innerHTML = '';
+
+    // Show modal
+    modal.style.display = 'flex';
+
+    // Add click outside to close
+    setTimeout(() => {
+        const overlay = modal.querySelector('.modal-overlay');
+        overlay.onclick = closeModuleModal;
+    }, 0);
+
+    // Add ESC key to close
+    const handleEsc = (e) => {
+        if (e.key === 'Escape') {
+            closeModuleModal();
+            document.removeEventListener('keydown', handleEsc);
+        }
+    };
+    document.addEventListener('keydown', handleEsc);
+}
+
+/**
+ * Close module modal
+ */
+function closeModuleModal() {
+    const modal = document.getElementById('moduleModal');
+    modal.style.display = 'none';
+
+    // Clean up event listeners
+    const overlay = modal.querySelector('.modal-overlay');
+    if (overlay) overlay.onclick = null;
+}
+
+/**
+ * Update module fields based on selected type
+ */
+function updateModuleFields() {
+    const moduleType = document.getElementById('moduleType').value;
+    const contentFields = document.getElementById('moduleContentFields');
+    const container = document.getElementById('moduleFieldsContainer');
+
+    if (!moduleType) {
+        contentFields.style.display = 'none';
+        return;
+    }
+
+    contentFields.style.display = 'block';
+    container.innerHTML = '';
+
+    // Generate fields based on module type
+    switch (moduleType) {
+        case 'productHeader':
+            container.innerHTML = `
+                <div class="form-group">
+                    <label>Title <span class="required">*</span></label>
+                    <input type="text" id="field_title" class="form-input" placeholder="Product Title" required>
+                </div>
+                <div class="form-group">
+                    <label>Description <span class="required">*</span></label>
+                    <textarea id="field_description" class="form-textarea" placeholder="Product description..." required></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Preview Image URL</label>
+                    <input type="text" id="field_previewImage" class="form-input" placeholder="/assets/product-preview.png">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Learn More URL</label>
+                        <input type="text" id="field_learnMoreUrl" class="form-input" placeholder="/docs/product">
+                    </div>
+                    <div class="form-group">
+                        <label>What's New URL</label>
+                        <input type="text" id="field_whatsNewUrl" class="form-input" placeholder="/docs/changelog">
+                    </div>
+                </div>
+            `;
+            break;
+
+        case 'featureList':
+            container.innerHTML = `
+                <div class="form-group">
+                    <label>Title</label>
+                    <input type="text" id="field_title" class="form-input" placeholder="Key Features">
+                </div>
+                <div class="form-group">
+                    <label>Features</label>
+                    <div id="featuresContainer"></div>
+                    <button type="button" class="add-field-btn" onclick="addFeatureField()">
+                        <i class="fas fa-plus"></i> Add Feature
+                    </button>
+                </div>
+            `;
+            addFeatureField(); // Add first feature
+            break;
+
+        case 'downloadGrid':
+            container.innerHTML = `
+                <div class="form-group">
+                    <label>Title</label>
+                    <input type="text" id="field_title" class="form-input" placeholder="Downloads">
+                </div>
+                <div class="form-group">
+                    <label>Downloads</label>
+                    <div id="downloadsContainer"></div>
+                    <button type="button" class="add-field-btn" onclick="addDownloadField()">
+                        <i class="fas fa-plus"></i> Add Download
+                    </button>
+                </div>
+            `;
+            addDownloadField(); // Add first download
+            break;
+
+        case 'imageBanner':
+            container.innerHTML = `
+                <div class="form-group">
+                    <label>Image URL <span class="required">*</span></label>
+                    <input type="text" id="field_imageUrl" class="form-input" placeholder="/assets/banner.png" required>
+                </div>
+                <div class="form-group">
+                    <label>Alt Text <span class="required">*</span></label>
+                    <input type="text" id="field_altText" class="form-input" placeholder="Banner description" required>
+                </div>
+                <div class="form-group">
+                    <label>Link URL (optional)</label>
+                    <input type="text" id="field_link" class="form-input" placeholder="/optional-link">
+                </div>
+            `;
+            break;
+
+        case 'textBlock':
+            container.innerHTML = `
+                <div class="form-group">
+                    <label>Title</label>
+                    <input type="text" id="field_title" class="form-input" placeholder="Block Title">
+                </div>
+                <div class="form-group">
+                    <label>Text Content <span class="required">*</span></label>
+                    <textarea id="field_text" class="form-textarea" placeholder="Your content here..." required style="min-height: 150px;"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="field_supportMarkdown" style="width: auto; margin-right: 8px;">
+                        Support Markdown
+                    </label>
+                </div>
+            `;
+            break;
+    }
+}
+
+// Feature counter for unique IDs
+let featureCounter = 0;
+
+/**
+ * Add a feature field
+ */
+function addFeatureField() {
+    const container = document.getElementById('featuresContainer');
+    const id = featureCounter++;
+
+    const featureHtml = `
+        <div class="dynamic-field-group" id="feature_${id}">
+            <div class="dynamic-field-header">
+                <h4>Feature ${id + 1}</h4>
+                <button type="button" class="remove-field-btn" onclick="removeFeatureField(${id})">
+                    <i class="fas fa-times"></i> Remove
+                </button>
+            </div>
+            <div class="form-group">
+                <label>Icon (FontAwesome class)</label>
+                <input type="text" class="form-input feature-icon" placeholder="fas fa-star" data-feature-id="${id}">
+                <small class="form-hint">e.g., fas fa-star, fas fa-bolt</small>
+            </div>
+            <div class="form-group">
+                <label>Title <span class="required">*</span></label>
+                <input type="text" class="form-input feature-title" placeholder="Feature name" data-feature-id="${id}" required>
+            </div>
+            <div class="form-group">
+                <label>Description <span class="required">*</span></label>
+                <textarea class="form-textarea feature-description" placeholder="Feature description" data-feature-id="${id}" required></textarea>
+            </div>
+        </div>
+    `;
+
+    container.insertAdjacentHTML('beforeend', featureHtml);
+}
+
+/**
+ * Remove a feature field
+ */
+function removeFeatureField(id) {
+    document.getElementById(`feature_${id}`)?.remove();
+}
+
+// Download counter for unique IDs
+let downloadCounter = 0;
+
+/**
+ * Add a download field
+ */
+function addDownloadField() {
+    const container = document.getElementById('downloadsContainer');
+    const id = downloadCounter++;
+
+    const downloadHtml = `
+        <div class="dynamic-field-group" id="download_${id}">
+            <div class="dynamic-field-header">
+                <h4>Download ${id + 1}</h4>
+                <button type="button" class="remove-field-btn" onclick="removeDownloadField(${id})">
+                    <i class="fas fa-times"></i> Remove
+                </button>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>OS <span class="required">*</span></label>
+                    <input type="text" class="form-input download-os" placeholder="Windows" data-download-id="${id}" required>
+                </div>
+                <div class="form-group">
+                    <label>Icon (FontAwesome)</label>
+                    <input type="text" class="form-input download-icon" placeholder="fab fa-windows" data-download-id="${id}">
+                </div>
+                <div class="form-group">
+                    <label>Version <span class="required">*</span></label>
+                    <input type="text" class="form-input download-version" placeholder="1.0.0" data-download-id="${id}" required>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Download URL <span class="required">*</span></label>
+                <input type="text" class="form-input download-url" placeholder="/downloads/files/app.exe" data-download-id="${id}" required>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" class="download-primary" data-download-id="${id}" style="width: auto; margin-right: 8px;">
+                        Primary Download
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" class="download-beta" data-download-id="${id}" style="width: auto; margin-right: 8px;">
+                        Beta Version
+                    </label>
+                </div>
+            </div>
+        </div>
+    `;
+
+    container.insertAdjacentHTML('beforeend', downloadHtml);
+}
+
+/**
+ * Remove a download field
+ */
+function removeDownloadField(id) {
+    document.getElementById(`download_${id}`)?.remove();
+}
+
+/**
+ * Submit module form
+ */
+function submitModuleForm() {
+    if (!currentEditingProduct) return;
+
+    const moduleId = document.getElementById('moduleId').value.trim();
+    const moduleType = document.getElementById('moduleType').value;
+    const modulePosition = document.getElementById('modulePosition').value;
+
+    // Validate basic fields
+    if (!moduleId || !moduleType || !modulePosition) {
+        showNotification('Please fill in all required fields', 'error');
+        return;
+    }
+
+    // Build content based on module type
+    let content = {};
+
+    try {
+        switch (moduleType) {
+            case 'productHeader':
+                content = {
+                    title: document.getElementById('field_title').value,
+                    description: document.getElementById('field_description').value,
+                    previewImage: document.getElementById('field_previewImage').value,
+                    learnMoreUrl: document.getElementById('field_learnMoreUrl').value,
+                    whatsNewUrl: document.getElementById('field_whatsNewUrl').value
+                };
+                break;
+
+            case 'featureList':
+                const features = [];
+                document.querySelectorAll('.feature-title').forEach((titleInput) => {
+                    const id = titleInput.dataset.featureId;
+                    features.push({
+                        icon: document.querySelector(`.feature-icon[data-feature-id="${id}"]`).value,
+                        title: titleInput.value,
+                        description: document.querySelector(`.feature-description[data-feature-id="${id}"]`).value
+                    });
+                });
+                content = {
+                    title: document.getElementById('field_title').value,
+                    features
+                };
+                break;
+
+            case 'downloadGrid':
+                const downloads = [];
+                document.querySelectorAll('.download-os').forEach((osInput) => {
+                    const id = osInput.dataset.downloadId;
+                    downloads.push({
+                        os: osInput.value,
+                        icon: document.querySelector(`.download-icon[data-download-id="${id}"]`).value,
+                        version: document.querySelector(`.download-version[data-download-id="${id}"]`).value,
+                        url: document.querySelector(`.download-url[data-download-id="${id}"]`).value,
+                        isPrimary: document.querySelector(`.download-primary[data-download-id="${id}"]`).checked,
+                        beta: document.querySelector(`.download-beta[data-download-id="${id}"]`).checked
+                    });
+                });
+                content = {
+                    title: document.getElementById('field_title').value,
+                    downloads
+                };
+                break;
+
+            case 'imageBanner':
+                content = {
+                    imageUrl: document.getElementById('field_imageUrl').value,
+                    altText: document.getElementById('field_altText').value,
+                    link: document.getElementById('field_link').value
+                };
+                break;
+
+            case 'textBlock':
+                content = {
+                    title: document.getElementById('field_title').value,
+                    text: document.getElementById('field_text').value,
+                    supportMarkdown: document.getElementById('field_supportMarkdown').checked
+                };
+                break;
+        }
+
+        // Add module
+        currentEditingProduct.modules.push({
+            moduleId,
+            type: moduleType,
+            position: modulePosition,
+            content
+        });
+
+        renderModuleEditor(currentEditingProduct);
+        closeModuleModal();
+        console.log('✅ Success: Module added successfully');
+
+    } catch (error) {
+        showNotification('Error creating module: ' + error.message, 'error');
+    }
+}
+
+/**
+ * Remove a module
+ */
+function removeModule(index) {
+    if (!currentEditingProduct) return;
+
+    if (confirm('Are you sure you want to remove this module?')) {
+        currentEditingProduct.modules.splice(index, 1);
+        renderModuleEditor(currentEditingProduct);
+        showNotification('Module removed', 'success');
+    }
+}
+
+/**
+ * Set a product as default
+ */
+function setDefaultProduct(productId) {
+    downloadsConfig.defaultProductId = productId;
+    renderProductList();
+    showNotification('Default product updated', 'success');
+}
+
+/**
+ * Delete a product
+ */
+async function deleteProduct(productId) {
+    const product = downloadsConfig.products.find(p => p.id === productId);
+    if (!product) return;
+
+    const confirmed = await showConfirmModal(
+        'Delete Product',
+        `Are you sure you want to delete "${product.name}"? This action cannot be undone.`
+    );
+
+    if (confirmed) {
+        downloadsConfig.products = downloadsConfig.products.filter(p => p.id !== productId);
+
+        // Update default if deleted product was default
+        if (downloadsConfig.defaultProductId === productId) {
+            downloadsConfig.defaultProductId = downloadsConfig.products.length > 0 ? downloadsConfig.products[0].id : null;
+        }
+
+        renderProductList();
+        showNotification('Product deleted successfully', 'success');
+    }
+}
+
+/**
+ * Save downloads configuration
+ */
+async function saveDownloadsConfiguration() {
+    try {
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+            showNotification('Authentication required', 'error');
+            return;
+        }
+
+        const response = await fetch('/api/downloads/config', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(downloadsConfig)
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            showNotification('Downloads configuration saved successfully', 'success');
+        } else {
+            throw new Error(data.error || 'Failed to save configuration');
+        }
+    } catch (error) {
+        console.error('Error saving downloads configuration:', error);
+        showNotification('Failed to save configuration: ' + error.message, 'error');
+    }
+}
+
+// Expose downloads functions to global scope
+window.editProduct = editProduct;
+window.deleteProduct = deleteProduct;
+window.setDefaultProduct = setDefaultProduct;
+window.showAddModuleModal = showAddModuleModal;
+window.removeModule = removeModule;
 
 // ==================== UTILITY FUNCTIONS ====================
 /**
