@@ -95,7 +95,6 @@ body.no-scroll {
     /* Add extra padding-top for fixed header (56px header + spacing) */
     padding: clamp(70px, 5vh, 100px) clamp(10px, 5vw, 20px) clamp(10px, 5vh, 30px) clamp(10px, 5vw, 20px);
     margin: 0 auto;
-    margin-top: 56px; /* Height of fixed header */
 }
 
 /* Desktop layout (> 1024px) */

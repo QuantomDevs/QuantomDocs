@@ -74,16 +74,13 @@ function generateHeaderHTML() {
         <div class="docs-header">
             <div class="docs-header-inner">
                 <!-- Logo Section -->
-                <a href="/docs" class="docs-header-logo">
-                    <div class="docs-header-logo-icon">
-                        <i class="fas fa-book"></i>
-                    </div>
-                    <span class="docs-header-logo-text">Quantom Docs</span>
-                </a>
+                <a href="/main" class="logo-container">
+                <img src="/shared/images/favicon/favicon.png" alt="Quantom Logo" class="logo-img">
+                <span class="logo-text"><strong>Quantom Docs</strong></span>
+            </a>
 
                 <!-- Navigation Tabs (Desktop) -->
                 <nav class="docs-header-nav" aria-label="Main navigation">
-                    ${generateNavTabs(products, hasMultipleProducts)}
                 </nav>
 
                 <!-- Actions Section -->
@@ -95,9 +92,11 @@ function generateHeaderHTML() {
                         <span class="docs-header-search-shortcut">⌘K</span>
                     </button>
 
-                    <!-- Theme Toggle -->
-                    <button class="docs-header-theme-toggle" id="docs-header-theme-toggle" aria-label="Toggle theme">
-                        <i class="fas fa-moon"></i>
+
+                    <button id="docs-header-theme-toggle" class="docs-header-theme-toggle" title="Toggle dark/light mode" aria-label="Toggle theme">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M11.5556 10.4445C8.48717 10.4445 6.00005 7.95743 6.00005 4.88899C6.00005 3.68721 6.38494 2.57877 7.03294 1.66943C4.04272 2.22766 1.77783 4.84721 1.77783 8.0001C1.77783 11.5592 4.66317 14.4445 8.22228 14.4445C11.2196 14.4445 13.7316 12.3948 14.4525 9.62321C13.6081 10.1414 12.6187 10.4445 11.5556 10.4445Z" fill="currentColor"/>
+                        </svg>
                     </button>
 
                     <!-- Mobile Menu Button -->
@@ -116,62 +115,6 @@ function generateHeaderHTML() {
     `;
 }
 
-/**
- * Generate navigation tabs
- */
-function generateNavTabs(products, hasMultipleProducts) {
-    if (!hasMultipleProducts || products.length === 0) {
-        // Single product or no products - show simple tabs
-        return `
-            <a href="/docs" class="docs-nav-tab active" data-tab="documentation">
-                <i class="fas fa-book"></i>
-                <span>Documentation</span>
-            </a>
-            <a href="/docs/editor" class="docs-nav-tab" data-tab="editor">
-                <i class="fas fa-edit"></i>
-                <span>Editor</span>
-            </a>
-            <a href="/docs/settings" class="docs-nav-tab" data-tab="settings">
-                <i class="fas fa-cog"></i>
-                <span>Settings</span>
-            </a>
-        `;
-    }
-
-    // Multiple products - show product dropdown
-    const currentProductData = products.find(p => p.id === headerCurrentProduct) || products[0];
-
-    return `
-        <div class="docs-header-product-dropdown">
-            <button class="docs-header-product-btn" id="docs-header-product-btn" aria-expanded="false">
-                <span class="docs-header-product-icon">${currentProductData?.icon || '📦'}</span>
-                <span>${currentProductData?.name || 'Select Product'}</span>
-                <i class="fas fa-chevron-down"></i>
-            </button>
-            <div class="docs-header-product-menu" id="docs-header-product-menu">
-                ${products.filter(p => p.showInDocs).map(product => `
-                    <a href="/docs?product=${product.id}"
-                       class="docs-header-product-item ${product.id === headerCurrentProduct ? 'active' : ''}"
-                       data-product="${product.id}">
-                        <span class="docs-header-product-icon">${product.icon || '📦'}</span>
-                        <div class="docs-header-product-info">
-                            <span class="docs-header-product-name">${product.name}</span>
-                            ${product.description ? `<span class="docs-header-product-desc">${product.description}</span>` : ''}
-                        </div>
-                    </a>
-                `).join('')}
-            </div>
-        </div>
-        <a href="/docs/editor" class="docs-nav-tab" data-tab="editor">
-            <i class="fas fa-edit"></i>
-            <span>Editor</span>
-        </a>
-        <a href="/docs/settings" class="docs-nav-tab" data-tab="settings">
-            <i class="fas fa-cog"></i>
-            <span>Settings</span>
-        </a>
-    `;
-}
 
 /**
  * Generate mobile navigation items
@@ -194,23 +137,6 @@ function generateMobileNavItems(products) {
         });
         items.push('<div style="height: 1px; background: var(--border-color); margin: var(--spacing-sm) 0;"></div>');
     }
-
-    // Add main navigation items
-    items.push('<div style="padding: var(--spacing-sm) var(--spacing-lg); color: var(--secondary-text-color); font-size: 12px; font-weight: 600; text-transform: uppercase;">Navigation</div>');
-    items.push(`
-        <a href="/docs" class="docs-mobile-nav-item active">
-            <i class="fas fa-book"></i>
-            Documentation
-        </a>
-        <a href="/docs/editor" class="docs-mobile-nav-item">
-            <i class="fas fa-edit"></i>
-            Editor
-        </a>
-        <a href="/docs/settings" class="docs-mobile-nav-item">
-            <i class="fas fa-cog"></i>
-            Settings
-        </a>
-    `);
 
     return items.join('');
 }
@@ -237,29 +163,6 @@ function attachHeaderEventListeners() {
 
     if (mobileMenuOverlay) {
         mobileMenuOverlay.addEventListener('click', closeMobileMenu);
-    }
-
-    // Product dropdown toggle
-    const productBtn = document.getElementById('docs-header-product-btn');
-    const productMenu = document.getElementById('docs-header-product-menu');
-
-    if (productBtn && productMenu) {
-        productBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const isActive = productMenu.classList.contains('active');
-            if (isActive) {
-                closeProductDropdown();
-            } else {
-                openProductDropdown();
-            }
-        });
-
-        // Close dropdown when clicking outside
-        document.addEventListener('click', (e) => {
-            if (!productBtn.contains(e.target) && !productMenu.contains(e.target)) {
-                closeProductDropdown();
-            }
-        });
     }
 
     // Theme toggle
@@ -317,34 +220,6 @@ function closeMobileMenu() {
 }
 
 /**
- * Open product dropdown
- */
-function openProductDropdown() {
-    const btn = document.getElementById('docs-header-product-btn');
-    const menu = document.getElementById('docs-header-product-menu');
-
-    if (btn && menu) {
-        btn.classList.add('active');
-        btn.setAttribute('aria-expanded', 'true');
-        menu.classList.add('active');
-    }
-}
-
-/**
- * Close product dropdown
- */
-function closeProductDropdown() {
-    const btn = document.getElementById('docs-header-product-btn');
-    const menu = document.getElementById('docs-header-product-menu');
-
-    if (btn && menu) {
-        btn.classList.remove('active');
-        btn.setAttribute('aria-expanded', 'false');
-        menu.classList.remove('active');
-    }
-}
-
-/**
  * Toggle theme
  */
 function toggleTheme() {
@@ -366,13 +241,22 @@ function updateThemeIcon() {
 
     const html = document.documentElement;
     const currentTheme = html.getAttribute('data-theme') || 'dark';
-    const icon = themeToggle.querySelector('i');
+    const themeBtn = document.querySelector('#docs-header-theme-toggle');
 
-    if (icon) {
+    if (themeBtn) {
         if (currentTheme === 'dark') {
-            icon.className = 'fas fa-moon';
+            // Moon icon for dark mode
+            themeBtn.innerHTML = `
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M11.5556 10.4445C8.48717 10.4445 6.00005 7.95743 6.00005 4.88899C6.00005 3.68721 6.38494 2.57877 7.03294 1.66943C4.04272 2.22766 1.77783 4.84721 1.77783 8.0001C1.77783 11.5592 4.66317 14.4445 8.22228 14.4445C11.2196 14.4445 13.7316 12.3948 14.4525 9.62321C13.6081 10.1414 12.6187 10.4445 11.5556 10.4445Z" fill="currentColor"/>
+                </svg>
+            `;
         } else {
-            icon.className = 'fas fa-sun';
+            // Sun icon for light mode
+            themeBtn.innerHTML = ` <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M8 1.11133V2.00022 M12.8711 3.12891L12.2427 3.75735 M14.8889 8H14 M12.8711 12.8711L12.2427 12.2427 M8 14.8889V14 M3.12891 12.8711L3.75735 12.2427 M1.11133 8H2.00022 M3.12891 3.12891L3.75735 3.75735 M8.00043 11.7782C10.0868 11.7782 11.7782 10.0868 11.7782 8.00043C11.7782 5.91402 10.0868 4.22266 8.00043 4.22266C5.91402 4.22266 4.22266 5.91402 4.22266 8.00043C4.22266 10.0868 5.91402 11.7782 8.00043 11.7782Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                `;
         }
     }
 }
