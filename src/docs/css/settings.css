@@ -1,6 +1,9 @@
+/* Import centralized variables */
+@import url('/shared/css/variables.css');
+
 /* ============================================
    SETTINGS PAGE STYLES
-   Uses variables from /shared/css/common.css
+   Uses variables from /shared/css/variables.css
    ============================================ */
 
 /* ==================== LOGIN PAGE ==================== */

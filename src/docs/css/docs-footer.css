@@ -1,0 +1,151 @@
+/**
+ * Documentation Footer Styles
+ * Minimal footer for documentation pages only
+ */
+
+/* Import centralized variables */
+@import url('/shared/css/variables.css');
+
+/* ===========================
+   Docs Footer Container
+   =========================== */
+.docs-footer {
+    width: 100%;
+    background: var(--bg-primary);
+    border-top: 1px solid var(--border-primary);
+    padding: var(--spacing-lg) 0;
+    margin-top: var(--spacing-3xl);
+}
+
+.docs-footer-container {
+    max-width: var(--max-width-wide);
+    margin: 0 auto;
+    padding: 0 var(--spacing-xl);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--spacing-lg);
+}
+
+/* ===========================
+   Social Media Links
+   =========================== */
+.docs-footer-social {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.docs-social-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    color: var(--text-tertiary);
+    text-decoration: none;
+    border-radius: var(--radius-md);
+    transition: all var(--transition-fast);
+}
+
+.docs-social-link:hover {
+    color: var(--text-primary);
+    background: var(--bg-soft);
+}
+
+.docs-social-link svg {
+    width: 20px;
+    height: 20px;
+}
+
+/* ===========================
+   Copyright Section
+   =========================== */
+.docs-footer-copyright {
+    display: flex;
+    align-items: center;
+}
+
+.docs-footer-copyright span {
+    color: var(--text-tertiary);
+    font-size: var(--font-size-sm);
+    white-space: nowrap;
+}
+
+/* ===========================
+   Responsive Design
+   =========================== */
+
+/* Tablet and below (less than 768px) */
+@media (max-width: 767px) {
+    .docs-footer-container {
+        padding: 0 var(--spacing-md);
+        flex-direction: column;
+        gap: var(--spacing-md);
+    }
+
+    .docs-footer-social {
+        order: 2;
+    }
+
+    .docs-footer-copyright {
+        order: 1;
+    }
+
+    .docs-footer-copyright span {
+        font-size: 0.8125rem;
+    }
+}
+
+/* Small mobile (less than 480px) */
+@media (max-width: 479px) {
+    .docs-footer {
+        padding: var(--spacing-md) 0;
+    }
+
+    .docs-footer-container {
+        padding: 0 var(--spacing-sm);
+    }
+
+    .docs-social-link {
+        width: 32px;
+        height: 32px;
+    }
+
+    .docs-social-link svg {
+        width: 18px;
+        height: 18px;
+    }
+
+    .docs-footer-copyright span {
+        font-size: 0.75rem;
+    }
+}
+
+/* ===========================
+   Accessibility
+   =========================== */
+
+/* Focus visible states */
+.docs-social-link:focus-visible {
+    outline: 2px solid var(--accent-color);
+    outline-offset: 2px;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    .docs-social-link {
+        transition: none;
+    }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+    .docs-footer {
+        border-top-width: 2px;
+    }
+
+    .docs-social-link {
+        border: 1px solid currentColor;
+    }
+}

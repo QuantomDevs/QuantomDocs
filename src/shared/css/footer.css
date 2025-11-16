@@ -1,0 +1,305 @@
+/**
+ * Footer Styles - Main Website Pages
+ * DO NOT use on documentation pages
+ */
+
+/* Import centralized variables */
+@import url('/shared/css/variables.css');
+
+/* ===========================
+   Main Footer Container
+   =========================== */
+.main-footer {
+    width: 100%;
+    background: var(--bg-primary);
+    border-top: 1px solid var(--border-primary);
+    padding-top: var(--spacing-2xl);
+    padding-bottom: var(--spacing-xl);
+    margin-top: auto;
+}
+
+.footer-container {
+    max-width: var(--max-width-wide);
+    margin: 0 auto;
+    padding-left: var(--spacing-xl);
+    padding-right: var(--spacing-xl);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-2xl);
+}
+
+/* ===========================
+   Footer Top Section
+   =========================== */
+.footer-top {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-2xl);
+}
+
+/* ===========================
+   Footer Brand Section
+   =========================== */
+.footer-brand {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--spacing-lg);
+}
+
+.footer-logo {
+    height: 36px;
+    width: auto;
+    color: var(--text-primary);
+    flex-shrink: 0;
+}
+
+/* ===========================
+   Social Media Links
+   =========================== */
+.footer-socials {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.footer-socials a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    color: var(--text-secondary);
+    text-decoration: none;
+    border-radius: var(--radius-md);
+    transition: all var(--transition-fast);
+}
+
+.footer-socials a:hover {
+    color: var(--text-primary);
+    background: var(--bg-soft);
+    transform: translateY(-2px);
+}
+
+.footer-socials svg {
+    width: 22px;
+    height: 22px;
+}
+
+/* ===========================
+   Footer Links Grid
+   =========================== */
+.footer-links {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-xl);
+}
+
+.footer-column {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.footer-title {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+    color: var(--text-primary);
+    margin: 0 0 var(--spacing-sm) 0;
+}
+
+.footer-link {
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-md);
+    transition: color var(--transition-fast);
+    width: fit-content;
+}
+
+.footer-link:hover {
+    color: var(--text-primary);
+}
+
+.footer-link-external {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+.footer-link-external svg {
+    width: 14px;
+    height: 14px;
+}
+
+/* ===========================
+   Footer Bottom Section
+   =========================== */
+.footer-bottom {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-top: var(--spacing-lg);
+    border-top: 1px solid var(--border-primary);
+}
+
+.footer-copyright {
+    color: var(--text-tertiary);
+    font-size: var(--font-size-sm);
+    text-align: center;
+}
+
+.footer-copyright a {
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: color var(--transition-fast);
+}
+
+.footer-copyright a:hover {
+    color: var(--text-primary);
+}
+
+/* ===========================
+   Responsive Design
+   =========================== */
+
+/* Tablet (768px and up) */
+@media (min-width: 768px) {
+    .footer-links {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .footer-column {
+        align-items: flex-start;
+    }
+}
+
+/* Desktop (1024px and up) */
+@media (min-width: 1024px) {
+    .footer-top {
+        flex-direction: row;
+        justify-content: space-between;
+        gap: var(--spacing-3xl);
+    }
+
+    .footer-brand {
+        flex-direction: column;
+        justify-content: flex-start;
+        align-items: flex-start;
+        min-width: 200px;
+        max-width: 200px;
+    }
+
+    .footer-socials {
+        align-self: flex-start;
+    }
+
+    .footer-links {
+        flex: 1;
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+/* Mobile (less than 768px) */
+@media (max-width: 767px) {
+    .main-footer {
+        padding-top: var(--spacing-xl);
+        padding-bottom: var(--spacing-lg);
+    }
+
+    .footer-container {
+        padding-left: var(--spacing-md);
+        padding-right: var(--spacing-md);
+        gap: var(--spacing-xl);
+    }
+
+    .footer-top {
+        gap: var(--spacing-xl);
+    }
+
+    .footer-brand {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .footer-socials {
+        align-self: center;
+    }
+
+    .footer-links {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-md);
+    }
+
+    .footer-column {
+        align-items: center;
+        text-align: center;
+    }
+
+    .footer-link {
+        margin: 0 auto;
+    }
+
+    .footer-bottom {
+        padding-top: var(--spacing-md);
+    }
+}
+
+/* Small mobile (less than 480px) */
+@media (max-width: 479px) {
+    .footer-container {
+        padding-left: var(--spacing-sm);
+        padding-right: var(--spacing-sm);
+    }
+
+    .footer-logo {
+        height: 30px;
+    }
+
+    .footer-socials a {
+        width: 36px;
+        height: 36px;
+    }
+
+    .footer-socials svg {
+        width: 20px;
+        height: 20px;
+    }
+}
+
+/* ===========================
+   Accessibility
+   =========================== */
+
+/* Focus visible states */
+.footer-link:focus-visible,
+.footer-socials a:focus-visible {
+    outline: 2px solid var(--accent-color);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    .footer-link,
+    .footer-socials a {
+        transition: none;
+    }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+    .main-footer {
+        border-top-width: 2px;
+    }
+
+    .footer-bottom {
+        border-top-width: 2px;
+    }
+
+    .footer-link,
+    .footer-socials a {
+        text-decoration: underline;
+    }
+}

@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 - Page Not Found | Quantom Docs</title>
+    <link rel="icon" href="/shared/images/favicon/favicon.png" type="image/png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="/shared/css/header.css">
+    <link rel="stylesheet" href="/shared/css/footer.css">
+    <link rel="stylesheet" href="/shared/css/common.css">
+    <link rel="stylesheet" href="/shared/css/mobile-menu.css">
+    <style>
+        .error-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: clamp(100px, 15vh, 150px) 20px 50px 20px;
+            text-align: center;
+        }
+
+        .error-code {
+            font-size: clamp(80px, 15vw, 150px);
+            font-weight: 900;
+            color: var(--accent-color);
+            line-height: 1;
+            margin: 0 0 20px 0;
+            text-shadow: 0 4px 20px rgba(52, 211, 153, 0.3);
+        }
+
+        .error-title {
+            font-size: clamp(24px, 5vw, 36px);
+            font-weight: 700;
+            color: var(--text-color);
+            margin: 0 0 16px 0;
+        }
+
+        .error-message {
+            font-size: clamp(16px, 3vw, 18px);
+            color: var(--secondary-text-color);
+            line-height: 1.6;
+            margin: 0 0 40px 0;
+        }
+
+        .search-container {
+            background: var(--card-background-color);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 30px;
+            margin: 0 0 40px 0;
+        }
+
+        .search-label {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-color);
+            margin: 0 0 16px 0;
+            text-align: left;
+        }
+
+        .search-input-wrapper {
+            position: relative;
+            width: 100%;
+        }
+
+        .search-input-wrapper i {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--secondary-text-color);
+            font-size: 18px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 14px 16px 14px 48px;
+            font-size: 16px;
+            background: var(--background-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-color);
+            transition: border-color 0.2s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--accent-color);
+        }
+
+        .search-input::placeholder {
+            color: var(--secondary-text-color);
+        }
+
+        .quick-links {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin: 0 0 40px 0;
+        }
+
+        .quick-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px 20px;
+            background: var(--card-background-color);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            text-decoration: none;
+            color: var(--text-color);
+            transition: all 0.2s ease;
+        }
+
+        .quick-link:hover {
+            border-color: var(--accent-color);
+            background: var(--accent-color);
+            color: var(--background-color);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .quick-link i {
+            font-size: 24px;
+            width: 24px;
+            text-align: center;
+        }
+
+        .quick-link span {
+            font-weight: 500;
+        }
+
+        .home-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 14px 32px;
+            background: var(--accent-color);
+            color: var(--background-color);
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .home-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(52, 211, 153, 0.4);
+        }
+
+        .home-button i {
+            font-size: 18px;
+        }
+
+        @media (max-width: 768px) {
+            .quick-links {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header></header>
+
+    <main class="error-container">
+        <h1 class="error-code">404</h1>
+        <h2 class="error-title">Page Not Found</h2>
+        <p class="error-message">
+            The page you're looking for doesn't exist or has been moved.<br>
+            Let's help you find what you need.
+        </p>
+
+        <div class="search-container">
+            <div class="search-label">
+                <i class="fas fa-search"></i> Search our documentation
+            </div>
+            <div class="search-input-wrapper">
+                <i class="fas fa-search"></i>
+                <input
+                    type="text"
+                    class="search-input"
+                    id="error-search-input"
+                    placeholder="Search for guides, tutorials, configuration..."
+                    autofocus
+                >
+            </div>
+        </div>
+
+        <div class="quick-links">
+            <a href="/main" class="quick-link">
+                <i class="fas fa-home"></i>
+                <span>Home</span>
+            </a>
+            <a href="/docs" class="quick-link">
+                <i class="fas fa-book"></i>
+                <span>Documentation</span>
+            </a>
+            <a href="/downloads" class="quick-link">
+                <i class="fas fa-download"></i>
+                <span>Downloads</span>
+            </a>
+            <a href="https://discord.gg/5gdthYHqSv" class="quick-link" target="_blank">
+                <i class="fab fa-discord"></i>
+                <span>Discord</span>
+            </a>
+        </div>
+
+        <a href="/main" class="home-button">
+            <i class="fas fa-arrow-left"></i>
+            <span>Back to Homepage</span>
+        </a>
+    </main>
+
+    <footer class="footer"></footer>
+
+    <div id="mobile-overlay-menu"></div>
+
+    <!-- Header and Footer Modules -->
+    <script type="module" src="/shared/js/header.js"></script>
+    <script type="module" src="/shared/js/footer.js"></script>
+    <script src="/shared/js/common.js"></script>
+    <script src="/shared/js/mobile-menu.js"></script>
+
+    <script>
+        // Load 404 configuration and apply settings
+        async function load404Config() {
+            try {
+                const response = await fetch('/docs/config/docs-config.json');
+                const config = await response.json();
+                const error404Config = config.errorPages?.['404'];
+
+                if (!error404Config) {
+                    console.warn('404 error configuration not found, using defaults');
+                    return;
+                }
+
+                // Apply content settings
+                if (error404Config.content) {
+                    const { title, description, searchPlaceholder, homeButtonText } = error404Config.content;
+
+                    if (title) {
+                        document.querySelector('.error-title').textContent = title;
+                    }
+
+                    if (description) {
+                        const descElement = document.querySelector('.error-message');
+                        let processedDesc = description;
+
+                        // Apply placeholders before rendering
+                        if (error404Config.placeholders) {
+                            if (error404Config.placeholders.requestedUrl) {
+                                const requestedUrl = window.location.pathname;
+                                processedDesc = processedDesc.replace(/\{requestedUrl\}/g, `<code>${requestedUrl}</code>`);
+                            }
+
+                            if (error404Config.placeholders.timestamp) {
+                                const timestamp = new Date().toLocaleString();
+                                processedDesc = processedDesc.replace(/\{timestamp\}/g, timestamp);
+                            }
+
+                            if (error404Config.placeholders.productName) {
+                                const productName = config.general?.defaultProduct || 'Quantom';
+                                processedDesc = processedDesc.replace(/\{productName\}/g, productName);
+                            }
+                        }
+
+                        // Support basic markdown formatting
+                        if (error404Config.content.supportMarkdown) {
+                            processedDesc = processedDesc
+                                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')  // Bold
+                                .replace(/\*(.*?)\*/g, '<em>$1</em>')              // Italic
+                                .replace(/`(.*?)`/g, '<code>$1</code>');           // Inline code
+                        }
+
+                        // Support newlines
+                        processedDesc = processedDesc.replace(/\n/g, '<br>');
+
+                        descElement.innerHTML = processedDesc;
+                    }
+
+                    if (searchPlaceholder) {
+                        document.getElementById('error-search-input').placeholder = searchPlaceholder;
+                    }
+
+                    if (homeButtonText) {
+                        document.querySelector('.home-button span').textContent = homeButtonText;
+                    }
+                }
+
+                // Apply redirect settings
+                if (error404Config.redirect) {
+                    const { enabled, showQuickLinks, showSearchBar, links } = error404Config.redirect;
+
+                    // Hide search bar if disabled
+                    if (!showSearchBar) {
+                        document.querySelector('.search-container').style.display = 'none';
+                    }
+
+                    // Hide or rebuild quick links
+                    const quickLinksContainer = document.querySelector('.quick-links');
+                    if (!showQuickLinks) {
+                        quickLinksContainer.style.display = 'none';
+                    } else if (links && links.length > 0) {
+                        // Rebuild quick links from config
+                        quickLinksContainer.innerHTML = '';
+                        links.forEach(link => {
+                            const linkElement = document.createElement('a');
+                            linkElement.href = link.url;
+                            linkElement.className = 'quick-link';
+                            if (link.external) {
+                                linkElement.target = '_blank';
+                            }
+
+                            linkElement.innerHTML = `
+                                <i class="${link.icon}"></i>
+                                <span>${link.text}</span>
+                            `;
+
+                            quickLinksContainer.appendChild(linkElement);
+                        });
+                    }
+
+                    // If redirect is completely disabled, hide navigation elements
+                    if (!enabled) {
+                        quickLinksContainer.style.display = 'none';
+                        document.querySelector('.home-button').style.display = 'none';
+                    }
+                }
+
+            } catch (error) {
+                console.error('Failed to load 404 configuration:', error);
+            }
+        }
+
+        // Load configuration on page load
+        document.addEventListener('DOMContentLoaded', load404Config);
+
+        // Redirect to docs search when user presses Enter in search input
+        document.getElementById('error-search-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                const query = e.target.value.trim();
+                if (query) {
+                    // Redirect to docs page with search query
+                    window.location.href = `/docs?search=${encodeURIComponent(query)}`;
+                }
+            }
+        });
+    </script>
+</body>
+</html>

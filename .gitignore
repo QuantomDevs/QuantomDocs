@@ -19,6 +19,8 @@ config.ini
 # Logs
 *.log
 server.log
+*.DS_Store
+**/.DS_Store
 
 # Node.js
 node_modules/
@@ -40,6 +42,7 @@ project-informations/*
 src/docs/config/users.json
 src/docs/config/analytics.json
 trash/
+data/
 
 # Build artifacts
 dist/

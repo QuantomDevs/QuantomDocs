@@ -1,3 +1,6 @@
+/* Import centralized variables */
+@import url('/shared/css/variables.css');
+
 /* Index Page Body Background */
 body {
 

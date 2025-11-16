@@ -6,12 +6,13 @@
     <title>Quantom Docs</title>
     <link rel="icon" href="/shared/images/favicon/favicon.png" type="image/png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <link rel="stylesheet" href="/shared/css/common.css">
+    <link rel="stylesheet" href="/shared/css/variables.css">
+    <link rel="stylesheet" href="/docs/css/docs-header.css">
     <link rel="stylesheet" href="/docs/css/docs.css">
     <link rel="stylesheet" href="/docs/css/docs-components.css">
     <link rel="stylesheet" href="/docs/css/docs-search.css">
+    <link rel="stylesheet" href="/docs/css/docs-footer.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.1.0/github-markdown.min.css">
-    <link rel="stylesheet" href="/shared/css/mobile-menu.css">
 
     <!-- Prism.js for syntax highlighting -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
@@ -108,35 +109,6 @@
                     </div>
                 </div>
 
-                <div id="static-getting-started">
-                    <h1>Welcome to Quantom Docs</h1>
-
-                    <div class="warning-box">
-                        <div class="warning-title">
-                            <i class="fas fa-exclamation-triangle"></i>
-                            <span>WORK IN PROGRESS</span>
-                        </div>
-                        <p>This docs site is under heavily constructing! For more information, please contact use via our <a href="https://discord.gg/5gdthYHqSv">Discord server</a></p>
-                    </div>
-
-                    <p>Quantom is a Paper fork, aim to find balance between Performance, Vanilla, and Stability, designed for large network, high capacity situation.</p>
-                    <p>This docs includes guides about configuring Quantom, development etc.</p>
-
-                    <hr>
-
-                    <section id="contact">
-                        <h2>📬 Contact</h2>
-                        <ul>
-                            <li>Discord: <a href="https://discord.gg/5gdthYHqSv">https://discord.gg/5gdthYHqSv</a></li>
-                            <li>Community QQ Group: <span>619278377</span></li>
-                        </ul>
-                    </section>
-
-                    <a href="#" class="next-page-link">
-                        <div class="next-label">Next page</div>
-                        <div class="next-title">Frequently Asked Questions</div>
-                    </a>
-                </div>
                 <div id="dynamic-content-area" class="markdown-body">
                     <!-- Markdown content will be loaded here -->
                 </div>
@@ -159,8 +131,6 @@
                     </ul>
                 </aside>
             </div>
-
-            <footer class="footer"></footer>
         </div>
 
         <div id="mobile-right-sidebar-menu" class="mobile-right-sidebar-menu">
@@ -226,20 +196,27 @@
         </div>
     </div>
 
-    <div id="mobile-overlay-menu"></div>
-
     <!-- Prism.js core loaded eagerly (needed for code blocks) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
 
-    <script src="/shared/js/common.js"></script>
-    <script src="/shared/js/mobile-menu.js"></script>
+    <!-- Docs Footer Module -->
+    <script type="module" src="/docs/js/docs-footer.js"></script>
+
     <script src="/shared/js/lazy-loader.js"></script>
+
+    <!-- Docs Header Module (loaded after lazy-loader) -->
+    <script src="/docs/js/docs-header.js"></script>
 
     <!-- Initialize docs page with lazy loading -->
     <script>
         // Docs page initialization mit lazy loading
         document.addEventListener('DOMContentLoaded', async () => {
             try {
+                // Initialize header first
+                if (window.DocsHeader && typeof window.DocsHeader.init === 'function') {
+                    await window.DocsHeader.init();
+                }
+
                 // Show search button in sidebar
                 const sidebarSearchBtn = document.getElementById('docs-search-btn');
                 if (sidebarSearchBtn) {

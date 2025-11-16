@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Documentation Editor - QuantomDocs</title>
+
+    <!-- Quill CSS -->
+    <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="/docs/css/editor.css">
+    <link rel="stylesheet" href="/docs/css/docs-footer.css">
+
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="editor-container">
+        <!-- Header -->
+        <header class="editor-header">
+            <div class="editor-header-left">
+                <h1 class="editor-title">
+                    <i class="fas fa-edit"></i>
+                    Documentation Editor
+                </h1>
+            </div>
+
+            <div class="editor-header-right">
+                <button id="toggle-mode-btn" class="btn btn-secondary" title="Switch between WYSIWYG and Markdown">
+                    <i class="fas fa-exchange-alt"></i>
+                    <span>Markdown Mode</span>
+                </button>
+                <button id="preview-btn" class="btn btn-secondary" title="Toggle preview pane">
+                    <i class="fas fa-eye"></i>
+                    <span>Preview</span>
+                </button>
+                <button id="save-btn" class="btn btn-primary" title="Save document">
+                    <i class="fas fa-save"></i>
+                    <span>Save</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- File Info Bar -->
+        <div class="editor-info-bar">
+            <div class="editor-file-info">
+                <select id="product-select" class="editor-select">
+                    <option value="">Select Product...</option>
+                </select>
+                <select id="super-category-select" class="editor-select" disabled>
+                    <option value="">Select Super Category...</option>
+                </select>
+                <select id="category-select" class="editor-select" disabled>
+                    <option value="">Select Category...</option>
+                </select>
+                <input type="text" id="file-name-input" class="editor-input" placeholder="File name (e.g., getting-started)" disabled>
+            </div>
+            <div class="editor-status">
+                <span id="status-indicator" class="status-indicator">
+                    <i class="fas fa-circle"></i>
+                    <span id="status-text">Not saved</span>
+                </span>
+            </div>
+        </div>
+
+        <!-- Main Editor Workspace -->
+        <div class="editor-workspace">
+            <!-- WYSIWYG Editor -->
+            <div id="wysiwyg-container" class="editor-pane active">
+                <div id="toolbar-container" class="ql-toolbar-custom">
+                    <!-- Quill toolbar will be injected here -->
+                </div>
+                <div id="editor" class="quill-editor"></div>
+            </div>
+
+            <!-- Markdown Editor -->
+            <div id="markdown-container" class="editor-pane">
+                <div class="markdown-toolbar">
+                    <button class="toolbar-btn" data-insert="# " title="Heading 1">
+                        <i class="fas fa-heading"></i>1
+                    </button>
+                    <button class="toolbar-btn" data-insert="## " title="Heading 2">
+                        <i class="fas fa-heading"></i>2
+                    </button>
+                    <button class="toolbar-btn" data-insert="**" data-wrap="**" title="Bold">
+                        <i class="fas fa-bold"></i>
+                    </button>
+                    <button class="toolbar-btn" data-insert="*" data-wrap="*" title="Italic">
+                        <i class="fas fa-italic"></i>
+                    </button>
+                    <button class="toolbar-btn" data-insert="`" data-wrap="`" title="Code">
+                        <i class="fas fa-code"></i>
+                    </button>
+                    <button class="toolbar-btn" data-insert="[]()" title="Link">
+                        <i class="fas fa-link"></i>
+                    </button>
+                    <button class="toolbar-btn" data-insert="- " title="List">
+                        <i class="fas fa-list"></i>
+                    </button>
+                </div>
+                <textarea id="markdown-textarea" class="markdown-textarea" placeholder="Write markdown here..."></textarea>
+            </div>
+
+            <!-- Preview Pane -->
+            <div id="preview-container" class="editor-pane preview-pane">
+                <div class="preview-header">
+                    <h3>Preview</h3>
+                    <button id="close-preview-btn" class="btn-icon" title="Close preview">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div id="preview-content" class="preview-content"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quill JS -->
+    <script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
+
+    <!-- Turndown for HTML to Markdown conversion -->
+    <script src="https://unpkg.com/turndown@7.1.2/dist/turndown.js"></script>
+
+    <!-- Showdown for Markdown to HTML conversion -->
+    <script src="https://cdn.jsdelivr.net/npm/showdown@2.1.0/dist/showdown.min.js"></script>
+
+    <!-- Highlight.js for code syntax highlighting in preview -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+
+    <!-- Editor scripts -->
+    <script src="/docs/js/markdown-sync.js"></script>
+    <script src="/docs/js/editor.js"></script>
+</body>
+</html>
