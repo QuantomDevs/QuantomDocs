@@ -79,19 +79,20 @@ function generateHeaderHTML() {
                 <span class="logo-text"><strong>Quantom Docs</strong></span>
             </a>
 
-                <!-- Navigation Tabs (Desktop) -->
-                <nav class="docs-header-nav" aria-label="Main navigation">
-                </nav>
-
                 <!-- Actions Section -->
                 <div class="docs-header-actions">
-                    <!-- Search Button (Desktop) -->
-                    <button class="docs-header-search-btn" id="docs-header-search-btn" aria-label="Search documentation">
+                    <!-- Search Icon (Mobile) -->
+                    <button class="docs-header-search-icon" id="docs-header-search-icon" aria-label="Search documentation">
                         <i class="fas fa-search"></i>
-                        <span>Search...</span>
-                        <span class="docs-header-search-shortcut">⌘K</span>
                     </button>
 
+                    <!-- Product Navigation (Desktop) -->
+                    <nav class="docs-header-nav" aria-label="Main navigation">
+                        ${generateProductButtons(products)}
+                    </nav>
+
+                    <!-- Download Button -->
+                    <a href="/download" class="special-button">Download</a>
 
                     <button id="docs-header-theme-toggle" class="docs-header-theme-toggle" title="Toggle dark/light mode" aria-label="Toggle theme">
                         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -110,11 +111,33 @@ function generateHeaderHTML() {
         <!-- Mobile Navigation -->
         <div class="docs-mobile-nav-overlay" id="docs-mobile-nav-overlay"></div>
         <div class="docs-mobile-nav-menu" id="docs-mobile-nav-menu">
-            ${generateMobileNavItems(products)}
+            <!-- Sidebar content will be loaded here dynamically -->
         </div>
     `;
 }
 
+
+/**
+ * Generate product navigation buttons for header
+ */
+function generateProductButtons(products) {
+    if (!products || products.length === 0) return '';
+
+    const buttons = products
+        .filter(p => p.showInDocs)
+        .map(product => {
+            const isActive = product.id === headerCurrentProduct ? 'active' : '';
+            return `
+                <a href="/docs?product=${product.id}"
+                   class="product-nav-button ${isActive}"
+                   data-product="${product.id}">
+                    ${product.name}
+                </a>
+            `;
+        });
+
+    return buttons.join('');
+}
 
 /**
  * Generate mobile navigation items
@@ -142,6 +165,116 @@ function generateMobileNavItems(products) {
 }
 
 /**
+ * Load sidebar content into mobile menu (lazy loading)
+ */
+function loadSidebarContentToMobile() {
+    const mobileMenu = document.getElementById('docs-mobile-nav-menu');
+    const sidebarLeft = document.querySelector('.sidebar-left');
+
+    if (mobileMenu && sidebarLeft) {
+        // Check if already loaded
+        if (mobileMenu.hasAttribute('data-loaded')) {
+            return;
+        }
+
+        // Clone sidebar content
+        const sidebarContent = sidebarLeft.cloneNode(true);
+
+        // Hide search button in mobile sidebar
+        const searchBtn = sidebarContent.querySelector('.docs-search-button-sidebar');
+        if (searchBtn) {
+            searchBtn.style.display = 'none';
+        }
+
+        // Remove sidebar-left class to avoid CSS conflicts
+        sidebarContent.classList.remove('sidebar-left');
+        sidebarContent.classList.add('mobile-sidebar-content');
+
+        // Fix duplicate IDs by prefixing with 'mobile-'
+        const elementsWithIds = sidebarContent.querySelectorAll('[id]');
+        elementsWithIds.forEach(element => {
+            const oldId = element.id;
+            element.id = 'mobile-' + oldId;
+
+            // Update any aria-controls or other references
+            const ariaControls = element.getAttribute('aria-controls');
+            if (ariaControls) {
+                element.setAttribute('aria-controls', 'mobile-' + ariaControls);
+            }
+        });
+
+        // Clear and insert content
+        mobileMenu.innerHTML = '';
+        mobileMenu.appendChild(sidebarContent);
+        mobileMenu.setAttribute('data-loaded', 'true');
+
+        // Re-bind event listeners for mobile sidebar
+        bindMobileSidebarEvents();
+    }
+}
+
+/**
+ * Bind event listeners for mobile sidebar elements
+ */
+function bindMobileSidebarEvents() {
+    // Super Category Selector
+    const mobileSuperCategoryBtn = document.getElementById('mobile-super-category-btn');
+    const mobileSuperCategoryDropdown = document.getElementById('mobile-super-category-dropdown');
+
+    if (mobileSuperCategoryBtn && mobileSuperCategoryDropdown) {
+        mobileSuperCategoryBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            mobileSuperCategoryBtn.classList.toggle('open');
+            mobileSuperCategoryDropdown.classList.toggle('show');
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!mobileSuperCategoryBtn.contains(e.target) && !mobileSuperCategoryDropdown.contains(e.target)) {
+                mobileSuperCategoryBtn.classList.remove('open');
+                mobileSuperCategoryDropdown.classList.remove('show');
+            }
+        });
+
+        // Handle super category option clicks
+        const mobileOptions = mobileSuperCategoryDropdown.querySelectorAll('.super-category-option');
+        mobileOptions.forEach(option => {
+            option.addEventListener('click', () => {
+                const superCategoryId = option.getAttribute('data-super-category-id');
+                const superCategoryName = option.textContent.trim();
+
+                // Update button text
+                const nameSpan = mobileSuperCategoryBtn.querySelector('.super-category-name');
+                if (nameSpan) {
+                    nameSpan.textContent = superCategoryName;
+                }
+
+                // Close dropdown
+                mobileSuperCategoryBtn.classList.remove('open');
+                mobileSuperCategoryDropdown.classList.remove('show');
+
+                // Trigger the same functionality as desktop version
+                if (window.handleSuperCategoryChange) {
+                    window.handleSuperCategoryChange(superCategoryId, superCategoryName);
+                }
+            });
+        });
+    }
+
+    // Product Selector (mobile)
+    const mobileProductSelectorBtn = document.getElementById('mobile-product-selector-btn');
+    const mobileProductSelectorDropdown = document.getElementById('mobile-product-selector-dropdown');
+
+    if (mobileProductSelectorBtn && mobileProductSelectorDropdown) {
+        mobileProductSelectorBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            mobileProductSelectorBtn.classList.toggle('active');
+            mobileProductSelectorDropdown.classList.toggle('active');
+        });
+    }
+}
+
+/**
  * Attach event listeners to header elements
  */
 function attachHeaderEventListeners() {
@@ -156,6 +289,8 @@ function attachHeaderEventListeners() {
             if (isActive) {
                 closeMobileMenu();
             } else {
+                // Load sidebar content before opening (lazy loading)
+                loadSidebarContentToMobile();
                 openMobileMenu();
             }
         });
@@ -165,23 +300,23 @@ function attachHeaderEventListeners() {
         mobileMenuOverlay.addEventListener('click', closeMobileMenu);
     }
 
-    // Theme toggle
-    const themeToggle = document.getElementById('docs-header-theme-toggle');
-    if (themeToggle) {
-        themeToggle.addEventListener('click', toggleTheme);
-        updateThemeIcon();
-    }
-
-    // Search button
-    const searchBtn = document.getElementById('docs-header-search-btn');
-    if (searchBtn) {
-        searchBtn.addEventListener('click', () => {
+    // Search icon (mobile)
+    const searchIcon = document.getElementById('docs-header-search-icon');
+    if (searchIcon) {
+        searchIcon.addEventListener('click', () => {
             // Trigger existing search functionality
             const sidebarSearchBtn = document.getElementById('docs-search-btn');
             if (sidebarSearchBtn) {
                 sidebarSearchBtn.click();
             }
         });
+    }
+
+    // Theme toggle
+    const themeToggle = document.getElementById('docs-header-theme-toggle');
+    if (themeToggle) {
+        themeToggle.addEventListener('click', toggleTheme);
+        updateThemeIcon();
     }
 
     // Close mobile menu when clicking on a link

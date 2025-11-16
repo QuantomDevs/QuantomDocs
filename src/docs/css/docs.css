@@ -1622,13 +1622,19 @@ html[data-theme="light"] .split-button-arrow:hover {
 /* Responsive Design for Page Header Controls */
 @media (max-width: 1024px) {
     .page-header-controls {
-        flex-direction: column;
-        align-items: start;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
         gap: 12px;
     }
 
     .category-display {
-        justify-content: center;
+        justify-content: flex-start;
+        flex: 1;
+    }
+
+    .split-button-container {
+        flex-shrink: 0;
     }
 }
 
