@@ -33,38 +33,35 @@ function generateHeaderHTML() {
             <div class="docs-header-inner">
                 <!-- Logo Section -->
                 <a href="/main" class="logo-container">
-                <img src="/shared/images/favicon/favicon.png" alt="Quantom Logo" class="logo-img">
-                <span class="logo-text"><strong>Quantom</strong></span>
-            </a>
+                    <img src="/shared/images/favicon/favicon.png" alt="Quantom Logo" class="logo-img">
+                    <span class="logo-text"><strong>Quantom</strong></span>
+                </a>
 
-                <!-- Actions Section -->
+                <!-- Navigation Section (Center) -->
+                <nav class="docs-header-nav" aria-label="Main navigation">
+                    <a href="#" class="docs-nav-link" id="product-nav-btn">
+                        Product
+                        <svg class="nav-dropdown-icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" width="16" height="16">
+                            <path d="M490.24 644.848a40 40 0 0 0 54.476 0.128l0.856-0.816 224.016-220-56.056-57.08-196.676 193.156-207.456-193.84-54.62 58.452 235.456 220z"></path>
+                        </svg>
+                    </a>
+                    <a href="/pricing" class="docs-nav-link">Pricing</a>
+                    <a href="/docs" class="docs-nav-link">Docs</a>
+                </nav>
+
+                <!-- Actions Section (Right) -->
                 <div class="docs-header-actions">
-                    <!-- Search Icon (Mobile) -->
-                    <button class="docs-header-search-icon" id="docs-header-search-icon" aria-label="Search documentation">
-                        <i class="fas fa-search"></i>
-                    </button>
-
-                    <!-- Product Navigation (Desktop) -->
-                    <nav class="docs-header-nav" aria-label="Main navigation">
-                        <button class="docs-nav-tab" id="product-nav-btn">
-                            Product
-                        </button>
-                        <a href="/docs" class="docs-nav-tab">
-                            Docs
-                        </a>
-                        <a href="/pricing" class="docs-nav-tab">
-                            Pricing
-                        </a>
-                    </nav>
-
-                    <!-- Download Button -->
-                    <a href="/download" class="special-button">Download</a>
-
+                    <!-- Theme Toggle (Desktop) -->
                     <button id="docs-header-theme-toggle" class="docs-header-theme-toggle" title="Toggle dark/light mode" aria-label="Toggle theme">
                         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M11.5556 10.4445C8.48717 10.4445 6.00005 7.95743 6.00005 4.88899C6.00005 3.68721 6.38494 2.57877 7.03294 1.66943C4.04272 2.22766 1.77783 4.84721 1.77783 8.0001C1.77783 11.5592 4.66317 14.4445 8.22228 14.4445C11.2196 14.4445 13.7316 12.3948 14.4525 9.62321C13.6081 10.1414 12.6187 10.4445 11.5556 10.4445Z" fill="currentColor"/>
                         </svg>
                     </button>
+
+                    <!-- Download Button -->
+                    <a href="/download" class="header-btn header-btn-primary">
+                        <span class="btn-content">Download</span>
+                    </a>
 
                     <!-- Mobile Menu Button -->
                     <button class="docs-header-mobile-menu" id="docs-header-mobile-menu" aria-label="Open menu">
