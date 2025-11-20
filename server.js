@@ -155,6 +155,7 @@ app.use('/shared', express.static(path.join(__dirname, 'src/shared')));
 app.use('/main', express.static(path.join(__dirname, 'src/main')));
 app.use('/docs', express.static(path.join(__dirname, 'src/docs')));
 app.use('/legal', express.static(path.join(__dirname, 'src/legal')));
+app.use('/downloads', express.static(path.join(__dirname, 'src/downloads')));
 
 
 // Rate limiting
@@ -1823,6 +1824,11 @@ app.get('/main', (req, res) => {
 
 app.get('/settings', (req, res) => {
     res.sendFile(path.join(__dirname, 'src', 'docs', 'settings.html'));
+});
+
+// Downloads section
+app.get('/download', (req, res) => {
+    res.sendFile(path.join(__dirname, 'src', 'downloads', 'index.html'));
 });
 
 // Legal section - main entry point

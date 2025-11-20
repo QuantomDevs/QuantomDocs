@@ -1,0 +1,862 @@
+/**
+ * Downloads Page Styles
+ * Modern design with proper CSS variables integration
+ */
+
+/* ===========================
+   Global Styles
+   =========================== */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family: var(--font-primary);
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    font-size: var(--font-size-md);
+    line-height: var(--line-height-md);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    padding-top: 64px; /* Account for fixed header */
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.download-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.download-container {
+    max-width: var(--max-width-content);
+    margin: 0 auto;
+    padding: var(--spacing-3xl) var(--spacing-xl);
+    width: 100%;
+}
+
+/* ===========================
+   Page Header
+   =========================== */
+.page-header {
+    text-align: left;
+    margin-bottom: var(--spacing-2xl);
+}
+
+.page-header h1 {
+    font-size: 2.75rem;
+    font-weight: var(--font-weight-bold);
+    margin-bottom: var(--spacing-md);
+    color: var(--text-primary);
+}
+
+.page-header p {
+    font-size: var(--font-size-lg);
+    color: var(--text-secondary);
+    max-width: 600px;
+}
+
+/* ===========================
+   Scroll Navigation
+   =========================== */
+.scroll-navigation {
+    border-bottom: 1px solid var(--border-primary);
+    margin-bottom: var(--spacing-2xl);
+    position: sticky;
+    top: 64px; /* Below fixed header */
+    background-color: var(--bg-primary);
+    z-index: var(--z-sticky);
+    padding-top: var(--spacing-sm);
+}
+
+.nav-links-list {
+    display: flex;
+    gap: var(--spacing-lg);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+}
+
+.nav-links-list::-webkit-scrollbar {
+    display: none;
+}
+
+.nav-link {
+    background: none;
+    border: none;
+    padding: var(--spacing-sm) 0;
+    margin-bottom: -1px;
+    text-decoration: none;
+    font-size: var(--font-size-md);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: color var(--transition-normal);
+    border-bottom: 2px solid transparent;
+    white-space: nowrap;
+    font-weight: var(--font-weight-medium);
+}
+
+.nav-link:hover {
+    color: var(--text-primary);
+}
+
+.nav-link.active {
+    color: var(--text-primary);
+    border-bottom-color: var(--accent-color);
+}
+
+/* ===========================
+   Product Sections
+   =========================== */
+.product-sections-container {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-2xl);
+}
+
+.product-section {
+    scroll-margin-top: 130px; /* Account for sticky header + nav */
+}
+
+.product-card {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-2xl);
+    align-items: center;
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-primary);
+    border-radius: var(--radius-xl);
+    padding: var(--spacing-2xl);
+    transition: border-color var(--transition-normal), box-shadow var(--transition-normal), transform var(--transition-normal);
+}
+
+/* ===========================
+   Product Info
+   =========================== */
+.product-info h2 {
+    font-size: var(--font-size-2xl);
+    font-weight: var(--font-weight-semibold);
+    margin-bottom: var(--spacing-sm);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    color: var(--text-primary);
+}
+
+.new-tag,
+.beta-tag {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    padding: 2px 8px;
+    border-radius: 4px;
+    text-transform: uppercase;
+}
+
+.new-tag {
+    background-color: var(--accent-color);
+    color: var(--bg-primary);
+}
+
+.beta-tag {
+    background-color: var(--text-warning);
+    color: var(--bg-primary);
+}
+
+.coming-soon-badge,
+.new-badge {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    font-size: 11px;
+    font-weight: var(--font-weight-semibold);
+    padding: 4px 10px;
+    border-radius: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    z-index: 1;
+}
+
+.coming-soon-badge {
+    background-color: var(--text-info);
+    color: var(--bg-primary);
+}
+
+.new-badge {
+    background-color: var(--accent-color);
+    color: var(--bg-primary);
+}
+
+.product-description {
+    color: var(--text-secondary);
+    line-height: var(--line-height-lg);
+    margin-bottom: var(--spacing-lg);
+    font-size: var(--font-size-md);
+}
+
+.product-links {
+    display: flex;
+    gap: var(--spacing-lg);
+    margin-bottom: var(--spacing-xl);
+    flex-wrap: wrap;
+}
+
+.product-link {
+    color: var(--text-secondary);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    transition: color var(--transition-normal);
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-medium);
+}
+
+.product-link:hover {
+    color: var(--accent-color);
+}
+
+.external-link-icon {
+    width: 16px;
+    height: 16px;
+    stroke: currentColor;
+    stroke-width: 2;
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+/* ===========================
+   Download Options & Buttons
+   =========================== */
+.download-options {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+.download-button {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    padding: var(--spacing-md) var(--spacing-lg);
+    background: var(--swatch--transparent);
+    border: 1px solid var(--border-primary);
+    color: var(--text-secondary);
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    text-align: left;
+    font-family: var(--font-primary);
+    font-size: var(--font-size-md);
+    position: relative;
+}
+
+.download-button.has-badge {
+    overflow: visible;
+}
+
+.download-button:hover:not(.active) {
+    border-color: var(--border-secondary);
+    background-color: rgba(255, 255, 255, 0.02);
+    transform: translateX(2px);
+}
+
+.download-button.active {
+    background-color: var(--accent-color);
+    border-color: var(--accent-color);
+    color: var(--bg-primary);
+    box-shadow: 0 4px 12px rgba(38, 189, 108, 0.15);
+}
+
+.os-details {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.os-icon {
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+}
+
+.download-button.active .os-icon {
+    fill: var(--bg-primary);
+}
+
+.os-info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.os-name {
+    font-weight: var(--font-weight-medium);
+    color: inherit;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+.download-button.active .os-name {
+    font-weight: var(--font-weight-semibold);
+}
+
+.os-version {
+    font-size: var(--font-size-sm);
+    color: var(--text-tertiary);
+}
+
+.download-button.active .os-version {
+    color: var(--bg-primary);
+    opacity: 0.8;
+}
+
+/* ===========================
+   Dropdown
+   =========================== */
+.download-option-group {
+    position: relative;
+}
+
+.dropdown-arrow {
+    width: 16px;
+    height: 16px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: transform var(--transition-normal);
+    flex-shrink: 0;
+}
+
+.download-option-group.open .dropdown-arrow {
+    transform: rotate(180deg);
+}
+
+.dropdown-content {
+    position: absolute;
+    top: calc(100% + var(--spacing-xs));
+    left: 0;
+    right: 0;
+    z-index: var(--z-dropdown);
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-secondary);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5), 0 4px 12px rgba(0, 0, 0, 0.3);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all var(--transition-fast);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-xs);
+    backdrop-filter: blur(10px);
+}
+
+.download-option-group.open .dropdown-content {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.dropdown-item {
+    width: 100%;
+    text-align: left;
+    background: var(--bg-secondary);
+    cursor: pointer;
+    border: 1px solid var(--border-primary);
+    color: var(--text-secondary);
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-md);
+    font-family: var(--font-primary);
+    transition: all var(--transition-fast);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.dropdown-item:hover {
+    background-color: var(--bg-tertiary);
+    border-color: var(--accent-color);
+    color: var(--text-primary);
+    transform: translateX(2px);
+}
+
+.chip-icon {
+    width: 18px;
+    height: 18px;
+}
+
+/* ===========================
+   Install Button
+   =========================== */
+.install-button {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-md) var(--spacing-xl);
+    background-color: var(--accent-color);
+    color: var(--bg-primary);
+    border: none;
+    border-radius: var(--radius-lg);
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-semibold);
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    font-family: var(--font-primary);
+}
+
+.install-button:hover {
+    background-color: var(--accent-color-dark);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+.install-button .external-link-icon {
+    width: 18px;
+    height: 18px;
+}
+
+/* ===========================
+   CLI Command
+   =========================== */
+.cli-command {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-primary);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-md) var(--spacing-lg);
+    margin-top: var(--spacing-md);
+}
+
+.command-text {
+    font-family: var(--font-code);
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.copy-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    border-radius: var(--radius-md);
+    flex-shrink: 0;
+}
+
+.copy-button:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+    color: var(--text-primary);
+}
+
+.copy-icon {
+    width: 16px;
+    height: 16px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+/* ===========================
+   Docker Compose
+   =========================== */
+.compose-command-container {
+    position: relative;
+    margin-top: var(--spacing-md);
+}
+
+.compose-text {
+    width: 100%;
+    min-height: 180px;
+    resize: none;
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-primary);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-md);
+    font-family: var(--font-code);
+    color: var(--text-secondary);
+    line-height: var(--line-height-lg);
+    font-size: var(--font-size-sm);
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.compose-text:focus {
+    outline: none;
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 3px rgba(38, 189, 108, 0.1);
+}
+
+.compose-text:hover {
+    border-color: var(--border-secondary);
+}
+
+.compose-command-container .copy-button {
+    position: absolute;
+    top: var(--spacing-sm);
+    right: var(--spacing-sm);
+}
+
+/* ===========================
+   Product Preview
+   =========================== */
+.product-preview {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-primary);
+}
+
+.product-preview img {
+    max-width: 100%;
+    height: auto;
+    border-radius: var(--radius-md);
+}
+
+/* ===========================
+   Call-to-Action Section
+   =========================== */
+.cta-section {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: var(--spacing-3xl) var(--spacing-xl);
+    margin-top: var(--spacing-3xl);
+    gap: var(--spacing-lg);
+    overflow: hidden;
+    background: linear-gradient(180deg, var(--bg-primary) 0%, #0a0e1a 50%, #050810 100%);
+    border-radius: var(--radius-xl);
+}
+
+.cta-content {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-lg);
+}
+
+.cta-logo {
+    width: 64px;
+    height: 64px;
+    margin-bottom: var(--spacing-md);
+}
+
+.cta-section h2 {
+    font-size: var(--font-size-3xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.cta-section p {
+    font-size: var(--font-size-lg);
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+.cta-button {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-md) var(--spacing-2xl);
+    background-color: var(--accent-color);
+    color: var(--bg-primary);
+    border: none;
+    border-radius: 2000px;
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-semibold);
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    text-decoration: none;
+    font-family: var(--font-primary);
+}
+
+.cta-button:hover {
+    background-color: var(--accent-color-dark);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+.apple-icon {
+    width: 24px;
+    height: 24px;
+}
+
+/* ===========================
+   Starfield Animation
+   =========================== */
+.starfield {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+}
+
+.starfield::before,
+.starfield::after {
+    content: '';
+    position: absolute;
+    width: 2px;
+    height: 2px;
+    background: transparent;
+    border-radius: 50%;
+}
+
+/* Small stars - fast twinkle */
+.starfield::before {
+    box-shadow:
+        10px 20px 0 0 rgba(255, 255, 255, 0.8),
+        50px 80px 0 0 rgba(255, 255, 255, 0.6),
+        120px 40px 0 0 rgba(255, 255, 255, 0.9),
+        200px 100px 0 0 rgba(255, 255, 255, 0.7),
+        280px 60px 0 0 rgba(255, 255, 255, 0.5),
+        340px 140px 0 0 rgba(255, 255, 255, 0.8),
+        420px 30px 0 0 rgba(255, 255, 255, 0.6),
+        500px 120px 0 0 rgba(255, 255, 255, 0.9),
+        580px 80px 0 0 rgba(255, 255, 255, 0.7),
+        650px 50px 0 0 rgba(255, 255, 255, 0.8),
+        720px 110px 0 0 rgba(255, 255, 255, 0.6),
+        800px 70px 0 0 rgba(255, 255, 255, 0.9),
+        880px 130px 0 0 rgba(255, 255, 255, 0.7),
+        950px 40px 0 0 rgba(255, 255, 255, 0.8),
+        1020px 90px 0 0 rgba(255, 255, 255, 0.6),
+        1100px 150px 0 0 rgba(255, 255, 255, 0.9),
+        30px 160px 0 0 rgba(255, 255, 255, 0.7),
+        100px 190px 0 0 rgba(255, 255, 255, 0.8),
+        180px 210px 0 0 rgba(255, 255, 255, 0.6),
+        260px 180px 0 0 rgba(255, 255, 255, 0.9),
+        330px 220px 0 0 rgba(255, 255, 255, 0.7),
+        410px 170px 0 0 rgba(255, 255, 255, 0.8),
+        490px 240px 0 0 rgba(255, 255, 255, 0.6),
+        570px 200px 0 0 rgba(255, 255, 255, 0.9),
+        640px 160px 0 0 rgba(255, 255, 255, 0.7),
+        710px 230px 0 0 rgba(255, 255, 255, 0.8),
+        790px 190px 0 0 rgba(255, 255, 255, 0.6),
+        870px 250px 0 0 rgba(255, 255, 255, 0.9),
+        940px 180px 0 0 rgba(255, 255, 255, 0.7),
+        1010px 220px 0 0 rgba(255, 255, 255, 0.8);
+    animation: twinkle 3s infinite alternate;
+}
+
+/* Medium stars - slower twinkle */
+.starfield::after {
+    width: 3px;
+    height: 3px;
+    box-shadow:
+        80px 30px 0 0 rgba(38, 189, 108, 0.6),
+        160px 90px 0 0 rgba(88, 166, 255, 0.7),
+        250px 120px 0 0 rgba(255, 255, 255, 0.8),
+        360px 50px 0 0 rgba(38, 189, 108, 0.5),
+        450px 140px 0 0 rgba(88, 166, 255, 0.6),
+        540px 70px 0 0 rgba(255, 255, 255, 0.9),
+        620px 100px 0 0 rgba(38, 189, 108, 0.7),
+        700px 160px 0 0 rgba(88, 166, 255, 0.8),
+        780px 40px 0 0 rgba(255, 255, 255, 0.6),
+        860px 130px 0 0 rgba(38, 189, 108, 0.8),
+        930px 80px 0 0 rgba(88, 166, 255, 0.7),
+        1000px 110px 0 0 rgba(255, 255, 255, 0.9),
+        1080px 150px 0 0 rgba(38, 189, 108, 0.6),
+        60px 200px 0 0 rgba(88, 166, 255, 0.8),
+        140px 230px 0 0 rgba(255, 255, 255, 0.7),
+        220px 190px 0 0 rgba(38, 189, 108, 0.9),
+        300px 250px 0 0 rgba(88, 166, 255, 0.6),
+        380px 210px 0 0 rgba(255, 255, 255, 0.8),
+        460px 180px 0 0 rgba(38, 189, 108, 0.7),
+        540px 240px 0 0 rgba(88, 166, 255, 0.9);
+    animation: twinkle 5s infinite alternate-reverse, float 20s infinite linear;
+}
+
+@keyframes twinkle {
+    0%, 100% {
+        opacity: 0.3;
+        transform: scale(0.8);
+    }
+    50% {
+        opacity: 1;
+        transform: scale(1.2);
+    }
+}
+
+@keyframes float {
+    0% {
+        transform: translateY(0) translateX(0);
+    }
+    25% {
+        transform: translateY(-10px) translateX(5px);
+    }
+    50% {
+        transform: translateY(0) translateX(10px);
+    }
+    75% {
+        transform: translateY(10px) translateX(5px);
+    }
+    100% {
+        transform: translateY(0) translateX(0);
+    }
+}
+
+/* ===========================
+   Responsive Design
+   =========================== */
+
+/* Tablet */
+@media (max-width: 1023px) {
+    .download-container {
+        padding: var(--spacing-2xl) var(--spacing-lg);
+    }
+
+    .page-header h1 {
+        font-size: 2.25rem;
+    }
+
+    .product-card {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-xl);
+        padding: var(--spacing-xl);
+    }
+
+    .product-preview {
+        order: -1; /* Move image to top on mobile */
+    }
+
+    .nav-links-list {
+        gap: var(--spacing-md);
+    }
+}
+
+/* Mobile */
+@media (max-width: 767px) {
+    body {
+        padding-top: 64px;
+    }
+
+    .download-container {
+        padding: var(--spacing-xl) var(--spacing-md);
+    }
+
+    .page-header h1 {
+        font-size: 2rem;
+    }
+
+    .page-header p {
+        font-size: var(--font-size-md);
+    }
+
+    .scroll-navigation {
+        top: 64px;
+        padding-top: var(--spacing-xs);
+    }
+
+    .product-card {
+        padding: var(--spacing-lg);
+    }
+
+    .product-info h2 {
+        font-size: var(--font-size-xl);
+    }
+
+    .product-links {
+        flex-direction: column;
+        gap: var(--spacing-sm);
+    }
+
+    .download-button {
+        padding: var(--spacing-sm) var(--spacing-md);
+    }
+
+    .os-details {
+        gap: var(--spacing-sm);
+    }
+
+    .os-icon {
+        width: 20px;
+        height: 20px;
+    }
+
+    .cta-section {
+        padding: var(--spacing-2xl) var(--spacing-md);
+    }
+
+    .cta-section h2 {
+        font-size: var(--font-size-2xl);
+    }
+
+    .cta-logo {
+        width: 48px;
+        height: 48px;
+    }
+}
+
+/* ===========================
+   Accessibility
+   =========================== */
+
+/* Focus visible states */
+.nav-link:focus-visible,
+.download-button:focus-visible,
+.product-link:focus-visible,
+.install-button:focus-visible,
+.cta-button:focus-visible,
+.copy-button:focus-visible {
+    outline: 2px solid var(--accent-color);
+    outline-offset: 2px;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        transition: none !important;
+        animation: none !important;
+    }
+
+    html {
+        scroll-behavior: auto;
+    }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+    .product-card {
+        border-width: 2px;
+    }
+
+    .download-button {
+        border-width: 2px;
+    }
+}
