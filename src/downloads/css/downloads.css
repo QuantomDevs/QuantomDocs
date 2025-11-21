@@ -496,7 +496,7 @@ body {
 
 .compose-text {
     width: 100%;
-    min-height: 180px;
+    min-height: 400px;
     resize: none;
     background-color: var(--bg-primary);
     border: 1px solid var(--border-primary);
@@ -556,8 +556,8 @@ body {
     margin-top: var(--spacing-3xl);
     gap: var(--spacing-lg);
     overflow: hidden;
-    background: linear-gradient(180deg, var(--bg-primary) 0%, #0a0e1a 50%, #050810 100%);
     border-radius: var(--radius-xl);
+    isolation: isolate;
 }
 
 .cta-content {
@@ -617,118 +617,25 @@ body {
 }
 
 /* ===========================
-   Starfield Animation
+   tsParticles Positioning
    =========================== */
-.starfield {
+#tsparticles {
+    position: absolute;
+    top: auto;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 60%;
+    z-index: 1;
+    pointer-events: none;
+}
+
+#tsparticles canvas {
     position: absolute;
     top: 0;
     left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 1;
-}
-
-.starfield::before,
-.starfield::after {
-    content: '';
-    position: absolute;
-    width: 2px;
-    height: 2px;
-    background: transparent;
-    border-radius: 50%;
-}
-
-/* Small stars - fast twinkle */
-.starfield::before {
-    box-shadow:
-        10px 20px 0 0 rgba(255, 255, 255, 0.8),
-        50px 80px 0 0 rgba(255, 255, 255, 0.6),
-        120px 40px 0 0 rgba(255, 255, 255, 0.9),
-        200px 100px 0 0 rgba(255, 255, 255, 0.7),
-        280px 60px 0 0 rgba(255, 255, 255, 0.5),
-        340px 140px 0 0 rgba(255, 255, 255, 0.8),
-        420px 30px 0 0 rgba(255, 255, 255, 0.6),
-        500px 120px 0 0 rgba(255, 255, 255, 0.9),
-        580px 80px 0 0 rgba(255, 255, 255, 0.7),
-        650px 50px 0 0 rgba(255, 255, 255, 0.8),
-        720px 110px 0 0 rgba(255, 255, 255, 0.6),
-        800px 70px 0 0 rgba(255, 255, 255, 0.9),
-        880px 130px 0 0 rgba(255, 255, 255, 0.7),
-        950px 40px 0 0 rgba(255, 255, 255, 0.8),
-        1020px 90px 0 0 rgba(255, 255, 255, 0.6),
-        1100px 150px 0 0 rgba(255, 255, 255, 0.9),
-        30px 160px 0 0 rgba(255, 255, 255, 0.7),
-        100px 190px 0 0 rgba(255, 255, 255, 0.8),
-        180px 210px 0 0 rgba(255, 255, 255, 0.6),
-        260px 180px 0 0 rgba(255, 255, 255, 0.9),
-        330px 220px 0 0 rgba(255, 255, 255, 0.7),
-        410px 170px 0 0 rgba(255, 255, 255, 0.8),
-        490px 240px 0 0 rgba(255, 255, 255, 0.6),
-        570px 200px 0 0 rgba(255, 255, 255, 0.9),
-        640px 160px 0 0 rgba(255, 255, 255, 0.7),
-        710px 230px 0 0 rgba(255, 255, 255, 0.8),
-        790px 190px 0 0 rgba(255, 255, 255, 0.6),
-        870px 250px 0 0 rgba(255, 255, 255, 0.9),
-        940px 180px 0 0 rgba(255, 255, 255, 0.7),
-        1010px 220px 0 0 rgba(255, 255, 255, 0.8);
-    animation: twinkle 3s infinite alternate;
-}
-
-/* Medium stars - slower twinkle */
-.starfield::after {
-    width: 3px;
-    height: 3px;
-    box-shadow:
-        80px 30px 0 0 rgba(38, 189, 108, 0.6),
-        160px 90px 0 0 rgba(88, 166, 255, 0.7),
-        250px 120px 0 0 rgba(255, 255, 255, 0.8),
-        360px 50px 0 0 rgba(38, 189, 108, 0.5),
-        450px 140px 0 0 rgba(88, 166, 255, 0.6),
-        540px 70px 0 0 rgba(255, 255, 255, 0.9),
-        620px 100px 0 0 rgba(38, 189, 108, 0.7),
-        700px 160px 0 0 rgba(88, 166, 255, 0.8),
-        780px 40px 0 0 rgba(255, 255, 255, 0.6),
-        860px 130px 0 0 rgba(38, 189, 108, 0.8),
-        930px 80px 0 0 rgba(88, 166, 255, 0.7),
-        1000px 110px 0 0 rgba(255, 255, 255, 0.9),
-        1080px 150px 0 0 rgba(38, 189, 108, 0.6),
-        60px 200px 0 0 rgba(88, 166, 255, 0.8),
-        140px 230px 0 0 rgba(255, 255, 255, 0.7),
-        220px 190px 0 0 rgba(38, 189, 108, 0.9),
-        300px 250px 0 0 rgba(88, 166, 255, 0.6),
-        380px 210px 0 0 rgba(255, 255, 255, 0.8),
-        460px 180px 0 0 rgba(38, 189, 108, 0.7),
-        540px 240px 0 0 rgba(88, 166, 255, 0.9);
-    animation: twinkle 5s infinite alternate-reverse, float 20s infinite linear;
-}
-
-@keyframes twinkle {
-    0%, 100% {
-        opacity: 0.3;
-        transform: scale(0.8);
-    }
-    50% {
-        opacity: 1;
-        transform: scale(1.2);
-    }
-}
-
-@keyframes float {
-    0% {
-        transform: translateY(0) translateX(0);
-    }
-    25% {
-        transform: translateY(-10px) translateX(5px);
-    }
-    50% {
-        transform: translateY(0) translateX(10px);
-    }
-    75% {
-        transform: translateY(10px) translateX(5px);
-    }
-    100% {
-        transform: translateY(0) translateX(0);
-    }
+    width: 100% !important;
+    height: 100% !important;
 }
 
 /* ===========================

@@ -268,7 +268,8 @@ services:
 
             <!-- Call-to-Action Section -->
             <section class="cta-section">
-                <div class="starfield"></div>
+                <!-- Container for particle animation in the background -->
+                <div id="tsparticles"></div>
                 <div class="cta-content">
                     <img class="cta-logo" src="/shared/images/favicon/favicon.png" alt="Quantom Logo">
                     <h2>Ready to Build Real Software?</h2>
@@ -289,6 +290,10 @@ services:
     <!-- Scripts -->
     <script type="module" src="/shared/js/header.js"></script>
     <script type="module" src="/shared/js/footer.js"></script>
+
+    <!-- tsParticles Library -->
+    <script src="https://cdn.jsdelivr.net/npm/tsparticles@2.9.3/tsparticles.bundle.min.js"></script>
+
     <script src="/downloads/js/downloads.js"></script>
 </body>
 </html>

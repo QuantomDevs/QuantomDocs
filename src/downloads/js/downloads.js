@@ -308,4 +308,87 @@ document.addEventListener('DOMContentLoaded', function () {
     ╚═══════════════════════════════════════╝
     `, 'color: #26bd6c; font-family: monospace;');
 
+    // ==================== 11. TSPARTICLES CONFIGURATION ====================
+
+    // Check if tsParticles is loaded
+    if (typeof tsParticles !== 'undefined') {
+        // Load and configure the tsParticles instance
+        tsParticles.load("tsparticles", {
+            // IMPORTANT: Disable fullscreen mode to contain particles within the container
+            fullScreen: {
+                enable: false,
+                zIndex: 1
+            },
+            // Background is transparent as it comes from the CSS section
+            background: {
+                color: {
+                    value: "transparent"
+                }
+            },
+            // We don't want interactivity with the mouse
+            interactivity: {
+                events: {
+                    onHover: {
+                        enable: false,
+                    },
+                    onClick: {
+                        enable: false,
+                    },
+                    resize: true
+                }
+            },
+            // Here we define the appearance and behavior of the particles (stars)
+            particles: {
+                // Color of the stars
+                color: {
+                    value: "#ffffff"
+                },
+                // No lines between the stars
+                links: {
+                    enable: false
+                },
+                // Particles are moving
+                move: {
+                    enable: true,
+                    speed: 0.4, // very slow
+                    direction: "none", // in random directions
+                    random: true,
+                    straight: false,
+                    outModes: {
+                        default: "out" // Disappear at the edge
+                    }
+                },
+                // Number of stars
+                number: {
+                    value: 120, // A moderate number
+                    density: {
+                        enable: true,
+                        area: 800 // Distributed over an area
+                    }
+                },
+                // Opacity (important for the "twinkle" effect)
+                opacity: {
+                    value: { min: 0.1, max: 0.6 }, // Random opacity between 10% and 60%
+                    animation: {
+                        enable: true, // Opacity is animated
+                        speed: 0.8,   // Slow fade in and out
+                        sync: false
+                    }
+                },
+                // Shape of the stars (circles)
+                shape: {
+                    type: "circle"
+                },
+                // Size of the stars
+                size: {
+                    value: { min: 0.5, max: 2.0 } // Random size for a natural look
+                }
+            }
+        });
+
+        console.log('%ctsParticles initialized successfully', 'color: #26bd6c; font-weight: bold;');
+    } else {
+        console.warn('tsParticles library not loaded');
+    }
+
 });
