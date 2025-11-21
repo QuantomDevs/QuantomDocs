@@ -1372,6 +1372,7 @@ body.no-scroll {
     color: var(--text-color);
     font-weight: 700;
     padding: var(--spacing-xs);
+    line-height: var(--spacing-xl);
 }
 
 /* Split Button Container */

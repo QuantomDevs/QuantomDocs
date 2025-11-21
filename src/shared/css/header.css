@@ -7,20 +7,25 @@
 .docs-header {
     position: fixed;
     top: 0;
-    left: 0;
-    right: 0;
-    width: 100%;
     z-index: 1000;
-    background: var(--background-color);
-    border-bottom: 1px solid var(--border-color);
-    transition: all 0.2s ease;
+    border: 1px solid var(--border-color);
+    line-height: 58px;
+    padding: 0 10px 0 20px;
+    height: 58px;
+    border-radius: 2222px;
+    left: 100px;
+    margin-top: 20px;
+    min-width: 680px;
+    right: 100px;
+    align-content: center;
+    backdrop-filter: blur(20px);
+    transition: all .5s cubic-bezier(.25,.8,.25,1);
+    background-color: var(--shadow-primary);
 }
 
 .docs-header-inner {
-    max-width: 1400px;
     margin: 0 auto;
     padding: 0 24px;
-    height: 64px;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -40,10 +45,9 @@
     position: relative;
     display: flex;
     align-items: center;
-    gap: 4px;
-    padding: 8px 16px;
+    padding: 8px 25px;
     height: 46px;
-    color: var(--text-color);
+    color: var(--text-secondary);
     text-decoration: none;
     font-size: 14px;
     font-weight: 500;
@@ -375,5 +379,4 @@
 /* Scrolled State */
 .docs-header.scrolled {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    background: var(--card-background-color);
 }
