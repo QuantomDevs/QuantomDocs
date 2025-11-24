@@ -1,0 +1,11 @@
+{
+  "users": [
+    {
+      "username": "admin",
+      "password": "$2b$10$y2CJO5uLR.Tm.EHu/XP84OlnKEMAM2pPK3RJ93zk3Llrz19JnwNoC",
+      "role": "admin",
+      "authCode": "qnt_auth_2025_admin_secure_token_xyz789",
+      "createdAt": "2025-09-16T14:36:55.656Z"
+    }
+  ]
+}

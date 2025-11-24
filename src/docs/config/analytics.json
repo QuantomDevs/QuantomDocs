@@ -1,0 +1,83 @@
+{
+  "months": {
+    "2025-10": {
+      "totalVisits": 450,
+      "pages": {
+        "/main": 49,
+        "/docs": 30,
+        "/downloads": 22,
+        "/settings": 13,
+        "/settings/": 2,
+        "/legal": 7,
+        "/legal/": 7,
+        "/legal/terms-of-service": 6,
+        "/legal/privacy-policy": 9,
+        "/legal/impressum": 8,
+        "/legal/content/terms-of-service.md": 9,
+        "/legal/content/privacy-policy.md": 10,
+        "/legal/content/impressum.md": 12,
+        "/downloads/LobbySystem-2.1.0-build3.jar": 1,
+        "/download/portfolio-site": 3,
+        "/download/quantom-core": 1,
+        "/download/downloads/portfolio-site-v2.0.0.zip": 1
+      },
+      "markdownFiles": {
+        "/docs/quantom/getting-started/installation": 17,
+        "/docs/quantom/01-getting-started/about-quantom": 126,
+        "/docs/quantom/01-getting-started/features-overview": 8,
+        "/docs/quantom/01-getting-started/first-steps": 9,
+        "/docs/quantom/01-getting-started/component-test": 21,
+        "/docs/quantom/01-getting-started/installation": 67,
+        "/docs/quantom/01-getting-started/project-documentation": 4,
+        "/docs/quantom/01-getting-started/quick-start": 3,
+        "/docs/quantom/02-configuration/configuration-basics": 4,
+        "/docs/quantom/02-configuration/markdown-features-demo": 1
+      }
+    },
+    "2025-11": {
+      "totalVisits": 313,
+      "pages": {
+        "/main": 40,
+        "/docs": 22,
+        "/settings": 13,
+        "/etc/passwd/super-categories": 2,
+        "/downloads": 3,
+        "/product-service": 1,
+        "/legal/": 1,
+        "/legal/content/terms-of-service.md": 1,
+        "/startups": 1,
+        "/download": 31,
+        "/downloads/": 2,
+        "/pricing": 1
+      },
+      "markdownFiles": {
+        "/docs/quantom/01-getting-started/installation": 11,
+        "/docs/quantom/01-getting-started/project-documentation": 2,
+        "/docs/quantom/01-getting-started/first-steps": 4,
+        "/docs/quantom/02-configuration/syntax-highlighting-test": 2,
+        "/docs/quantom/02-configuration/markdown-features-demo": 1,
+        "/docs/quantom/02-configuration/configuration-basics": 1,
+        "/docs/quantom/01-getting-started/quick-start": 1,
+        "/docs/quantom/01-getting-started/about-quantom": 4,
+        "/docs/quantom/01-getting-started/features-overview": 2,
+        "/docs/quantom/01-documentation/01-getting-started/about-quantom": 89,
+        "/docs/quantom/01-documentation/01-getting-started/component-test": 8,
+        "/docs/quantom/01-documentation/01-getting-started/features-overview": 42,
+        "/docs/quantom/01-documentation/01-getting-started/first-steps": 10,
+        "/docs/quantom/01-documentation/01-getting-started/project-documentation": 5,
+        "/docs/quantom/01-documentation/01-getting-started/installation": 8,
+        "/docs/quantom/01-documentation/01-getting-started/quick-start": 2,
+        "/docs/quantom/02-api_reference/01-getting-started/about-quantom": 1,
+        "/docs/terminus/01-documentation/02-connections/ssl": 1,
+        "/docs/terminus/01-documentation/03-configs/json-import": 1
+      }
+    }
+  },
+  "allTime": {
+    "totalVisits": 763,
+    "totalPages": 23,
+    "totalMarkdownFiles": 21,
+    "firstVisit": "2025-10-10T17:09:48.577Z",
+    "lastVisit": "2025-11-24T09:07:17.912Z"
+  }
+}
