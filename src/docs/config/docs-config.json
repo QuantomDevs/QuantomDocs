@@ -1,100 +1,69 @@
 {
+  "_comment_general": "Allgemeine Einstellungen für die Dokumentationsseite",
   "general": {
+    "_comment_default": "Legt fest, ob automatisch ein Standard-Produkt beim Laden von /docs angezeigt werden soll. Werte: true | false",
     "default": true,
+    "_comment_defaultProduct": "ID des Standard-Produkts, das beim Laden von /docs angezeigt wird (wenn 'default' true ist). Muss mit einer 'id' in der 'products' Liste übereinstimmen. Beispiel: 'quantom'",
     "defaultProduct": "quantom",
+    "_comment_sidebarRightHeaders": "Konfiguration für die rechte Sidebar (Inhaltsverzeichnis). Legt fest, welche Überschriftsebenen im Inhaltsverzeichnis angezeigt werden sollen.",
     "sidebarRightHeaders": {
+      "_comment_mainSectionHeader": "Zeigt H1-Überschriften im Inhaltsverzeichnis an. Werte: true | false",
       "mainSectionHeader": true,
+      "_comment_subSectionHeader": "Zeigt H2-Überschriften im Inhaltsverzeichnis an. Werte: true | false",
       "subSectionHeader": true,
+      "_comment_subSubSectionHeader": "Zeigt H3-Überschriften im Inhaltsverzeichnis an. Werte: true | false",
       "subSubSectionHeader": false
     },
-    "rightSidebarSectionGap": true,
-    "superCategories": {
-      "enabled": true,
-      "showSelectorWhenSingle": false,
-      "defaultSelection": "first",
-      "selectorPosition": "below-search",
-      "showBreadcrumbInContent": true,
-      "searchScope": "all"
-    }
+    "_comment_rightSidebarSectionGap": "Aktiviert Einrückung für H2 und H3 Überschriften im Inhaltsverzeichnis für bessere visuelle Hierarchie. Werte: true | false",
+    "rightSidebarSectionGap": true
   },
+  "_comment_header": "Konfiguration für den Header/Navigation-Bereich",
   "header": {
-    "navigation": {
-      "dropdownEnabled": true,
-      "showProductIcons": true,
-      "productDisplayOrder": "alphabetical",
-      "customOrder": ["quantom", "Terminus"],
-      "gridColumns": 2,
-      "dropdownAnimation": "fade",
-      "dropdownPosition": "below",
-      "buttonAlignment": {
-        "mainPage": "center",
-        "docsPage": "left"
-      },
-      "showButtonLabels": true,
-      "compactMode": false
-    }
-  },
-  "errorPages": {
-    "404": {
-      "redirect": {
-        "enabled": false,
-        "showQuickLinks": false,
-        "showSearchBar": false,
-        "links": [
-          {
-            "text": "Home",
-            "url": "/main",
-            "icon": "fas fa-home"
-          },
-          {
-            "text": "Documentation",
-            "url": "/docs",
-            "icon": "fas fa-book"
-          },
-          {
-            "text": "Downloads",
-            "url": "/downloads",
-            "icon": "fas fa-download"
-          },
-          {
-            "text": "Discord",
-            "url": "https://discord.gg/5gdthYHqSv",
-            "icon": "fab fa-discord",
-            "external": true
-          }
-        ]
-      },
-      "content": {
-        "title": "Page Not Found",
-        "description": "The page you're looking for **{requestedUrl}** doesn't exist or has been moved.\nLet's help you find what you need in the {productName} documentation.",
-        "searchPlaceholder": "Search for guides, tutorials, configuration...",
-        "homeButtonText": "Back to Homepage",
-        "supportMarkdown": true
-      },
-      "placeholders": {
-        "requestedUrl": true,
-        "timestamp": true,
-        "productName": true
+    "_comment_links": "Liste der Links, die im Header neben den Produkten angezeigt werden sollen. Jeder Link kann als normaler Link oder als 'Special Button' (hervorgehobener Button) angezeigt werden.",
+    "links": [
+      {
+        "_comment": "Downloads-Link - Hervorgehoben als Special Button",
+        "name": "Download",
+        "url": "/downloads",
+        "special": true,
+        "external": false
       }
-    }
+    ]
   },
+  "_comment_products": "Liste aller verfügbaren Produkte für die Dokumentation. Jedes Produkt wird als separater Bereich in der Dokumentation angezeigt.",
   "products": [
     {
+      "_comment": "Quantom Server Produkt-Konfiguration",
+      "_comment_id": "Eindeutige ID des Produkts. Wird in URLs und als Verzeichnisname verwendet. Format: Kleinbuchstaben, keine Leerzeichen. Beispiel: 'quantom'",
       "id": "quantom",
+      "_comment_name": "Anzeigename des Produkts. Wird in der Benutzeroberfläche angezeigt. Beispiel: 'Quantom Server'",
       "name": "Quantom Server",
+      "_comment_description": "Kurze Beschreibung des Produkts. Wird auf der Produkt-Übersichtsseite angezeigt. Maximal 150 Zeichen empfohlen.",
       "description": "High-performance Minecraft server software optimized for large networks",
+      "_comment_path": "Dateipfad zum Produkt-Verzeichnis (relativ zu src/docs/content/). Normalerweise identisch mit 'id'. Beispiel: 'quantom'",
       "path": "quantom",
+      "_comment_icon": "Icon/Emoji für das Produkt. Wird in der Navigation und Übersicht angezeigt. Kann ein Emoji oder Font Awesome Icon sein. Beispiel: '🚀' oder 'fas fa-rocket'",
       "icon": "🚀",
+      "_comment_showInDocs": "Bestimmt, ob dieses Produkt in der Dokumentation angezeigt wird. Werte: true (sichtbar) | false (versteckt)",
       "showInDocs": true,
+      "_comment_firstSide": "Pfad zur ersten Markdown-Datei, die beim Öffnen dieses Produkts geladen wird. Relativ zu src/docs/content/. Format: 'produkt-id/kategorie/Dateiname.md'. Beispiel: 'quantom/01-Getting-Started/Installation.md'",
       "firstSide": "quantom/01-Getting-Started/Installation.md"
     },
     {
+      "_comment": "Terminus Produkt-Konfiguration",
+      "_comment_id": "Eindeutige ID des Produkts",
       "id": "Terminus",
+      "_comment_name": "Anzeigename des Produkts",
       "name": "Test",
+      "_comment_description": "Kurze Beschreibung des Produkts",
       "description": "Terminus is a modern lightweight web based Terminal and remote file browser client.",
+      "_comment_path": "Dateipfad zum Produkt-Verzeichnis",
       "path": "terminus",
+      "_comment_icon": "Icon/Emoji für das Produkt",
       "icon": "🚀",
+      "_comment_showInDocs": "Sichtbarkeit in der Dokumentation",
       "showInDocs": true,
+      "_comment_firstSide": "Erste zu ladende Markdown-Datei",
       "firstSide": "terminus/01-Getting-Started/Installation.md"
     }
   ]

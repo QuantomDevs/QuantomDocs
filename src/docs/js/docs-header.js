@@ -69,6 +69,25 @@ function getCurrentProduct() {
 function generateHeaderHTML() {
     const products = headerDocsConfig?.products || [];
     const hasMultipleProducts = products.length > 1;
+    const headerLinks = headerDocsConfig?.header?.links || [];
+
+    // Separate special buttons from regular links
+    const regularLinks = headerLinks.filter(link => !link.special);
+    const specialButtons = headerLinks.filter(link => link.special);
+
+    // Generate regular links HTML
+    const regularLinksHTML = regularLinks.map(link => {
+        const target = link.external ? ' target="_blank"' : '';
+        const rel = link.external ? ' rel="noopener noreferrer"' : '';
+        return `<a href="${link.url}" class="docs-header-nav-link"${target}${rel}>${link.name}</a>`;
+    }).join('');
+
+    // Generate special buttons HTML
+    const specialButtonsHTML = specialButtons.map(link => {
+        const target = link.external ? ' target="_blank"' : '';
+        const rel = link.external ? ' rel="noopener noreferrer"' : '';
+        return `<a href="${link.url}" class="special-button"${target}${rel}>${link.name}</a>`;
+    }).join('');
 
     return `
         <div class="docs-header">
@@ -88,11 +107,12 @@ function generateHeaderHTML() {
 
                     <!-- Product Navigation (Desktop) -->
                     <nav class="docs-header-nav" aria-label="Main navigation">
+                        ${regularLinksHTML}
                         ${generateProductButtons(products)}
                     </nav>
 
-                    <!-- Download Button -->
-                    <a href="/download" class="special-button">Download</a>
+                    <!-- Special Buttons (from config) -->
+                    ${specialButtonsHTML}
 
                     <button id="docs-header-theme-toggle" class="docs-header-theme-toggle" title="Toggle dark/light mode" aria-label="Toggle theme">
                         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
