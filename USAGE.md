@@ -566,15 +566,7 @@ Before deploying to production:
 - [ ] **Enable rate limiting** (already configured)
 - [ ] **Restrict admin access** (IP whitelist if possible)
 
-### Environment Variables for Production
 
-```env
-NODE_ENV=production
-PORT=5005
-JWT_SECRET=<use-strong-generated-key>
-JWT_EXPIRES_IN=24h
-DISCORD_BOT_TOKEN=<your-bot-token>
-```
 
 ### Using PM2 (Process Manager)
 

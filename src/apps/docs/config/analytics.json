@@ -35,7 +35,7 @@
       }
     },
     "2025-11": {
-      "totalVisits": 349,
+      "totalVisits": 350,
       "pages": {
         "/main": 44,
         "/docs": 23,
@@ -60,7 +60,7 @@
         "/docs/quantom/01-getting-started/quick-start": 1,
         "/docs/quantom/01-getting-started/about-quantom": 4,
         "/docs/quantom/01-getting-started/features-overview": 2,
-        "/docs/quantom/01-documentation/01-getting-started/about-quantom": 103,
+        "/docs/quantom/01-documentation/01-getting-started/about-quantom": 104,
         "/docs/quantom/01-documentation/01-getting-started/component-test": 8,
         "/docs/quantom/01-documentation/01-getting-started/features-overview": 43,
         "/docs/quantom/01-documentation/01-getting-started/first-steps": 11,
@@ -81,10 +81,10 @@
     }
   },
   "allTime": {
-    "totalVisits": 799,
+    "totalVisits": 800,
     "totalPages": 23,
     "totalMarkdownFiles": 28,
     "firstVisit": "2025-10-10T17:09:48.577Z",
-    "lastVisit": "2025-11-25T19:30:16.646Z"
+    "lastVisit": "2025-11-25T20:16:13.129Z"
   }
 }

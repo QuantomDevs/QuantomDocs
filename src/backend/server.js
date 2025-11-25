@@ -15,9 +15,9 @@ const app = express();
 
 // Define safe base directories
 const SAFE_DIRECTORIES = {
-    content: path.join(__dirname, 'content'),
-    uploads: path.join(__dirname, 'src', 'main', 'downloads'),
-    data: path.join(__dirname, 'data')
+    content: path.join(__dirname, '..', '..', 'content', 'products'),
+    uploads: path.join(__dirname, '..', 'apps', 'main', 'downloads'),
+    data: path.join(__dirname, '..', '..', 'data')
 };
 
 /**
@@ -151,11 +151,11 @@ app.use((req, res, next) => {
 });
 
 // Serve static files from new structure
-app.use('/shared', express.static(path.join(__dirname, 'src/shared')));
-app.use('/main', express.static(path.join(__dirname, 'src/main')));
-app.use('/docs', express.static(path.join(__dirname, 'src/docs')));
-app.use('/legal', express.static(path.join(__dirname, 'src/legal')));
-app.use('/downloads', express.static(path.join(__dirname, 'src/downloads')));
+app.use('/components', express.static(path.join(__dirname, '..', 'components')));
+app.use('/shared', express.static(path.join(__dirname, '..', 'components'))); // Keep /shared for backward compatibility
+app.use('/main', express.static(path.join(__dirname, '..', 'apps', 'main')));
+app.use('/docs', express.static(path.join(__dirname, '..', 'apps', 'docs')));
+app.use('/downloads', express.static(path.join(__dirname, '..', 'apps', 'downloads')));
 
 
 // Rate limiting
@@ -178,9 +178,9 @@ const uploadLimiter = rateLimit({
 // Helper functions
 const readJsonFile = (filePath) => {
     try {
-        // Resolve path relative to src/main/config for main config files
+        // Resolve path relative to src/apps/main/config for main config files
         const fullPath = filePath.startsWith('config/')
-            ? path.join(__dirname, 'src', 'main', filePath)
+            ? path.join(__dirname, '..', 'apps', 'main', filePath)
             : filePath;
         if (fs.existsSync(fullPath)) {
             const data = fs.readFileSync(fullPath, 'utf8');
@@ -195,9 +195,9 @@ const readJsonFile = (filePath) => {
 
 const writeJsonFile = (filePath, data) => {
     try {
-        // Resolve path relative to src/main/config for main config files
+        // Resolve path relative to src/apps/main/config for main config files
         const fullPath = filePath.startsWith('config/')
-            ? path.join(__dirname, 'src', 'main', filePath)
+            ? path.join(__dirname, '..', 'apps', 'main', filePath)
             : filePath;
         fs.writeFileSync(fullPath, JSON.stringify(data, null, 2));
         return true;
@@ -208,7 +208,7 @@ const writeJsonFile = (filePath, data) => {
 };
 
 // Analytics helper functions
-const analyticsPath = path.join(__dirname, 'src', 'docs', 'config', 'analytics.json');
+const analyticsPath = path.join(__dirname, '..', 'apps', 'docs', 'config', 'analytics.json');
 
 const readAnalytics = () => {
     try {
@@ -311,7 +311,7 @@ const trackVisit = (urlPath, isMarkdownFile = false) => {
 };
 
 // Token blacklist helper functions
-const tokenBlacklistPath = path.join(__dirname, 'src', 'docs', 'config', 'token-blacklist.json');
+const tokenBlacklistPath = path.join(__dirname, '..', 'apps', 'docs', 'config', 'token-blacklist.json');
 
 const readBlacklist = () => {
     try {
@@ -583,8 +583,8 @@ app.post('/api/login', authLimiter, async (req, res) => {
             return res.status(400).json({ error: 'Username and password required' });
         }
 
-        // Load users (now from docs/config)
-        const usersPath = path.join(__dirname, 'src', 'docs', 'config', 'users.json');
+        // Load users (now from apps/docs/config)
+        const usersPath = path.join(__dirname, '..', 'apps', 'docs', 'config', 'users.json');
         const usersData = readJsonFile(usersPath);
         if (!usersData || !usersData.users) {
             return res.status(500).json({ error: 'User database not found' });
@@ -697,7 +697,7 @@ app.post('/api/refresh', verifyToken, (req, res) => {
 app.get('/api/docs/products/:productId/structure', (req, res) => {
     try {
         const { productId } = req.params;
-        const productPath = path.join(__dirname, 'src', 'docs', 'content', productId);
+        const productPath = path.join(__dirname, '..', '..', 'content', 'products', productId);
 
         // Check if product directory exists
         if (!fs.existsSync(productPath)) {
@@ -897,7 +897,7 @@ app.get('/api/docs/:product/:superCategory/:category/:file', (req, res) => {
 // Image upload configuration for editor
 const imageStorage = multer.diskStorage({
     destination: function (req, file, cb) {
-        const uploadPath = path.join(__dirname, 'src', 'docs', 'images');
+        const uploadPath = path.join(__dirname, '..', 'apps', 'docs', 'images');
 
         // Ensure directory exists
         if (!fs.existsSync(uploadPath)) {
@@ -1028,7 +1028,7 @@ app.post('/api/analytics/search', (req, res) => {
             return res.status(400).json({ error: 'Query is required' });
         }
 
-        const analyticsDir = path.join(__dirname, 'data', 'analytics');
+        const analyticsDir = path.join(__dirname, '..', '..', 'data', 'analytics');
         const searchLogPath = path.join(analyticsDir, 'search-queries.json');
 
         // Ensure directory exists
@@ -1073,7 +1073,7 @@ app.post('/api/analytics/search', (req, res) => {
 // User Management Routes
 app.get('/api/users', verifyToken, (req, res) => {
     try {
-        const usersPath = path.join(__dirname, 'src', 'docs', 'config', 'users.json');
+        const usersPath = path.join(__dirname, '..', 'apps', 'docs', 'config', 'users.json');
         const usersData = readJsonFile(usersPath);
 
         if (!usersData) {
@@ -1102,7 +1102,7 @@ app.post('/api/users', verifyToken, async (req, res) => {
             return res.status(400).json({ error: 'Username and password required' });
         }
 
-        const usersPath = path.join(__dirname, 'src', 'docs', 'config', 'users.json');
+        const usersPath = path.join(__dirname, '..', 'apps', 'docs', 'config', 'users.json');
         const usersData = readJsonFile(usersPath);
 
         if (!usersData) {
@@ -1151,7 +1151,7 @@ app.put('/api/users/:username', verifyToken, async (req, res) => {
         const { username } = req.params;
         const { role, password } = req.body;
 
-        const usersPath = path.join(__dirname, 'src', 'docs', 'config', 'users.json');
+        const usersPath = path.join(__dirname, '..', 'apps', 'docs', 'config', 'users.json');
         const usersData = readJsonFile(usersPath);
 
         if (!usersData) {
@@ -1200,7 +1200,7 @@ app.delete('/api/users/:username', verifyToken, (req, res) => {
             return res.status(400).json({ error: 'Cannot delete your own account' });
         }
 
-        const usersPath = path.join(__dirname, 'src', 'docs', 'config', 'users.json');
+        const usersPath = path.join(__dirname, '..', 'apps', 'docs', 'config', 'users.json');
         const usersData = readJsonFile(usersPath);
 
         if (!usersData) {
@@ -1234,7 +1234,7 @@ app.post('/api/change-password', verifyToken, async (req, res) => {
             return res.status(400).json({ error: 'Current and new password required' });
         }
 
-        const usersPath = path.join(__dirname, 'src', 'docs', 'config', 'users.json');
+        const usersPath = path.join(__dirname, '..', 'apps', 'docs', 'config', 'users.json');
         const usersData = readJsonFile(usersPath);
 
         if (!usersData) {
@@ -1269,7 +1269,7 @@ app.post('/api/change-password', verifyToken, async (req, res) => {
 // Config Management Routes
 app.get('/api/config/docs', verifyToken, (req, res) => {
     try {
-        const configPath = path.join(__dirname, 'src', 'docs', 'config', 'docs-config.json');
+        const configPath = path.join(__dirname, '..', 'apps', 'docs', 'config', 'docs-config.json');
         const configData = readJsonFile(configPath);
 
         if (!configData) {
@@ -1286,7 +1286,7 @@ app.get('/api/config/docs', verifyToken, (req, res) => {
 app.put('/api/config/docs', verifyToken, (req, res) => {
     try {
         const configData = req.body;
-        const configPath = path.join(__dirname, 'src', 'docs', 'config', 'docs-config.json');
+        const configPath = path.join(__dirname, '..', 'apps', 'docs', 'config', 'docs-config.json');
 
         if (writeJsonFile(configPath, configData)) {
             res.json({ success: true, message: 'Config updated successfully' });
@@ -1370,7 +1370,7 @@ app.post('/api/analytics/track', (req, res) => {
 app.get('/api/files/:product/tree', verifyToken, (req, res) => {
     try {
         const { product } = req.params;
-        const productPath = path.join(__dirname, 'src', 'docs', 'content', product);
+        const productPath = path.join(__dirname, '..', '..', 'content', 'products', product);
 
         if (!fs.existsSync(productPath)) {
             return res.status(404).json({ error: 'Product not found' });
@@ -1473,7 +1473,7 @@ app.post('/api/files/:product', verifyToken, (req, res) => {
             return res.status(400).json({ error: 'Type and name are required' });
         }
 
-        const basePath = path.join(__dirname, 'src', 'docs', 'content', product);
+        const basePath = path.join(__dirname, '..', '..', 'content', 'products', product);
         const targetPath = folderPath
             ? path.join(basePath, folderPath, name)
             : path.join(basePath, name);
@@ -1605,7 +1605,7 @@ app.post('/api/files/:product/rename', verifyToken, (req, res) => {
             return res.status(400).json({ error: 'Old path and new name are required' });
         }
 
-        const basePath = path.join(__dirname, 'src', 'docs', 'content', product);
+        const basePath = path.join(__dirname, '..', '..', 'content', 'products', product);
         const oldFullPath = path.join(basePath, oldPath);
         const directory = path.dirname(oldFullPath);
         const newFullPath = path.join(directory, newName);
@@ -1648,7 +1648,7 @@ app.post('/api/files/:product/move', verifyToken, (req, res) => {
             return res.status(400).json({ error: 'Source and target paths are required' });
         }
 
-        const basePath = path.join(__dirname, 'src', 'docs', 'content', product);
+        const basePath = path.join(__dirname, '..', '..', 'content', 'products', product);
         const sourceFullPath = path.join(basePath, sourcePath);
         const targetFullPath = path.join(basePath, targetPath, path.basename(sourcePath));
 
@@ -1690,7 +1690,7 @@ app.post('/api/files/:product/move', verifyToken, (req, res) => {
 app.post('/api/files/:product/upload', verifyToken, uploadLimiter, async (req, res) => {
     try {
         const { product } = req.params;
-        const uploadPath = path.join(__dirname, 'src', 'docs', 'content', product, 'images');
+        const uploadPath = path.join(__dirname, '..', '..', 'content', 'products', product, 'images');
 
         // Ensure directory exists
         if (!fs.existsSync(uploadPath)) {
@@ -1818,44 +1818,33 @@ app.get('/', (req, res) => {
 
 // Main section routes (without .html extension)
 app.get('/main', (req, res) => {
-    res.sendFile(path.join(__dirname, 'src', 'main', 'index.html'));
+    res.sendFile(path.join(__dirname, '..', 'apps', 'main', 'index.html'));
 });
 
 
 app.get('/settings', (req, res) => {
-    res.sendFile(path.join(__dirname, 'src', 'docs', 'settings.html'));
+    res.sendFile(path.join(__dirname, '..', 'apps', 'docs', 'settings.html'));
 });
 
 // Downloads section
 app.get('/download', (req, res) => {
-    res.sendFile(path.join(__dirname, 'src', 'downloads', 'index.html'));
-});
-
-// Legal section - main entry point
-app.get('/legal', (req, res) => {
-    res.sendFile(path.join(__dirname, 'src', 'legal', 'index.html'));
-});
-
-// Legal section - all nested routes (e.g., /legal/terms-of-service, /legal/privacy-policy)
-// The legal/index.html handles client-side routing based on the URL path
-app.get('/legal/*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'src', 'legal', 'index.html'));
+    res.sendFile(path.join(__dirname, '..', 'apps', 'downloads', 'index.html'));
 });
 
 // Docs section - main entry point
 app.get('/docs', (req, res) => {
-    res.sendFile(path.join(__dirname, 'src', 'docs', 'index.html'));
+    res.sendFile(path.join(__dirname, '..', 'apps', 'docs', 'index.html'));
 });
 
 // Docs section - all nested routes (e.g., /docs/quantom/getting-started/installation)
 // The docs/index.html handles client-side routing based on the URL path
 app.get('/docs/*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'src', 'docs', 'index.html'));
+    res.sendFile(path.join(__dirname, '..', 'apps', 'docs', 'index.html'));
 });
 
 // 404 handler for all unmatched routes
 app.use((req, res) => {
-    res.status(404).sendFile(path.join(__dirname, 'src', 'main', '404.html'));
+    res.status(404).sendFile(path.join(__dirname, '..', 'apps', 'main', '404.html'));
 });
 
 // Error handling middleware
@@ -1877,7 +1866,7 @@ app.listen(PORT, HOST, () => {
     console.log(`✓ Health check: http://localhost:${PORT}/api/health`);
 
     // Check if users.json exists
-    const usersPath = path.join(__dirname, 'src', 'docs', 'config', 'users.json');
+    const usersPath = path.join(__dirname, '..', 'apps', 'docs', 'config', 'users.json');
     if (!fs.existsSync(usersPath)) {
         console.log('⚠ users.json not found. Run: node hash_password.js');
     } else {

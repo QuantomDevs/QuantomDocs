@@ -10,22 +10,22 @@ const STATIC_ASSETS = [
     '/main/downloads.html',
     '/main/404.html',
     '/docs/index.html',
-    '/shared/css/common.css',
-    '/shared/css/mobile-menu.css',
+    '/components/css/common.css',
+    '/components/css/mobile-menu.css',
     '/main/css/index.css',
     '/main/css/downloads.css',
     '/docs/css/docs.css',
     '/docs/css/docs-search.css',
-    '/shared/js/common.js',
-    '/shared/js/mobile-menu.js',
-    '/shared/js/lazy-loader.js',
+    '/components/js/common.js',
+    '/components/js/mobile-menu.js',
+    '/components/js/lazy-loader.js',
     '/main/js/index.js',
     '/main/js/downloads.js',
     '/docs/js/docs-products.js',
     '/docs/js/docs.js',
     '/docs/js/docs-search.js',
     '/docs/js/marked-extension.js',
-    '/shared/images/favicon/favicon.png'
+    '/components/images/favicon/favicon.png'
 ];
 
 // Install event - cache static assets
