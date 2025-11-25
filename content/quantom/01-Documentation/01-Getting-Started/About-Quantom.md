@@ -1,5 +1,5 @@
 
-Quantom Server is a high-performance Minecraft server software designed for networks of all sizes, from small community servers to large-scale multiplayer networks.
+Quantom Server is an high-performance Minecraft server software designed for networks of all sizes, from small community servers to large-scale multiplayer networks.
 
 ## What is Quantom?
 

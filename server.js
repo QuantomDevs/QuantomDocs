@@ -15,7 +15,7 @@ const app = express();
 
 // Define safe base directories
 const SAFE_DIRECTORIES = {
-    content: path.join(__dirname, 'src', 'docs', 'content'),
+    content: path.join(__dirname, 'content'),
     uploads: path.join(__dirname, 'src', 'main', 'downloads'),
     data: path.join(__dirname, 'data')
 };
