@@ -11,9 +11,15 @@ services:
       - PORT=5005
       - HOST=0.0.0.0
     volumes:
+      # Mount content directory for live editing (UPDATED PATH)
       - ./content:/app/content
+      # Mount data directory for analytics persistence
       - ./data:/app/data
-      - ./src/main/downloads:/app/src/main/downloads
+      # Mount downloads directory
+      - ./src/apps/main/downloads:/app/src/apps/main/downloads
+      # Mount config files for live updates
+      - ./src/apps/docs/config:/app/src/apps/docs/config
+      - ./src/apps/downloads/config:/app/src/apps/downloads/config
     restart: unless-stopped
     labels:
       - com.centurylinklabs.watchtower.enable="true"

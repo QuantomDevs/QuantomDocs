@@ -854,7 +854,176 @@ app.get('/api/docs/:product/:superCategory/categories', (req, res) => {
     }
 });
 
-// Get markdown file from super-category structure
+/**
+ * Format a folder/file name into a URL-friendly slug
+ * Removes number prefixes like "01-" and converts to lowercase with hyphens
+ * @param {string} name - Original folder/file name (e.g., "01-Getting-Started")
+ * @returns {string} URL-friendly slug (e.g., "getting-started")
+ */
+function formatUrlPath(name) {
+    // Remove file extension if present
+    let cleaned = name.replace(/\.md$/, '');
+
+    // Remove number prefix (e.g., "01-", "02-", etc.)
+    cleaned = cleaned.replace(/^\d+-/, '');
+
+    // Convert to lowercase
+    cleaned = cleaned.toLowerCase();
+
+    // Replace spaces and underscores with hyphens
+    cleaned = cleaned.replace(/[\s_]+/g, '-');
+
+    // Remove any characters that aren't alphanumeric or hyphens
+    cleaned = cleaned.replace(/[^a-z0-9-]/g, '');
+
+    // Remove consecutive hyphens
+    cleaned = cleaned.replace(/-+/g, '-');
+
+    // Remove leading and trailing hyphens
+    cleaned = cleaned.replace(/^-|-$/g, '');
+
+    return cleaned;
+}
+
+/**
+ * Resolve a formatted URL path back to the actual folder/file name
+ * @param {string} parentPath - Absolute path to parent directory
+ * @param {string} urlSlug - URL slug to resolve
+ * @returns {string|null} Actual folder/file name, or null if not found
+ */
+function resolveUrlPath(parentPath, urlSlug) {
+    try {
+        const entries = fs.readdirSync(parentPath, { withFileTypes: true });
+
+        for (const entry of entries) {
+            const formatted = formatUrlPath(entry.name);
+            if (formatted === urlSlug.toLowerCase()) {
+                return entry.name;
+            }
+        }
+
+        return null;
+    } catch (error) {
+        console.error(`Error resolving URL path in ${parentPath}:`, error);
+        return null;
+    }
+}
+
+/**
+ * Recursively builds a category tree from a directory
+ * Supports unlimited nesting depth
+ * @param {string} dirPath - Absolute path to directory
+ * @param {string} relativePath - Relative path from product root (for URLs)
+ * @returns {Array} Array of category/file objects
+ */
+function buildCategoryTree(dirPath, relativePath = '') {
+    const items = [];
+
+    try {
+        const entries = fs.readdirSync(dirPath, { withFileTypes: true });
+
+        for (const entry of entries) {
+            // Skip hidden files and folders (e.g., .DS_Store)
+            if (entry.name.startsWith('.')) continue;
+
+            const itemPath = path.join(dirPath, entry.name);
+            const itemRelativePath = relativePath
+                ? `${relativePath}/${entry.name}`
+                : entry.name;
+
+            if (entry.isDirectory()) {
+                // Extract order number and clean name
+                const match = entry.name.match(/^(\d+)-(.+)$/);
+                const order = match ? parseInt(match[1], 10) : 999;
+                const cleanName = match ? match[2] : entry.name;
+                const urlSlug = formatUrlPath(entry.name);
+
+                // Recursively build subtree
+                const children = buildCategoryTree(itemPath, itemRelativePath);
+
+                items.push({
+                    type: 'category',
+                    id: entry.name,
+                    name: cleanName,
+                    urlSlug: urlSlug,
+                    order: order,
+                    path: itemRelativePath,
+                    children: children,
+                    hasFiles: children.some(child => child.type === 'file'),
+                    hasSubcategories: children.some(child => child.type === 'category')
+                });
+
+            } else if (entry.isFile() && entry.name.endsWith('.md')) {
+                // Markdown file
+                const match = entry.name.match(/^(\d+)-(.+)\.md$/);
+                const order = match ? parseInt(match[1], 10) : 999;
+                const cleanName = match ? match[2] : entry.name.replace('.md', '');
+                const urlSlug = formatUrlPath(entry.name);
+
+                items.push({
+                    type: 'file',
+                    id: entry.name.replace('.md', ''),
+                    name: cleanName,
+                    urlSlug: urlSlug,
+                    order: order,
+                    path: itemRelativePath,
+                    fileName: entry.name
+                });
+            }
+        }
+
+        // Sort by order number, then by name
+        items.sort((a, b) => {
+            if (a.order !== b.order) {
+                return a.order - b.order;
+            }
+            return a.name.localeCompare(b.name);
+        });
+
+    } catch (error) {
+        console.error(`Error building tree for ${dirPath}:`, error);
+    }
+
+    return items;
+}
+
+// Get complete recursive file tree for a product
+app.get('/api/docs/:product/tree', (req, res) => {
+    try {
+        const productId = req.params.product;
+
+        const validation = validatePath(productId, 'content');
+
+        if (!validation.valid) {
+            logSecurityEvent('Unauthorized tree access attempt', {
+                productId,
+                ip: req.ip,
+                error: validation.error
+            });
+            return res.status(403).json({ error: 'Access denied' });
+        }
+
+        // Check if product directory exists
+        if (!fs.existsSync(validation.resolvedPath)) {
+            return res.status(404).json({ error: 'Product not found' });
+        }
+
+        // Build recursive tree
+        const tree = buildCategoryTree(validation.resolvedPath);
+
+        res.json({
+            product: productId,
+            tree: tree,
+            timestamp: new Date().toISOString()
+        });
+
+    } catch (error) {
+        console.error('Error building product tree:', error);
+        res.status(500).json({ error: 'Failed to build product tree' });
+    }
+});
+
+// Get markdown file from super-category structure (legacy - supports flat structure)
 app.get('/api/docs/:product/:superCategory/:category/:file', (req, res) => {
     try {
         const { product, superCategory, category, file } = req.params;
@@ -888,6 +1057,90 @@ app.get('/api/docs/:product/:superCategory/:category/:file', (req, res) => {
                 lastModified: stats.mtime
             }
         });
+    } catch (error) {
+        console.error('Error reading markdown file:', error);
+        res.status(500).json({ error: 'Failed to load file' });
+    }
+});
+
+// Get markdown file using URL-formatted nested path (supports URL slugs)
+app.get('/api/docs/:product/*', (req, res) => {
+    try {
+        const productId = req.params.product;
+        const urlPath = req.params[0]; // Everything after product ID (URL-formatted)
+
+        // Skip if this looks like an existing endpoint
+        if (!urlPath || urlPath === 'tree' || urlPath === 'super-categories') {
+            return res.status(404).json({ error: 'File not found' });
+        }
+
+        // Split URL path into segments (e.g., "getting-started/installation" -> ["getting-started", "installation"])
+        const urlSegments = urlPath.split('/').filter(s => s);
+
+        // Resolve each URL segment to actual folder/file name
+        const productValidation = validatePath(productId, 'content');
+        if (!productValidation.valid) {
+            return res.status(403).json({ error: 'Access denied' });
+        }
+
+        let currentPath = productValidation.resolvedPath;
+        const resolvedSegments = [];
+
+        for (const segment of urlSegments) {
+            const actualName = resolveUrlPath(currentPath, segment);
+
+            if (!actualName) {
+                return res.status(404).json({
+                    error: 'File not found',
+                    details: `Could not resolve: ${segment}`
+                });
+            }
+
+            resolvedSegments.push(actualName);
+            currentPath = path.join(currentPath, actualName);
+        }
+
+        // Check if the resolved path is a file or directory
+        if (!fs.existsSync(currentPath)) {
+            // Try adding .md extension
+            currentPath += '.md';
+            resolvedSegments[resolvedSegments.length - 1] += '.md';
+        }
+
+        const stats = fs.statSync(currentPath);
+
+        // If it's a directory, return error
+        if (stats.isDirectory()) {
+            return res.status(400).json({ error: 'Path is a directory, not a file' });
+        }
+
+        // Validate the resolved path
+        const filePath = path.join(productId, ...resolvedSegments);
+        const validation = validatePath(filePath, 'content');
+
+        if (!validation.valid) {
+            logSecurityEvent('Unauthorized file access attempt', {
+                urlPath,
+                resolvedPath: filePath,
+                ip: req.ip,
+                error: validation.error
+            });
+            return res.status(403).json({ error: 'Access denied' });
+        }
+
+        const content = fs.readFileSync(validation.resolvedPath, 'utf-8');
+        const fileStats = fs.statSync(validation.resolvedPath);
+
+        res.json({
+            content,
+            path: urlPath,
+            resolvedPath: filePath,
+            metadata: {
+                size: content.length,
+                lastModified: fileStats.mtime
+            }
+        });
+
     } catch (error) {
         console.error('Error reading markdown file:', error);
         res.status(500).json({ error: 'Failed to load file' });

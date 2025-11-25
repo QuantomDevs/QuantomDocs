@@ -35,9 +35,9 @@
       }
     },
     "2025-11": {
-      "totalVisits": 350,
+      "totalVisits": 351,
       "pages": {
-        "/main": 44,
+        "/main": 45,
         "/docs": 23,
         "/settings": 13,
         "/etc/passwd/super-categories": 2,
@@ -81,10 +81,10 @@
     }
   },
   "allTime": {
-    "totalVisits": 800,
+    "totalVisits": 801,
     "totalPages": 23,
     "totalMarkdownFiles": 28,
     "firstVisit": "2025-10-10T17:09:48.577Z",
-    "lastVisit": "2025-11-25T20:16:13.129Z"
+    "lastVisit": "2025-11-25T23:07:15.146Z"
   }
 }

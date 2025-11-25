@@ -29,11 +29,12 @@ RUN apt-get update && \
 
 # Copy application files from build stage
 COPY --from=build /usr/src/app/package*.json ./
-COPY --from=build /usr/src/app/server.js ./
 COPY --from=build /usr/src/app/src ./src
+COPY --from=build /usr/src/app/content ./content
+COPY --from=build /usr/src/app/data ./data
 
 # Install production dependencies only
 RUN npm install --omit=dev
 
-# Start the application
-CMD ["node", "server.js"]
+# Start the application (NEW PATH)
+CMD ["node", "src/backend/server.js"]
