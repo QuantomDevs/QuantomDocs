@@ -5,8 +5,6 @@ let currentProduct = null;
 let currentCategory = null;
 let currentMarkdown = null;
 let currentFile = null;
-let currentSuperCategory = null;
-let availableSuperCategories = [];
 
 // Initialize the documentation page
 async function initDocsPage() {
@@ -159,25 +157,31 @@ async function loadProductDocs(productId, specificFilePath = null) {
 }
 
 // Load first available file in the tree
-function loadFirstAvailableFile(tree, productId) {
+function loadFirstAvailableFile(tree, productId, parentPath = []) {
     for (const item of tree) {
         if (item.type === 'file') {
+            // Build full path including parent categories
+            const fullPath = [...parentPath, item.urlSlug].join('/');
             if (typeof loadMarkdownFileByPath === 'function') {
-                loadMarkdownFileByPath(productId, item.urlSlug);
+                loadMarkdownFileByPath(productId, fullPath);
             }
-            return;
+            return true;
         } else if (item.type === 'category') {
+            // Build current path
+            const currentPath = [...parentPath, item.urlSlug];
+
             // Check if category has index
             if (item.hasIndex) {
+                const categoryPath = currentPath.join('/');
                 if (typeof loadCategoryIndex === 'function') {
-                    loadCategoryIndex(productId, item.urlSlug);
+                    loadCategoryIndex(productId, categoryPath);
                 }
-                return;
+                return true;
             }
             // Recurse into children
             if (item.children && item.children.length > 0) {
-                const found = loadFirstAvailableFile(item.children, productId);
-                if (found !== false) return;
+                const found = loadFirstAvailableFile(item.children, productId, currentPath);
+                if (found) return true;
             }
         }
     }
@@ -199,31 +203,15 @@ function buildSidebar(categories, productId, superCategory) {
         </button>
     `;
 
-    // Build super-category selector HTML
-    // Show selector if there are multiple super-categories
-    const showSelector = availableSuperCategories && availableSuperCategories.length > 1;
-    const superCategorySelectorHTML = `
-        <div id="super-category-selector" class="super-category-selector" style="display: ${showSelector ? 'block' : 'none'};">
-            <button id="super-category-btn" class="super-category-button">
-                <span class="super-category-name">Super Category Name</span>
-                <i class="fas fa-chevron-down super-category-icon"></i>
-            </button>
-            <div id="super-category-dropdown" class="super-category-dropdown">
-                <!-- Dynamically populated -->
-            </div>
-        </div>
-    `;
-
     // Clear sidebar and add elements
-    sidebar.innerHTML = searchButtonHTML + superCategorySelectorHTML;
+    // Note: This function is deprecated and uses old structure
+    // Super-category selector is now handled by docs-nested-categories.js
+    sidebar.innerHTML = searchButtonHTML;
 
     categories.forEach(category => {
         const categoryBlock = document.createElement('div');
         categoryBlock.className = 'nav-block';
 
-        const categoryTitle = document.createElement('h4');
-        categoryTitle.textContent = category.name;
-        categoryBlock.appendChild(categoryTitle);
 
         const fileList = document.createElement('ul');
         category.files.forEach(file => {
@@ -260,11 +248,12 @@ function buildSidebar(categories, productId, superCategory) {
 }
 
 // Load super-categories for a product
+// NOTE: This function is deprecated - new code uses renderSidebarTree from docs-nested-categories.js
 async function loadSuperCategories(productId) {
     try {
         const response = await fetch(`/api/docs/${productId}/super-categories`);
         const data = await response.json();
-        availableSuperCategories = data.superCategories;
+        const availableSuperCategories = data.superCategories;
 
         // Get selector element
         const selector = document.getElementById('super-category-selector');
@@ -272,11 +261,11 @@ async function loadSuperCategories(productId) {
         // Hide selector if only one super-category
         if (availableSuperCategories.length <= 1) {
             if (selector) selector.style.display = 'none';
-            currentSuperCategory = availableSuperCategories[0]?.fullName || null;
+            const selectedSuperCategory = availableSuperCategories[0]?.fullName || null;
 
             // Load categories for the single super-category
-            if (currentSuperCategory) {
-                await loadCategoriesForSuperCategory(productId, currentSuperCategory);
+            if (selectedSuperCategory) {
+                await loadCategoriesForSuperCategory(productId, selectedSuperCategory);
             }
             return;
         }
@@ -284,24 +273,28 @@ async function loadSuperCategories(productId) {
         if (selector) selector.style.display = 'block';
 
         // Set default to first super-category (order 01)
-        currentSuperCategory = availableSuperCategories[0].fullName;
+        const selectedSuperCategory = availableSuperCategories[0].fullName;
 
         renderSuperCategorySelector();
-        await loadCategoriesForSuperCategory(productId, currentSuperCategory);
+        await loadCategoriesForSuperCategory(productId, selectedSuperCategory);
     } catch (error) {
         console.error('Failed to load super-categories:', error);
     }
 }
 
 // Render super-category selector dropdown
+// NOTE: This function is deprecated - new code uses initializeSuperCategorySelector from docs-nested-categories.js
 function renderSuperCategorySelector() {
+    // Deprecated function - no longer used with new tree system
+    return;
+
     const btn = document.getElementById('super-category-btn');
     const dropdown = document.getElementById('super-category-dropdown');
 
     if (!btn || !dropdown) return;
 
     // Update button text
-    const selectedCat = availableSuperCategories.find(sc => sc.fullName === currentSuperCategory);
+    const selectedCat = [];
     const nameElement = document.querySelector('.super-category-name');
     if (nameElement && selectedCat) {
         nameElement.textContent = selectedCat.name;
@@ -383,11 +376,7 @@ async function loadCategoriesForSuperCategory(productId, superCategory) {
         // Update sidebar with categories
         buildSidebar(data.categories, productId, superCategory);
 
-        // Render super-category selector if multiple categories exist
-        if (availableSuperCategories && availableSuperCategories.length > 1) {
-            renderSuperCategorySelector();
-        }
-
+        // Note: Super-category selector is now handled by docs-nested-categories.js
         // Reinitialize super-category selector events after sidebar rebuild
         initSuperCategorySelectorEvents();
 
@@ -717,14 +706,23 @@ function updatePageHeaderControls(filePath) {
     if (!pageHeaderControls || !categoryNameElement) return;
 
     try {
-        // Parse file path: productId/categoryName/fileName.md
-        const pathParts = filePath.split('/');
-        const categoryName = pathParts[2];
-        const markdownName = pathParts[3];
+        // Parse file path: productId/super-category/category/.../fileName
+        // With new tree system, path can have multiple levels
+        const pathParts = filePath.split('/').filter(p => p);
 
-        // Format category name for display
-        const categoryDisplayName = formatCategoryName(categoryName);
-        const markdownDisplayName = formatCategoryName(markdownName);
+        if (pathParts.length < 2) {
+            // Not enough path parts
+            pageHeaderControls.style.display = 'none';
+            return;
+        }
+
+        // Last part is the file name, second-to-last is the immediate category
+        const markdownName = pathParts[pathParts.length - 1];
+        const categoryName = pathParts[pathParts.length - 2];
+
+        // Format names for display
+        const categoryDisplayName = categoryName ? formatCategoryName(categoryName) : '';
+        const markdownDisplayName = markdownName ? formatCategoryName(markdownName) : '';
 
         // Update category name
         categoryNameElement.textContent = categoryDisplayName;

@@ -44,33 +44,33 @@
     /* ===========================
        Theme Colors (Dark Theme - Default)
        =========================== */
-    --bg-primary: #090A0B;
-    --bg-secondary: #101112;
-    --bg-tertiary: #2F2E2D;
-    --bg-quaternary: #0b0e0e;
-    --bg-soft: lab(100% 0 0/.05);
-    --markdown-background: var(--bg-quaternary);
-    --color-canvas-default: #0A0D0D;
-    --border-primary: #404040;
-    --border-secondary: #333333;
-    --border-tertiary: #2a2a2a;
-    --border-color: #404040;
-    --border-accent: var(--accent-color);
-    --text-primary: #f5f5f5;
-    --text-secondary: #a8a8a8;
-    --text-tertiary: #8a8a8a;
-    --text-accent: var(--accent-color);
-    --text-success: #2ADB5C;
-    --text-warning: #f97316;
-    --text-error: #f85149;
-    --text-info: #58a6ff;
-    --accent-color: var(--light-green-light);
-    --accent-hover-color: var(--light-green-hover-rgb);
-    --accent-color-dark: var(--light-green-dark);
-    --accent-color-light: var(--light-green-light);
-    --shadow-primary: rgba(0, 0, 0, 0.5);
-    --shadow-secondary: rgba(0, 0, 0, 0.7);
-    --shadow-elevated: rgba(0, 0, 0, 0.8);
+   --bg-primary: #121212; /* Main background */
+   --bg-secondary: #101112; /* For cards and elevated surfaces */
+   --bg-tertiary: #191919; /* For cards and elevated surfaces */
+   --bg-quaternary: var(--bg-primary); /* For markdown background  - old: #0b0e0e  */
+   --bg-soft: lab(100% 0 0/.05);
+   --markdown-background: var(--bg-quaternary);
+   --color-canvas-default: #0A0D0D;
+   --border-primary: #404040;
+   --border-secondary: #333333;
+   --border-tertiary: #2a2a2a;
+   --border-color: #404040;
+   --border-accent: var(--accent-color);
+   --text-primary: #f5f5f5;
+   --text-secondary: #a8a8a8;
+   --text-tertiary: #8a8a8a;
+   --text-accent: var(--accent-color);
+   --text-success: #2ADB5C;
+   --text-warning: #f97316;
+   --text-error: #f85149;
+   --text-info: #58a6ff;
+   --accent-color: var(--light-green-light);
+   --accent-hover-color: var(--light-green-hover-rgb);
+   --accent-color-dark: var(--light-green-dark);
+   --accent-color-light: var(--light-green-light);
+   --shadow-primary: rgba(0, 0, 0, 0.5);
+   --shadow-secondary: rgba(0, 0, 0, 0.7);
+   --shadow-elevated: rgba(0, 0, 0, 0.8);
 
     /* ===========================
        Legacy Variable Mappings

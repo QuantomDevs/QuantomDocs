@@ -1,6 +1,11 @@
 // Nested Categories Rendering System
 // Handles recursive tree rendering with expand/collapse functionality
 
+// Global variable to store super categories and current selection
+let availableSuperCategories = [];
+let currentSuperCategory = null;
+let superCategorySelectorInitialized = false;
+
 /**
  * Render the complete sidebar tree structure
  * @param {Array} tree - The tree structure from the API
@@ -8,6 +13,17 @@
  */
 function renderSidebarTree(tree, productId) {
     const sidebar = document.querySelector('.sidebar-left');
+
+    // Extract super-categories (first level items)
+    availableSuperCategories = tree.filter(item => item.type === 'category');
+
+    // Set current super-category (load from localStorage or default to first)
+    const savedSuperCat = localStorage.getItem(`current-super-category-${productId}`);
+    if (savedSuperCat && availableSuperCategories.find(sc => sc.urlSlug === savedSuperCat)) {
+        currentSuperCategory = savedSuperCat;
+    } else if (availableSuperCategories.length > 0) {
+        currentSuperCategory = availableSuperCategories[0].urlSlug;
+    }
 
     // Build search button HTML
     const searchButtonHTML = `
@@ -20,17 +36,39 @@ function renderSidebarTree(tree, productId) {
         </button>
     `;
 
-    // Start building sidebar
-    sidebar.innerHTML = searchButtonHTML;
+    // Build super-category selector (only if multiple super-categories exist)
+    const showSelector = availableSuperCategories.length > 1;
+    const currentSuperCatObj = availableSuperCategories.find(sc => sc.urlSlug === currentSuperCategory);
+    const superCategorySelectorHTML = showSelector ? `
+        <div id="super-category-selector" class="super-category-selector">
+            <button id="super-category-btn" class="super-category-button">
+                <span class="super-category-name">${currentSuperCatObj ? currentSuperCatObj.name : 'Select Category'}</span>
+                <i class="fas fa-chevron-down super-category-icon"></i>
+            </button>
+            <div id="super-category-dropdown" class="super-category-dropdown">
+                ${availableSuperCategories.map(sc => `
+                    <div class="super-category-option ${sc.urlSlug === currentSuperCategory ? 'active' : ''}"
+                         data-super-category="${sc.urlSlug}">
+                        ${sc.name}
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    ` : '';
 
-    // Render tree items with depth tracking
-    tree.forEach(item => {
-        const itemElement = renderTreeItem(item, productId, [], 0);
+    // Start building sidebar
+    sidebar.innerHTML = searchButtonHTML + superCategorySelectorHTML;
+
+    // Render only the selected super-category
+    const selectedSuperCat = availableSuperCategories.find(sc => sc.urlSlug === currentSuperCategory);
+    if (selectedSuperCat) {
+        const itemElement = renderTreeItem(selectedSuperCat, productId, [], 0);
         sidebar.appendChild(itemElement);
-    });
+    }
 
     // Initialize event listeners
     initializeCategoryEventListeners(productId);
+    initializeSuperCategorySelector(productId, tree);
 }
 
 /**
@@ -413,6 +451,89 @@ function saveCategoryExpansionState(productId, categoryPath, isExpanded) {
 function getCategoryExpansionState(productId, categoryPath) {
     const key = `category-expansion-${productId}-${categoryPath}`;
     return localStorage.getItem(key) === 'true';
+}
+
+/**
+ * Initialize super-category selector event listeners
+ * @param {string} productId - Product ID
+ * @param {Array} tree - Full tree structure
+ */
+function initializeSuperCategorySelector(productId, tree) {
+    // Only initialize event listeners once using event delegation on the sidebar
+    if (!superCategorySelectorInitialized) {
+        const sidebar = document.querySelector('.sidebar-left');
+
+        // Use event delegation for button clicks
+        sidebar.addEventListener('click', (e) => {
+            const selectorBtn = e.target.closest('#super-category-btn');
+            if (!selectorBtn) return;
+
+            e.stopPropagation();
+            const dropdown = document.getElementById('super-category-dropdown');
+            if (!dropdown) return;
+
+            const isOpen = dropdown.classList.contains('open');
+
+            if (isOpen) {
+                dropdown.classList.remove('open');
+                const icon = selectorBtn.querySelector('.super-category-icon');
+                if (icon) icon.style.transform = 'rotate(0deg)';
+            } else {
+                dropdown.classList.add('open');
+                const icon = selectorBtn.querySelector('.super-category-icon');
+                if (icon) icon.style.transform = 'rotate(180deg)';
+            }
+        });
+
+        // Use event delegation for dropdown option clicks
+        sidebar.addEventListener('click', (e) => {
+            const option = e.target.closest('.super-category-option');
+            if (!option) return;
+
+            const dropdown = document.getElementById('super-category-dropdown');
+            const selectorBtn = document.getElementById('super-category-btn');
+            if (!dropdown || !selectorBtn) return;
+
+            const selectedSlug = option.dataset.superCategory;
+
+            // Update active state
+            dropdown.querySelectorAll('.super-category-option').forEach(opt => {
+                opt.classList.remove('active');
+            });
+            option.classList.add('active');
+
+            // Save to localStorage
+            localStorage.setItem(`current-super-category-${productId}`, selectedSlug);
+
+            // Update current super category
+            currentSuperCategory = selectedSlug;
+
+            // Re-render sidebar with new super-category
+            renderSidebarTree(tree, productId);
+
+            // Close dropdown
+            dropdown.classList.remove('open');
+            const icon = selectorBtn.querySelector('.super-category-icon');
+            if (icon) icon.style.transform = 'rotate(0deg)';
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('#super-category-selector')) {
+                const dropdown = document.getElementById('super-category-dropdown');
+                const selectorBtn = document.getElementById('super-category-btn');
+                if (dropdown) {
+                    dropdown.classList.remove('open');
+                    if (selectorBtn) {
+                        const icon = selectorBtn.querySelector('.super-category-icon');
+                        if (icon) icon.style.transform = 'rotate(0deg)';
+                    }
+                }
+            }
+        });
+
+        superCategorySelectorInitialized = true;
+    }
 }
 
 /**

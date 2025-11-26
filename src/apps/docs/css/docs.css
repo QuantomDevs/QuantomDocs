@@ -93,8 +93,8 @@ body.no-scroll {
 .docs-container {
     box-sizing: border-box;
     /* Add extra padding-top for fixed header (56px header + spacing) */
-    padding: clamp(70px, 5vh, 100px) clamp(10px, 5vw, 20px) clamp(10px, 5vh, 30px) clamp(10px, 5vw, 20px);
     margin: 0 auto;
+    padding: clamp(50px, 5vh, 100px) clamp(10px, 5vw, 20px) clamp(10px, 5vh, 30px) clamp(00px, 5vw, 00px);
 }
 
 /* Desktop layout (> 1024px) */
@@ -313,9 +313,6 @@ body.no-scroll {
 
 /* Content Container - Wraps content-columns and footer */
 .content-container {
-    background: var(--bg-quaternary);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-2xl);
     padding: var(--spacing-md);
     display: flex;
     flex-direction: column;
@@ -483,11 +480,12 @@ body.no-scroll {
     .sidebar-left {
         align-self: flex-start;
         height: 100%;
-        max-height: calc(100vh - 200px);
         overflow-y: auto;
         padding: clamp(15px, 2vw, 20px);
         width: 18rem;
         flex-shrink: 0;
+        background-color: var(--bg-tertiary);
+        border-right: solid 1px var(--border-color);
     }
 }
 
@@ -540,6 +538,94 @@ body.no-scroll {
     border: none;
     border-top: 1px solid var(--border-color);
     margin: 20px 0;
+}
+
+/* Super-Category Selector Styles */
+.super-category-selector {
+    position: relative;
+    margin: 15px 0;
+    width: 100%;
+}
+
+.super-category-button {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 12px 15px;
+    background: var(--card-background-color);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-color);
+    font-size: clamp(0.95rem, 1.1vw, 1.05rem);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    text-align: left;
+}
+
+.super-category-button:hover {
+    background-color: var(--accent-hover-color);
+    border-color: var(--accent-color);
+    color: var(--accent-color);
+}
+
+.super-category-name {
+    flex: 1;
+}
+
+.super-category-icon {
+    font-size: 0.8rem;
+    transition: transform 0.3s ease;
+    color: var(--secondary-text-color);
+    margin-left: 10px;
+}
+
+.super-category-dropdown {
+    position: absolute;
+    top: calc(100% + 5px);
+    left: 0;
+    right: 0;
+    background: var(--card-background-color);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    max-height: 0;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+    z-index: 1000;
+}
+
+.super-category-dropdown.open {
+    max-height: 500px;
+    opacity: 1;
+    visibility: visible;
+    display: inline;
+}
+
+.super-category-option {
+    padding: 12px 15px;
+    color: var(--text-color);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.super-category-option:last-child {
+    border-bottom: none;
+}
+
+.super-category-option:hover {
+    background-color: var(--accent-hover-color);
+    color: var(--accent-color);
+}
+
+.super-category-option.active {
+    background-color: var(--accent-hover-color);
+    color: var(--accent-color);
+    font-weight: 600;
 }
 
 /* Nested Categories Styles */
