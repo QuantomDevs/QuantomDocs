@@ -97,6 +97,19 @@ body.no-scroll {
     padding: clamp(50px, 5vh, 100px) clamp(10px, 5vw, 20px) clamp(10px, 5vh, 30px) clamp(00px, 5vw, 00px);
 }
 
+/* Remove padding when header is hidden on desktop */
+body.docs-header-hidden .docs-container {
+    padding-top: 0;
+    margin-top: 0;
+}
+
+@media (min-width: 1025px) {
+    body.docs-header-hidden .docs-container {
+        padding-top: 0;
+        margin-top: 0;
+    }
+}
+
 /* Desktop layout (> 1024px) */
 @media (min-width: 1025px) {
     .docs-container {
@@ -486,6 +499,132 @@ body.no-scroll {
         flex-shrink: 0;
         background-color: var(--bg-tertiary);
         border-right: solid 1px var(--border-color);
+    }
+}
+
+/* Sidebar Header Controls (Logo + Collapse Button) */
+.sidebar-header-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--spacing-md);
+    padding-bottom: var(--spacing-sm);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.sidebar-logo-container {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    flex-shrink: 0;
+    text-decoration: none;
+    flex: 1;
+}
+
+.sidebar-logo-img {
+    width: 24px;
+    height: 24px;
+    transition: var(--transition-fast);
+    border-radius: var(--radius-sm);
+}
+
+.sidebar-logo-img:hover {
+    transform: scale(1.05);
+}
+
+.sidebar-logo-text {
+    font-size: 1rem;
+    color: var(--text-color);
+    font-weight: var(--font-weight-bold);
+    text-decoration: none;
+}
+
+.sidebar-collapse-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background: transparent;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    color: var(--secondary-text-color);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.sidebar-collapse-btn:hover {
+    background: var(--card-background-color);
+    color: var(--accent-color);
+    border-color: var(--accent-color);
+}
+
+/* Collapsed Sidebar Mini Box */
+.sidebar-collapsed-box {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    display: none;
+    flex-direction: row;
+    gap: 10px;
+    z-index: 1001;
+    background: var(--background-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.sidebar-collapsed-box.visible {
+    display: flex;
+}
+
+.sidebar-mini-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: transparent;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    color: var(--secondary-text-color);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.sidebar-mini-btn:hover {
+    background: var(--card-background-color);
+    color: var(--accent-color);
+    border-color: var(--accent-color);
+}
+
+/* Sidebar collapsed state */
+.sidebar-left.collapsed {
+    transform: translateX(-100%);
+}
+
+/* Add smooth transition for sidebar collapse */
+@media (min-width: 1025px) {
+    .sidebar-left {
+        transition: transform 0.3s ease-in-out;
+    }
+}
+
+/* Mobile Adjustments - Always show logo and collapse button */
+@media (max-width: 1024px) {
+    .sidebar-collapsed-box {
+        display: none !important;
+    }
+
+    /* Always show sidebar header controls on mobile */
+    .sidebar-header-controls {
+        display: flex !important;
+    }
+
+    /* Hide collapse button on mobile (will be in header) */
+    .sidebar-header-controls .sidebar-collapse-btn {
+        display: none !important;
     }
 }
 

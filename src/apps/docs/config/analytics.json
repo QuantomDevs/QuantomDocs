@@ -35,10 +35,10 @@
       }
     },
     "2025-11": {
-      "totalVisits": 356,
+      "totalVisits": 442,
       "pages": {
-        "/main": 47,
-        "/docs": 24,
+        "/main": 51,
+        "/docs": 31,
         "/settings": 13,
         "/etc/passwd/super-categories": 2,
         "/downloads": 3,
@@ -49,7 +49,9 @@
         "/download": 31,
         "/downloads/": 2,
         "/pricing": 1,
-        "/products": 1
+        "/products": 1,
+        "/docsw/": 2,
+        "/test/": 6
       },
       "markdownFiles": {
         "/docs/quantom/01-getting-started/installation": 11,
@@ -78,15 +80,18 @@
         "/docs/quantom/01-documentation/04-reference/linux-commands": 2,
         "/docs/quantom/01-documentation/04-reference/mysql-reference": 4,
         "/docs/quantom/01-documentation/04-reference/preset-motd": 1,
-        "/docs/quantom/documentation/getting-started/about-quantom": 1
+        "/docs/quantom/documentation/getting-started/about-quantom": 1,
+        "/docs/docs/documentation/getting-started/features-overview": 4,
+        "/docs/docs/documentation/getting-started/about-quantom": 57,
+        "/docs/docs/api-reference/getting-started/about-quantom": 6
       }
     }
   },
   "allTime": {
-    "totalVisits": 806,
-    "totalPages": 24,
-    "totalMarkdownFiles": 29,
+    "totalVisits": 892,
+    "totalPages": 26,
+    "totalMarkdownFiles": 32,
     "firstVisit": "2025-10-10T17:09:48.577Z",
-    "lastVisit": "2025-11-26T14:11:45.275Z"
+    "lastVisit": "2025-11-26T21:30:03.575Z"
   }
 }

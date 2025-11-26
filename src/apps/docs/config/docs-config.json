@@ -2,6 +2,7 @@
   "general": {
     "default": true,
     "defaultProduct": "quantom",
+    "showHeader": false,
     "sidebarRightHeaders": {
       "mainSectionHeader": true,
       "subSectionHeader": true,

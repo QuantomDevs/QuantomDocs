@@ -17,16 +17,23 @@ async function initDocsHeader() {
         // Get current product from URL or config
         headerCurrentProduct = getCurrentProduct();
 
-        // Generate and inject header
+        // Always generate header HTML first
         const header = document.querySelector('header');
         if (header) {
             header.innerHTML = generateHeaderHTML();
             attachHeaderEventListeners();
             updateActiveTab();
+            window.addEventListener('scroll', handleHeaderScroll);
         }
 
-        // Add scroll effect
-        window.addEventListener('scroll', handleHeaderScroll);
+        // Then apply show/hide logic based on screen size and config
+        updateHeaderVisibility();
+
+        // Add resize listener to update header visibility
+        window.addEventListener('resize', updateHeaderVisibility);
+
+        // Store config in window for sidebar access
+        window.docsHeaderConfig = headerDocsConfig;
 
     } catch (error) {
         console.error('Failed to initialize docs header:', error);
@@ -122,7 +129,10 @@ function generateHeaderHTML() {
 
                     <!-- Mobile Menu Button -->
                     <button class="docs-header-mobile-menu" id="docs-header-mobile-menu" aria-label="Open menu">
-                        <i class="fas fa-bars"></i>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2"/>
+                            <path d="M9 3v18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
                     </button>
                 </div>
             </div>
@@ -447,6 +457,32 @@ function handleHeaderScroll() {
         header.classList.add('scrolled');
     } else {
         header.classList.remove('scrolled');
+    }
+}
+
+/**
+ * Update header visibility based on screen size and config
+ */
+function updateHeaderVisibility() {
+    const header = document.querySelector('header');
+    if (!header) return;
+
+    const showHeader = headerDocsConfig?.general?.showHeader !== false;
+    const isMobile = window.innerWidth <= 1024;
+
+    if (isMobile) {
+        // Always show header on mobile
+        header.style.display = '';
+        document.body.classList.remove('docs-header-hidden');
+    } else {
+        // On desktop, show/hide based on config
+        if (showHeader) {
+            header.style.display = '';
+            document.body.classList.remove('docs-header-hidden');
+        } else {
+            header.style.display = 'none';
+            document.body.classList.add('docs-header-hidden');
+        }
     }
 }
 
