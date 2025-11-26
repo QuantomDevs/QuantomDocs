@@ -10,66 +10,28 @@ let availableSuperCategories = [];
 
 // Initialize the documentation page
 async function initDocsPage() {
-    // Load config first
-    let config = null;
-    try {
-        const response = await fetch('/docs/config/docs-config.json');
-        config = await response.json();
-    } catch (error) {
-        console.error('Failed to load docs config:', error);
-        return;
-    }
-
-    // Parse URL path: /docs or /docs/quantom/getting-started/installation
+    // Parse URL path: /docs or /docs/category/file or /terminus or /terminus/category/file
     const path = window.location.pathname;
     const pathParts = path.split('/').filter(p => p);
 
-    // Remove 'docs' from the beginning
-    if (pathParts[0] === 'docs') {
-        pathParts.shift();
-    }
+    // First part of URL is the product name
+    // Examples: /docs -> product: "docs"
+    //           /docs/getting-started -> product: "docs", path: "getting-started"
+    //           /terminus -> product: "terminus"
+    //           /terminus/api/overview -> product: "terminus", path: "api/overview"
 
     if (pathParts.length === 0) {
-        // Just "/docs" - check if default is enabled
-        const general = config.general || {};
-        if (general.default === true && general.defaultProduct) {
-            // Load default product
-            const defaultProduct = general.defaultProduct;
-            const product = config.products.find(p => p.id === defaultProduct);
-
-            if (product && product.firstSide) {
-                // Load the firstSide file
-                currentProduct = defaultProduct;
-                await loadProductDocs(defaultProduct, product.firstSide);
-            } else {
-                // Fallback to product overview
-                await loadProductOverview();
-            }
-        } else {
-            // Show product overview
-            await loadProductOverview();
-        }
-    } else {
-        // Product selected: /docs/{product}/... or /docs/{product}/{category}/{file}
-        const selectedProduct = pathParts[0];
-
-        // Build file path if we have category and file
-        let selectedFile = null;
-        if (pathParts.length >= 3) {
-            // /docs/quantom/getting-started/installation -> quantom/getting-started/Installation.md
-            const category = pathParts[1];
-            const fileName = pathParts.slice(2).join('/');
-            // Capitalize first letter and add .md extension
-            const formattedFileName = fileName.split('-').map(word =>
-                word.charAt(0).toUpperCase() + word.slice(1)
-            ).join('-');
-            selectedFile = `${selectedProduct}/${category}/${formattedFileName}.md`;
-        }
-
-        // Load specific product docs
-        currentProduct = selectedProduct;
-        await loadProductDocs(selectedProduct, selectedFile);
+        // Root path "/" - show error or redirect
+        window.location.href = '/docs';
+        return;
     }
+
+    const productId = pathParts[0];
+    const filePath = pathParts.slice(1).join('/');
+
+    // Load product documentation
+    currentProduct = productId;
+    await loadProductDocs(productId, filePath || null);
 }
 
 // Load and display product overview grid
@@ -150,7 +112,7 @@ function selectProduct(productId) {
 }
 
 // Load product documentation
-async function loadProductDocs(productId, specificFile = null) {
+async function loadProductDocs(productId, specificFilePath = null) {
     try {
         // Show docs containers
         showDocsContainers();
@@ -158,17 +120,29 @@ async function loadProductDocs(productId, specificFile = null) {
         // Store current product
         currentProduct = productId;
 
-        // Load super-categories for this product
-        await loadSuperCategories(productId);
+        // Load tree structure for this product
+        const response = await fetch(`/api/docs/${productId}/tree`);
+        if (!response.ok) {
+            throw new Error(`Failed to load product tree: ${response.status}`);
+        }
 
-        // Initialize super-category selector event listeners
-        initSuperCategorySelectorEvents();
+        const data = await response.json();
+
+        // Render sidebar with tree structure
+        if (typeof renderSidebarTree === 'function') {
+            renderSidebarTree(data.tree, productId);
+        } else {
+            console.error('renderSidebarTree function not found. Make sure docs-nested-categories.js is loaded.');
+        }
 
         // Load the specified file if provided
-        if (specificFile) {
-            loadMarkdownFile(specificFile);
-            // Set active link in sidebar for the loaded file
-            setActiveSidebarLink(specificFile);
+        if (specificFilePath) {
+            if (typeof loadMarkdownFileByPath === 'function') {
+                await loadMarkdownFileByPath(productId, specificFilePath);
+            }
+        } else {
+            // Load first available file from tree
+            loadFirstAvailableFile(data.tree, productId);
         }
     } catch (error) {
         console.error('Error loading product docs:', error);
@@ -182,6 +156,32 @@ async function loadProductDocs(productId, specificFile = null) {
             </div>
         `;
     }
+}
+
+// Load first available file in the tree
+function loadFirstAvailableFile(tree, productId) {
+    for (const item of tree) {
+        if (item.type === 'file') {
+            if (typeof loadMarkdownFileByPath === 'function') {
+                loadMarkdownFileByPath(productId, item.urlSlug);
+            }
+            return;
+        } else if (item.type === 'category') {
+            // Check if category has index
+            if (item.hasIndex) {
+                if (typeof loadCategoryIndex === 'function') {
+                    loadCategoryIndex(productId, item.urlSlug);
+                }
+                return;
+            }
+            // Recurse into children
+            if (item.children && item.children.length > 0) {
+                const found = loadFirstAvailableFile(item.children, productId);
+                if (found !== false) return;
+            }
+        }
+    }
+    return false;
 }
 
 // Build the left sidebar navigation from categories

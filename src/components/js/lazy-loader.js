@@ -159,6 +159,7 @@ async function loadDocsModules() {
         await Promise.all([
             loadScript('/docs/js/docs.js', 'docs-js'),
             loadScript('/docs/js/marked-extension.js', 'marked-extension-js'),
+            loadScript('/docs/js/docs-nested-categories.js', 'docs-nested-categories-js'),
             loadScript('/docs/js/docs-products.js', 'docs-products-js'),
             loadScript('/docs/js/docs-page-actions.js', 'docs-page-actions-js')
         ]);

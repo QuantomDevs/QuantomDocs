@@ -542,6 +542,92 @@ body.no-scroll {
     margin: 20px 0;
 }
 
+/* Nested Categories Styles */
+.sidebar-category-item {
+    margin: 4px 0;
+}
+
+.sidebar-category-button {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 10px 15px;
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+    color: var(--text-color);
+    font-size: clamp(0.95rem, 1.1vw, 1.05rem);
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    text-align: left;
+}
+
+.sidebar-category-button:hover {
+    background-color: var(--card-background-color);
+    color: var(--accent-color);
+}
+
+.sidebar-category-button.active {
+    background-color: var(--accent-hover-color);
+    color: var(--accent-color);
+}
+
+.sidebar-category-button .category-name {
+    flex: 1;
+}
+
+.sidebar-category-button .category-arrow {
+    font-size: 0.75rem;
+    transition: transform 0.3s ease;
+    color: var(--secondary-text-color);
+    margin-left: 8px;
+}
+
+.sidebar-category-button.expanded .category-arrow {
+    transform: rotate(90deg);
+}
+
+.sidebar-nested-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out;
+    position: relative;
+    margin-left: 20px;
+    padding-left: 15px;
+    border-left: 2px solid var(--border-color);
+}
+
+.sidebar-nested-content.expanded {
+    max-height: 2000px;
+}
+
+.sidebar-nested-content .sidebar-file-item {
+    margin: 2px 0;
+}
+
+.sidebar-file-link {
+    display: block;
+    padding: 8px 15px;
+    color: var(--secondary-text-color);
+    text-decoration: none;
+    border-radius: 6px;
+    font-size: clamp(0.95rem, 1.1vw, 1.05rem);
+    transition: all 0.2s ease-in-out;
+}
+
+.sidebar-file-link:hover {
+    background-color: var(--card-background-color);
+    color: var(--text-color);
+}
+
+.sidebar-file-link.active {
+    background-color: var(--accent-hover-color);
+    color: var(--accent-color);
+    font-weight: 500;
+}
+
 /* Main Content Area */
 .main-content {
     padding: var(--spacing-md);

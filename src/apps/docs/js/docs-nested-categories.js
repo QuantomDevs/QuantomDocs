@@ -1,0 +1,430 @@
+// Nested Categories Rendering System
+// Handles recursive tree rendering with expand/collapse functionality
+
+/**
+ * Render the complete sidebar tree structure
+ * @param {Array} tree - The tree structure from the API
+ * @param {string} productId - Current product ID
+ */
+function renderSidebarTree(tree, productId) {
+    const sidebar = document.querySelector('.sidebar-left');
+
+    // Build search button HTML
+    const searchButtonHTML = `
+        <button id="docs-search-btn" class="docs-search-button-sidebar" title="Search documentation (⌘K)" style="display: flex;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M21 21L15 15M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span>Search</span>
+            <span class="search-shortcut">⌘K</span>
+        </button>
+    `;
+
+    // Start building sidebar
+    sidebar.innerHTML = searchButtonHTML;
+
+    // Render tree items with depth tracking
+    tree.forEach(item => {
+        const itemElement = renderTreeItem(item, productId, [], 0);
+        sidebar.appendChild(itemElement);
+    });
+
+    // Initialize event listeners
+    initializeCategoryEventListeners(productId);
+}
+
+/**
+ * Recursively render a single tree item (category or file)
+ * @param {Object} item - Tree item object
+ * @param {string} productId - Current product ID
+ * @param {Array} parentPath - Array of parent URL slugs
+ * @param {number} depth - Current depth in tree (0 = super-category, 1 = category, 2+ = nested)
+ * @returns {HTMLElement} - Rendered DOM element
+ */
+function renderTreeItem(item, productId, parentPath, depth) {
+    if (item.type === 'category') {
+        return renderCategory(item, productId, parentPath, depth);
+    } else if (item.type === 'file') {
+        return renderFile(item, productId, parentPath, depth);
+    }
+}
+
+/**
+ * Render a category with potential children
+ * @param {Object} category - Category object
+ * @param {string} productId - Current product ID
+ * @param {Array} parentPath - Array of parent URL slugs
+ * @param {number} depth - Current depth (0 = super-category, 1 = category, 2+ = nested)
+ * @returns {HTMLElement} - Category DOM element
+ */
+function renderCategory(category, productId, parentPath, depth) {
+    // Build path for this category
+    const currentPath = [...parentPath, category.urlSlug];
+
+    // Depth 0 and 1: Use old nav-block design (super-category and category)
+    // Depth 2+: Use new nested category design
+    if (depth < 2) {
+        return renderTraditionalCategory(category, productId, currentPath, depth);
+    } else {
+        return renderNestedCategory(category, productId, currentPath, depth);
+    }
+}
+
+/**
+ * Render traditional category (super-category or category level)
+ * Uses the old nav-block design with H4 and ul/li
+ */
+function renderTraditionalCategory(category, productId, currentPath, depth) {
+    const navBlock = document.createElement('div');
+    navBlock.className = 'nav-block';
+
+    // Category title
+    const title = document.createElement('h4');
+    title.textContent = category.name;
+    navBlock.appendChild(title);
+
+    // File list
+    if (category.children && category.children.length > 0) {
+        const fileList = document.createElement('ul');
+
+        category.children.forEach(child => {
+            const childElement = renderTreeItem(child, productId, currentPath, depth + 1);
+            fileList.appendChild(childElement);
+        });
+
+        navBlock.appendChild(fileList);
+    }
+
+    return navBlock;
+}
+
+/**
+ * Render nested category (depth 2+)
+ * Uses the new expandable button design
+ */
+function renderNestedCategory(category, productId, currentPath, depth) {
+    const container = document.createElement('div');
+    container.className = 'sidebar-category-item';
+
+    const pathString = currentPath.join('/');
+    const isExpanded = getCategoryExpansionState(productId, pathString);
+
+    // Create category button
+    const button = document.createElement('button');
+    button.className = `sidebar-category-button ${isExpanded ? 'expanded' : ''}`;
+    button.dataset.categoryPath = pathString;
+    button.dataset.hasIndex = category.hasIndex || false;
+
+    // Category name
+    const nameSpan = document.createElement('span');
+    nameSpan.className = 'category-name';
+    nameSpan.textContent = category.name;
+    button.appendChild(nameSpan);
+
+    // Arrow icon (only if has children)
+    if (category.children && category.children.length > 0) {
+        const arrow = document.createElement('span');
+        arrow.className = 'category-arrow';
+        arrow.textContent = '▶';
+        button.appendChild(arrow);
+    }
+
+    container.appendChild(button);
+
+    // Create nested content container
+    if (category.children && category.children.length > 0) {
+        const nestedContent = document.createElement('div');
+        nestedContent.className = `sidebar-nested-content ${isExpanded ? 'expanded' : ''}`;
+        nestedContent.style.display = isExpanded ? 'block' : 'none';
+
+        // Recursively render children
+        category.children.forEach(child => {
+            const childElement = renderTreeItem(child, productId, currentPath, depth + 1);
+            nestedContent.appendChild(childElement);
+        });
+
+        container.appendChild(nestedContent);
+    }
+
+    return container;
+}
+
+/**
+ * Render a file item
+ * @param {Object} file - File object
+ * @param {string} productId - Current product ID
+ * @param {Array} parentPath - Array of parent URL slugs
+ * @param {number} depth - Current depth
+ * @returns {HTMLElement} - File DOM element
+ */
+function renderFile(file, productId, parentPath, depth) {
+    // Build full path
+    const filePath = [...parentPath, file.urlSlug].join('/');
+    const fileUrl = `/${productId}/${filePath}`;
+
+    // For traditional categories (depth < 2): use li element
+    // For nested categories (depth >= 2): use div element
+    const container = depth < 2 ? document.createElement('li') : document.createElement('div');
+    if (depth >= 2) {
+        container.className = 'sidebar-file-item';
+    }
+
+    // Create link
+    const link = document.createElement('a');
+    link.href = fileUrl;
+    link.className = depth < 2 ? '' : 'sidebar-file-link';
+    link.dataset.filePath = filePath;
+    link.textContent = file.name;
+
+    container.appendChild(link);
+
+    return container;
+}
+
+/**
+ * Initialize event listeners for category buttons and file links
+ * @param {string} productId - Current product ID
+ */
+function initializeCategoryEventListeners(productId) {
+    const sidebar = document.querySelector('.sidebar-left');
+
+    // Category button click handler (for nested categories)
+    sidebar.addEventListener('click', (e) => {
+        const button = e.target.closest('.sidebar-category-button');
+        if (!button) return;
+
+        e.preventDefault();
+
+        const categoryPath = button.dataset.categoryPath;
+        const hasIndex = button.dataset.hasIndex === 'true';
+        const nestedContent = button.parentElement.querySelector('.sidebar-nested-content');
+
+        // Toggle expansion
+        const isExpanded = button.classList.contains('expanded');
+
+        if (nestedContent) {
+            if (isExpanded) {
+                // Collapse
+                button.classList.remove('expanded');
+                nestedContent.classList.remove('expanded');
+                nestedContent.style.display = 'none';
+            } else {
+                // Expand
+                button.classList.add('expanded');
+                nestedContent.classList.add('expanded');
+                nestedContent.style.display = 'block';
+            }
+
+            // Save expansion state
+            saveCategoryExpansionState(productId, categoryPath, !isExpanded);
+        }
+
+        // If has index.md, load it
+        if (hasIndex) {
+            // Remove active class from all
+            sidebar.querySelectorAll('.sidebar-category-button, .sidebar-file-link, .nav-block a').forEach(el => {
+                el.classList.remove('active');
+            });
+
+            // Add active class to this button
+            button.classList.add('active');
+
+            // Load index.md
+            loadCategoryIndex(productId, categoryPath);
+
+            // Update URL
+            const newUrl = `/${productId}/${categoryPath}/`;
+            window.history.pushState({ product: productId, path: categoryPath, isIndex: true }, '', newUrl);
+        }
+    });
+
+    // File link click handler (for nested categories)
+    sidebar.addEventListener('click', (e) => {
+        const link = e.target.closest('.sidebar-file-link');
+        if (!link) return;
+
+        e.preventDefault();
+
+        const filePath = link.dataset.filePath;
+
+        // Remove active class from all
+        sidebar.querySelectorAll('.sidebar-category-button, .sidebar-file-link, .nav-block a').forEach(el => {
+            el.classList.remove('active');
+        });
+
+        // Add active class to this link
+        link.classList.add('active');
+
+        // Load file
+        loadMarkdownFileByPath(productId, filePath);
+
+        // Update URL
+        const newUrl = `/${productId}/${filePath}`;
+        window.history.pushState({ product: productId, path: filePath, isFile: true }, '', newUrl);
+    });
+
+    // Traditional file link click handler (for nav-block links)
+    sidebar.addEventListener('click', (e) => {
+        const link = e.target.closest('.nav-block a');
+        if (!link) return;
+        // Check if it's not already handled by sidebar-file-link
+        if (link.classList.contains('sidebar-file-link')) return;
+
+        e.preventDefault();
+
+        const filePath = link.dataset.filePath;
+
+        // Remove active class from all
+        sidebar.querySelectorAll('.sidebar-category-button, .sidebar-file-link, .nav-block a').forEach(el => {
+            el.classList.remove('active');
+        });
+
+        // Add active class to this link
+        link.classList.add('active');
+
+        // Load file
+        loadMarkdownFileByPath(productId, filePath);
+
+        // Update URL
+        const newUrl = `/${productId}/${filePath}`;
+        window.history.pushState({ product: productId, path: filePath, isFile: true }, '', newUrl);
+    });
+}
+
+/**
+ * Load a category's index.md file
+ * @param {string} productId - Product ID
+ * @param {string} categoryPath - Category path (URL slugs)
+ */
+async function loadCategoryIndex(productId, categoryPath) {
+    try {
+        showLoadingSkeleton();
+
+        // Fetch index.md content
+        const response = await fetch(`/api/docs/${productId}/${categoryPath}/index`);
+
+        if (!response.ok) {
+            throw new Error(`Failed to load index: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        // Render markdown
+        const dynamicContent = document.getElementById('dynamic-content-area');
+        dynamicContent.innerHTML = marked.parse(data.content);
+        dynamicContent.style.display = 'block';
+
+        // Update page header
+        updatePageHeaderControls(categoryPath);
+
+        // Update table of contents
+        updateTableOfContents(dynamicContent);
+
+        // Add copy button listeners to code blocks
+        if (typeof addCopyButtonListeners === 'function') {
+            addCopyButtonListeners();
+        }
+
+        // Scroll to top
+        window.scrollTo(0, 0);
+
+        // Track analytics
+        trackMarkdownView(`${productId}/${categoryPath}/index`);
+
+    } catch (error) {
+        console.error('Error loading category index:', error);
+        document.getElementById('dynamic-content-area').innerHTML = `
+            <div style="padding: 40px; text-align: center; color: var(--secondary-text-color);">
+                <h2>Failed to load content</h2>
+                <p>${error.message}</p>
+            </div>
+        `;
+    }
+}
+
+/**
+ * Load a markdown file by its path (URL slugs)
+ * @param {string} productId - Product ID
+ * @param {string} filePath - File path (URL slugs)
+ */
+async function loadMarkdownFileByPath(productId, filePath) {
+    try {
+        showLoadingSkeleton();
+
+        // Fetch file content
+        const response = await fetch(`/api/docs/${productId}/${filePath}`);
+
+        if (!response.ok) {
+            throw new Error(`Failed to load file: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        // Render markdown
+        const dynamicContent = document.getElementById('dynamic-content-area');
+        dynamicContent.innerHTML = marked.parse(data.content);
+        dynamicContent.style.display = 'block';
+
+        // Update page header
+        updatePageHeaderControls(filePath);
+
+        // Update table of contents
+        updateTableOfContents(dynamicContent);
+
+        // Add copy button listeners
+        if (typeof addCopyButtonListeners === 'function') {
+            addCopyButtonListeners();
+        }
+
+        // Scroll to top
+        window.scrollTo(0, 0);
+
+        // Track analytics
+        trackMarkdownView(`${productId}/${filePath}`);
+
+    } catch (error) {
+        console.error('Error loading markdown file:', error);
+        document.getElementById('dynamic-content-area').innerHTML = `
+            <div style="padding: 40px; text-align: center; color: var(--secondary-text-color);">
+                <h2>Failed to load content</h2>
+                <p>${error.message}</p>
+            </div>
+        `;
+    }
+}
+
+/**
+ * Save category expansion state to localStorage
+ * @param {string} productId - Product ID
+ * @param {string} categoryPath - Category path
+ * @param {boolean} isExpanded - Expansion state
+ */
+function saveCategoryExpansionState(productId, categoryPath, isExpanded) {
+    const key = `category-expansion-${productId}-${categoryPath}`;
+    localStorage.setItem(key, isExpanded ? 'true' : 'false');
+}
+
+/**
+ * Get category expansion state from localStorage
+ * @param {string} productId - Product ID
+ * @param {string} categoryPath - Category path
+ * @returns {boolean} - Expansion state
+ */
+function getCategoryExpansionState(productId, categoryPath) {
+    const key = `category-expansion-${productId}-${categoryPath}`;
+    return localStorage.getItem(key) === 'true';
+}
+
+/**
+ * Show loading skeleton
+ */
+function showLoadingSkeleton() {
+    const dynamicContent = document.getElementById('dynamic-content-area');
+    dynamicContent.innerHTML = `
+        <div class="loading-skeleton">
+            <div class="skeleton-line" style="width: 60%;"></div>
+            <div class="skeleton-line" style="width: 80%;"></div>
+            <div class="skeleton-line" style="width: 70%;"></div>
+        </div>
+    `;
+}

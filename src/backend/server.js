@@ -15,7 +15,7 @@ const app = express();
 
 // Define safe base directories
 const SAFE_DIRECTORIES = {
-    content: path.join(__dirname, '..', '..', 'content', 'products'),
+    content: path.join(__dirname, '..', '..', 'content'),
     uploads: path.join(__dirname, '..', 'apps', 'main', 'downloads'),
     data: path.join(__dirname, '..', '..', 'data')
 };
@@ -697,7 +697,7 @@ app.post('/api/refresh', verifyToken, (req, res) => {
 app.get('/api/docs/products/:productId/structure', (req, res) => {
     try {
         const { productId } = req.params;
-        const productPath = path.join(__dirname, '..', '..', 'content', 'products', productId);
+        const productPath = path.join(__dirname, '..', '..', 'content', productId);
 
         // Check if product directory exists
         if (!fs.existsSync(productPath)) {
@@ -938,6 +938,10 @@ function buildCategoryTree(dirPath, relativePath = '') {
                 const cleanName = match ? match[2] : entry.name;
                 const urlSlug = formatUrlPath(entry.name);
 
+                // Check if this category has an index.md file
+                const indexPath = path.join(itemPath, 'index.md');
+                const hasIndex = fs.existsSync(indexPath);
+
                 // Recursively build subtree
                 const children = buildCategoryTree(itemPath, itemRelativePath);
 
@@ -950,10 +954,14 @@ function buildCategoryTree(dirPath, relativePath = '') {
                     path: itemRelativePath,
                     children: children,
                     hasFiles: children.some(child => child.type === 'file'),
-                    hasSubcategories: children.some(child => child.type === 'category')
+                    hasSubcategories: children.some(child => child.type === 'category'),
+                    hasIndex: hasIndex  // NEW: Indicates if category has index.md
                 });
 
             } else if (entry.isFile() && entry.name.endsWith('.md')) {
+                // Skip index.md files (they're represented by the category itself)
+                if (entry.name === 'index.md') continue;
+
                 // Markdown file
                 const match = entry.name.match(/^(\d+)-(.+)\.md$/);
                 const order = match ? parseInt(match[1], 10) : 999;
@@ -1625,7 +1633,7 @@ app.post('/api/analytics/track', (req, res) => {
 app.get('/api/files/:product/tree', verifyToken, (req, res) => {
     try {
         const { product } = req.params;
-        const productPath = path.join(__dirname, '..', '..', 'content', 'products', product);
+        const productPath = path.join(__dirname, '..', '..', 'content', product);
 
         if (!fs.existsSync(productPath)) {
             return res.status(404).json({ error: 'Product not found' });
@@ -1728,7 +1736,7 @@ app.post('/api/files/:product', verifyToken, (req, res) => {
             return res.status(400).json({ error: 'Type and name are required' });
         }
 
-        const basePath = path.join(__dirname, '..', '..', 'content', 'products', product);
+        const basePath = path.join(__dirname, '..', '..', 'content', product);
         const targetPath = folderPath
             ? path.join(basePath, folderPath, name)
             : path.join(basePath, name);
@@ -1860,7 +1868,7 @@ app.post('/api/files/:product/rename', verifyToken, (req, res) => {
             return res.status(400).json({ error: 'Old path and new name are required' });
         }
 
-        const basePath = path.join(__dirname, '..', '..', 'content', 'products', product);
+        const basePath = path.join(__dirname, '..', '..', 'content', product);
         const oldFullPath = path.join(basePath, oldPath);
         const directory = path.dirname(oldFullPath);
         const newFullPath = path.join(directory, newName);
@@ -1903,7 +1911,7 @@ app.post('/api/files/:product/move', verifyToken, (req, res) => {
             return res.status(400).json({ error: 'Source and target paths are required' });
         }
 
-        const basePath = path.join(__dirname, '..', '..', 'content', 'products', product);
+        const basePath = path.join(__dirname, '..', '..', 'content', product);
         const sourceFullPath = path.join(basePath, sourcePath);
         const targetFullPath = path.join(basePath, targetPath, path.basename(sourcePath));
 
@@ -1945,7 +1953,7 @@ app.post('/api/files/:product/move', verifyToken, (req, res) => {
 app.post('/api/files/:product/upload', verifyToken, uploadLimiter, async (req, res) => {
     try {
         const { product } = req.params;
-        const uploadPath = path.join(__dirname, '..', '..', 'content', 'products', product, 'images');
+        const uploadPath = path.join(__dirname, '..', '..', 'content', product, 'images');
 
         // Ensure directory exists
         if (!fs.existsSync(uploadPath)) {
