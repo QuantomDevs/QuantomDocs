@@ -894,14 +894,18 @@ function formatUrlPath(name) {
 function resolveUrlPath(parentPath, urlSlug) {
     try {
         const entries = fs.readdirSync(parentPath, { withFileTypes: true });
+        console.log(`[DEBUG] Resolving "${urlSlug}" in ${parentPath}`);
 
         for (const entry of entries) {
             const formatted = formatUrlPath(entry.name);
+            console.log(`[DEBUG]   - Entry: "${entry.name}" -> formatted: "${formatted}" (match: ${formatted === urlSlug.toLowerCase()})`);
             if (formatted === urlSlug.toLowerCase()) {
+                console.log(`[DEBUG]   ✓ Match found: "${entry.name}"`);
                 return entry.name;
             }
         }
 
+        console.log(`[DEBUG]   ✗ No match found for "${urlSlug}"`);
         return null;
     } catch (error) {
         console.error(`Error resolving URL path in ${parentPath}:`, error);
@@ -1023,14 +1027,57 @@ app.get('/api/docs/:product/tree', (req, res) => {
     }
 });
 
+// Get markdown file from super-category structure (legacy - supports flat structure)
+app.get('/api/docs/:product/:superCategory/:category/:file', (req, res) => {
+    try {
+        const { product, superCategory, category, file } = req.params;
+        const requestedPath = path.join(product, superCategory, category, `${file}.md`);
+
+        const validation = validatePath(requestedPath, 'content');
+
+        if (!validation.valid) {
+            logSecurityEvent('Unauthorized file access attempt', {
+                requestedPath,
+                ip: req.ip,
+                error: validation.error
+            });
+            return res.status(403).json({ error: 'Access denied' });
+        }
+
+        // Check if file exists
+        if (!fs.existsSync(validation.resolvedPath)) {
+            return res.status(404).json({ error: 'File not found' });
+        }
+
+        const content = fs.readFileSync(validation.resolvedPath, 'utf-8');
+        const stats = fs.statSync(validation.resolvedPath);
+
+        res.json({
+            content,
+            category,
+            file,
+            metadata: {
+                size: content.length,
+                lastModified: stats.mtime
+            }
+        });
+    } catch (error) {
+        console.error('Error reading markdown file:', error);
+        res.status(500).json({ error: 'Failed to load file' });
+    }
+});
+
 // Get markdown file using URL-formatted nested path (supports URL slugs)
 app.get('/api/docs/:product/*', (req, res) => {
     try {
         const productId = req.params.product;
         const urlPath = req.params[0]; // Everything after product ID (URL-formatted)
 
+        console.log(`[WILDCARD ENDPOINT] Request: /api/docs/${productId}/${urlPath}`);
+
         // Skip if this looks like an existing endpoint
         if (!urlPath || urlPath === 'tree' || urlPath === 'super-categories') {
+            console.log(`[WILDCARD ENDPOINT] Skipping - matches reserved path`);
             return res.status(404).json({ error: 'File not found' });
         }
 
@@ -1106,48 +1153,6 @@ app.get('/api/docs/:product/*', (req, res) => {
         res.status(500).json({ error: 'Failed to load file' });
     }
 });
-
-// Get markdown file from super-category structure (legacy - supports flat structure)
-app.get('/api/docs/:product/:superCategory/:category/:file', (req, res) => {
-    try {
-        const { product, superCategory, category, file } = req.params;
-        const requestedPath = path.join(product, superCategory, category, `${file}.md`);
-
-        const validation = validatePath(requestedPath, 'content');
-
-        if (!validation.valid) {
-            logSecurityEvent('Unauthorized file access attempt', {
-                requestedPath,
-                ip: req.ip,
-                error: validation.error
-            });
-            return res.status(403).json({ error: 'Access denied' });
-        }
-
-        // Check if file exists
-        if (!fs.existsSync(validation.resolvedPath)) {
-            return res.status(404).json({ error: 'File not found' });
-        }
-
-        const content = fs.readFileSync(validation.resolvedPath, 'utf-8');
-        const stats = fs.statSync(validation.resolvedPath);
-
-        res.json({
-            content,
-            category,
-            file,
-            metadata: {
-                size: content.length,
-                lastModified: stats.mtime
-            }
-        });
-    } catch (error) {
-        console.error('Error reading markdown file:', error);
-        res.status(500).json({ error: 'Failed to load file' });
-    }
-});
-
-
 
 // Image upload configuration for editor
 const imageStorage = multer.diskStorage({
