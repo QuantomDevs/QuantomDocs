@@ -1,12 +1,11 @@
 // Dynamic Multi-Product Documentation System
-// Handles product overview, dynamic loading, and navigation
+// Handles product overview, dynamic loading, and navigation with nested categories
 
 let currentProduct = null;
 let currentCategory = null;
 let currentMarkdown = null;
 let currentFile = null;
-let currentSuperCategory = null;
-let availableSuperCategories = [];
+let currentProductTree = null;
 
 // Initialize the documentation page
 async function initDocsPage() {
@@ -50,25 +49,19 @@ async function initDocsPage() {
             await loadProductOverview();
         }
     } else {
-        // Product selected: /docs/{product}/... or /docs/{product}/{category}/{file}
+        // Product selected: /docs/{product}/... or /docs/{product}/{path...}
         const selectedProduct = pathParts[0];
 
-        // Build file path if we have category and file
-        let selectedFile = null;
-        if (pathParts.length >= 3) {
-            // /docs/quantom/getting-started/installation -> quantom/getting-started/Installation.md
-            const category = pathParts[1];
-            const fileName = pathParts.slice(2).join('/');
-            // Capitalize first letter and add .md extension
-            const formattedFileName = fileName.split('-').map(word =>
-                word.charAt(0).toUpperCase() + word.slice(1)
-            ).join('-');
-            selectedFile = `${selectedProduct}/${category}/${formattedFileName}.md`;
+        // Build file path from URL slugs
+        let selectedFilePath = null;
+        if (pathParts.length > 1) {
+            // Join the path segments after product
+            selectedFilePath = pathParts.slice(1).join('/');
         }
 
         // Load specific product docs
         currentProduct = selectedProduct;
-        await loadProductDocs(selectedProduct, selectedFile);
+        await loadProductDocs(selectedProduct, selectedFilePath);
     }
 }
 
@@ -150,7 +143,7 @@ function selectProduct(productId) {
 }
 
 // Load product documentation
-async function loadProductDocs(productId, specificFile = null) {
+async function loadProductDocs(productId, specificFilePath = null) {
     try {
         // Show docs containers
         showDocsContainers();
@@ -158,17 +151,15 @@ async function loadProductDocs(productId, specificFile = null) {
         // Store current product
         currentProduct = productId;
 
-        // Load super-categories for this product
-        await loadSuperCategories(productId);
-
-        // Initialize super-category selector event listeners
-        initSuperCategorySelectorEvents();
+        // Load recursive tree structure for this product
+        await loadProductStructure(productId);
 
         // Load the specified file if provided
-        if (specificFile) {
-            loadMarkdownFile(specificFile);
-            // Set active link in sidebar for the loaded file
-            setActiveSidebarLink(specificFile);
+        if (specificFilePath) {
+            await loadMarkdownFileByPath(specificFilePath);
+        } else if (currentProductTree && currentProductTree.length > 0) {
+            // Load first available file
+            loadFirstAvailableFile(currentProductTree);
         }
     } catch (error) {
         console.error('Error loading product docs:', error);
@@ -184,8 +175,34 @@ async function loadProductDocs(productId, specificFile = null) {
     }
 }
 
-// Build the left sidebar navigation from categories
-function buildSidebar(categories, productId, superCategory) {
+// Load product structure using tree endpoint
+async function loadProductStructure(productId) {
+    try {
+        showLoadingSkeleton();
+
+        // Fetch recursive tree instead of flat categories
+        const response = await fetch(`/api/docs/${productId}/tree`);
+
+        if (!response.ok) {
+            throw new Error(`Failed to load product structure: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        // Store tree globally for navigation
+        currentProductTree = data.tree;
+
+        // Render sidebar with tree
+        renderSidebar(data.tree);
+
+    } catch (error) {
+        console.error('Error loading product structure:', error);
+        throw error;
+    }
+}
+
+// Render the sidebar with tree structure
+function renderSidebar(tree) {
     const sidebar = document.querySelector('.sidebar-left');
 
     // Build search button HTML
@@ -199,235 +216,184 @@ function buildSidebar(categories, productId, superCategory) {
         </button>
     `;
 
-    // Build super-category selector HTML
-    // Show selector if there are multiple super-categories
-    const showSelector = availableSuperCategories && availableSuperCategories.length > 1;
-    const superCategorySelectorHTML = `
-        <div id="super-category-selector" class="super-category-selector" style="display: ${showSelector ? 'block' : 'none'};">
-            <button id="super-category-btn" class="super-category-button">
-                <span class="super-category-name">Super Category Name</span>
-                <i class="fas fa-chevron-down super-category-icon"></i>
-            </button>
-            <div id="super-category-dropdown" class="super-category-dropdown">
-                <!-- Dynamically populated -->
+    // Clear sidebar and add search button
+    sidebar.innerHTML = searchButtonHTML;
+
+    // Render tree structure
+    const treeHTML = renderSidebarTree(tree, 0, []);
+    sidebar.innerHTML += treeHTML;
+
+    // Initialize category toggle listeners
+    initializeCategoryToggles();
+}
+
+// Recursively render sidebar tree
+function renderSidebarTree(items, depth = 0, parentPath = []) {
+    if (!items || items.length === 0) return '';
+
+    let html = `<ul class="sidebar-tree" data-depth="${depth}">`;
+
+    for (const item of items) {
+        if (item.type === 'category') {
+            html += renderCategory(item, depth, parentPath);
+        } else if (item.type === 'file') {
+            html += renderFile(item, depth, parentPath);
+        }
+    }
+
+    html += '</ul>';
+    return html;
+}
+
+// Render a category with potential children
+function renderCategory(category, depth, parentPath) {
+    const hasChildren = category.children && category.children.length > 0;
+    const indent = depth * 16; // 16px per depth level
+    const currentPath = [...parentPath, category.urlSlug];
+    const categoryId = category.id.replace(/[^a-zA-Z0-9]/g, '-');
+
+    // Check if this category should be expanded (from localStorage)
+    const isExpanded = loadExpansionState(categoryId);
+
+    let html = `
+        <li class="sidebar-category ${isExpanded ? 'expanded' : ''}" data-category="${escapeHtml(categoryId)}" style="padding-left: ${indent}px;">
+            <div class="category-header">
+                ${hasChildren ?
+                    `<i class="category-toggle fas fa-chevron-${isExpanded ? 'down' : 'right'}"></i>` :
+                    '<i class="category-icon fas fa-folder"></i>'}
+                <span class="category-name">${escapeHtml(category.name)}</span>
             </div>
-        </div>
     `;
 
-    // Clear sidebar and add elements
-    sidebar.innerHTML = searchButtonHTML + superCategorySelectorHTML;
+    if (hasChildren) {
+        // Add collapsible children container
+        html += `<div class="category-children" style="display: ${isExpanded ? 'block' : 'none'};">`;
+        html += renderSidebarTree(category.children, depth + 1, currentPath);
+        html += `</div>`;
+    }
 
-    categories.forEach(category => {
-        const categoryBlock = document.createElement('div');
-        categoryBlock.className = 'nav-block';
+    html += '</li>';
 
-        const categoryTitle = document.createElement('h4');
-        categoryTitle.textContent = category.name;
-        categoryBlock.appendChild(categoryTitle);
+    return html;
+}
 
-        const fileList = document.createElement('ul');
-        category.files.forEach(file => {
-            const li = document.createElement('li');
-            const a = document.createElement('a');
-            a.href = '#';
-            a.textContent = file.replace(/-/g, ' ');
-            a.setAttribute('data-file-path', `${productId}/${superCategory}/${category.id}/${file}`);
-            a.onclick = (e) => {
-                e.preventDefault();
+// Render a file entry
+function renderFile(file, depth, parentPath) {
+    const indent = depth * 16;
+    const filePath = [...parentPath, file.urlSlug].join('/');
+    const fileUrl = `/docs/${currentProduct}/${filePath}`;
 
-                // Remove active class from all links
-                sidebar.querySelectorAll('a').forEach(link => link.classList.remove('active'));
-                // Add active class to clicked link
-                a.classList.add('active');
+    return `
+        <li class="sidebar-file" data-file="${escapeHtml(file.id)}" style="padding-left: ${indent}px;">
+            <a href="${fileUrl}" class="file-link" data-path="${escapeHtml(filePath)}" onclick="return handleFileClick(event, '${escapeHtml(filePath)}')">
+                <i class="file-icon fas fa-file-alt"></i>
+                <span class="file-name">${escapeHtml(file.name)}</span>
+            </a>
+        </li>
+    `;
+}
 
-                // Update URL with clean path
-                const pathParts = [productId, superCategory, category.id, file];
-                const cleanPath = pathParts.map(part =>
-                    part.split('-').map(word => word.toLowerCase()).join('-')
-                ).join('/');
-                const newUrl = `/docs/${cleanPath}`;
-                window.history.pushState({ product: productId, superCategory, category: category.id, file }, '', newUrl);
+// Handle file link clicks
+window.handleFileClick = function(event, filePath) {
+    event.preventDefault();
 
-                loadMarkdownFile(`${productId}/${superCategory}/${category.id}/${file}`);
-            };
-            li.appendChild(a);
-            fileList.appendChild(li);
-        });
+    // Remove active class from all links
+    document.querySelectorAll('.sidebar-left .file-link').forEach(link => link.classList.remove('active'));
 
-        categoryBlock.appendChild(fileList);
-        sidebar.appendChild(categoryBlock);
+    // Add active class to clicked link
+    event.currentTarget.classList.add('active');
+
+    // Load the markdown file
+    loadMarkdownFileByPath(filePath);
+
+    // Update URL
+    const newUrl = `/docs/${currentProduct}/${filePath}`;
+    window.history.pushState({ product: currentProduct, filePath }, '', newUrl);
+
+    return false;
+};
+
+// Initialize category toggle functionality
+function initializeCategoryToggles() {
+    // Event delegation for category toggles
+    const sidebar = document.querySelector('.sidebar-left');
+    if (!sidebar) return;
+
+    // Remove existing listeners by cloning
+    const newSidebar = sidebar.cloneNode(true);
+    sidebar.parentNode.replaceChild(newSidebar, sidebar);
+
+    newSidebar.addEventListener('click', (e) => {
+        const toggleIcon = e.target.closest('.category-toggle');
+        if (!toggleIcon) return;
+
+        const categoryHeader = toggleIcon.closest('.category-header');
+        const categoryItem = categoryHeader.closest('.sidebar-category');
+        const childrenContainer = categoryItem.querySelector('.category-children');
+
+        if (!childrenContainer) return;
+
+        // Toggle visibility
+        const isExpanded = childrenContainer.style.display !== 'none';
+
+        if (isExpanded) {
+            // Collapse
+            childrenContainer.style.display = 'none';
+            toggleIcon.classList.remove('fa-chevron-down');
+            toggleIcon.classList.add('fa-chevron-right');
+            categoryItem.classList.remove('expanded');
+        } else {
+            // Expand
+            childrenContainer.style.display = 'block';
+            toggleIcon.classList.remove('fa-chevron-right');
+            toggleIcon.classList.add('fa-chevron-down');
+            categoryItem.classList.add('expanded');
+        }
+
+        // Store expansion state in localStorage
+        saveExpansionState(categoryItem.dataset.category, !isExpanded);
     });
 }
 
-// Load super-categories for a product
-async function loadSuperCategories(productId) {
-    try {
-        const response = await fetch(`/api/docs/${productId}/super-categories`);
-        const data = await response.json();
-        availableSuperCategories = data.superCategories;
+// Save category expansion state to localStorage
+function saveExpansionState(categoryId, isExpanded) {
+    const key = `category-expanded-${currentProduct}-${categoryId}`;
+    localStorage.setItem(key, isExpanded ? 'true' : 'false');
+}
 
-        // Get selector element
-        const selector = document.getElementById('super-category-selector');
+// Load category expansion state from localStorage
+function loadExpansionState(categoryId) {
+    const key = `category-expanded-${currentProduct}-${categoryId}`;
+    return localStorage.getItem(key) === 'true';
+}
 
-        // Hide selector if only one super-category
-        if (availableSuperCategories.length <= 1) {
-            if (selector) selector.style.display = 'none';
-            currentSuperCategory = availableSuperCategories[0]?.fullName || null;
-
-            // Load categories for the single super-category
-            if (currentSuperCategory) {
-                await loadCategoriesForSuperCategory(productId, currentSuperCategory);
-            }
+// Load first available file in the tree
+function loadFirstAvailableFile(tree) {
+    for (const item of tree) {
+        if (item.type === 'file') {
+            loadMarkdownFileByPath(item.urlSlug);
+            return;
+        } else if (item.type === 'category' && item.children && item.children.length > 0) {
+            loadFirstAvailableFile(item.children);
             return;
         }
-
-        if (selector) selector.style.display = 'block';
-
-        // Set default to first super-category (order 01)
-        currentSuperCategory = availableSuperCategories[0].fullName;
-
-        renderSuperCategorySelector();
-        await loadCategoriesForSuperCategory(productId, currentSuperCategory);
-    } catch (error) {
-        console.error('Failed to load super-categories:', error);
     }
 }
 
-// Render super-category selector dropdown
-function renderSuperCategorySelector() {
-    const btn = document.getElementById('super-category-btn');
-    const dropdown = document.getElementById('super-category-dropdown');
-
-    if (!btn || !dropdown) return;
-
-    // Update button text
-    const selectedCat = availableSuperCategories.find(sc => sc.fullName === currentSuperCategory);
-    const nameElement = document.querySelector('.super-category-name');
-    if (nameElement && selectedCat) {
-        nameElement.textContent = selectedCat.name;
-    }
-
-    // Render dropdown options
-    dropdown.innerHTML = availableSuperCategories.map(sc => `
-        <div class="super-category-option ${sc.fullName === currentSuperCategory ? 'active' : ''}"
-             data-super-category="${sc.fullName}">
-            ${sc.name}
-        </div>
-    `).join('');
-
-    // Add event listeners to options
-    dropdown.querySelectorAll('.super-category-option').forEach(option => {
-        option.addEventListener('click', async () => {
-            const newSuperCat = option.dataset.superCategory;
-            if (newSuperCat !== currentSuperCategory) {
-                currentSuperCategory = newSuperCat;
-                renderSuperCategorySelector();
-                await loadCategoriesForSuperCategory(currentProduct, currentSuperCategory);
-                toggleSuperCategoryDropdown(false);
-            }
-        });
-    });
-}
-
-// Toggle super-category dropdown
-function toggleSuperCategoryDropdown(show) {
-    const btn = document.getElementById('super-category-btn');
-    const dropdown = document.getElementById('super-category-dropdown');
-
-    if (!btn || !dropdown) return;
-
-    if (show === undefined) {
-        show = !dropdown.classList.contains('show');
-    }
-
-    if (show) {
-        dropdown.classList.add('show');
-        btn.classList.add('open');
-    } else {
-        dropdown.classList.remove('show');
-        btn.classList.remove('open');
-    }
-}
-
-// Initialize super-category selector event listeners
-function initSuperCategorySelectorEvents() {
-    const btn = document.getElementById('super-category-btn');
-
-    if (!btn) return;
-
-    // Remove existing listeners by cloning and replacing
-    const newBtn = btn.cloneNode(true);
-    btn.parentNode.replaceChild(newBtn, btn);
-
-    // Button click handler
-    newBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        toggleSuperCategoryDropdown();
-    });
-
-    // Close dropdown when clicking outside
-    document.addEventListener('click', (e) => {
-        const selector = document.getElementById('super-category-selector');
-        if (selector && !selector.contains(e.target)) {
-            toggleSuperCategoryDropdown(false);
-        }
-    });
-}
-
-// Load categories for a super-category
-async function loadCategoriesForSuperCategory(productId, superCategory) {
-    try {
-        const response = await fetch(`/api/docs/${productId}/${superCategory}/categories`);
-        const data = await response.json();
-
-        // Update sidebar with categories
-        buildSidebar(data.categories, productId, superCategory);
-
-        // Render super-category selector if multiple categories exist
-        if (availableSuperCategories && availableSuperCategories.length > 1) {
-            renderSuperCategorySelector();
-        }
-
-        // Reinitialize super-category selector events after sidebar rebuild
-        initSuperCategorySelectorEvents();
-
-        // Load first file if no file is currently loaded
-        if (!currentFile && data.categories.length > 0 && data.categories[0].files.length > 0) {
-            const firstCategory = data.categories[0];
-            const firstFile = firstCategory.files[0];
-            const filePath = `${productId}/${superCategory}/${firstCategory.id}/${firstFile}`;
-            loadMarkdownFile(filePath);
-        }
-    } catch (error) {
-        console.error('Failed to load categories:', error);
-    }
-}
-
-// Load and display markdown file
-async function loadMarkdownFile(filePath) {
+// Load markdown file using URL slug path
+async function loadMarkdownFileByPath(urlSlugPath) {
     const dynamicContent = document.getElementById('dynamic-content-area');
 
     try {
         // Show loading skeleton
         showLoadingSkeleton();
 
-        // Parse filePath: productId/superCategory/categoryId/fileName
-        const pathParts = filePath.split('/');
-        if (pathParts.length < 4) {
-            throw new Error(`Invalid file path format: ${filePath}`);
-        }
-
-        const productId = pathParts[0];
-        const superCategory = pathParts[1];
-        const categoryId = pathParts[2];
-        const fileName = pathParts[3];
-
-        // Use the new API endpoint
-        const apiUrl = `/api/docs/${productId}/${superCategory}/${categoryId}/${fileName}`;
+        // Use the wildcard endpoint with URL slugs
+        const apiUrl = `/api/docs/${currentProduct}/${urlSlugPath}`;
         const response = await fetch(apiUrl);
 
         if (!response.ok) {
-            throw new Error(`Failed to load: ${filePath}`);
+            throw new Error(`Failed to load: ${urlSlugPath}`);
         }
 
         // Parse JSON response
@@ -446,7 +412,7 @@ async function loadMarkdownFile(filePath) {
         dynamicContent.style.display = 'block';
 
         // Update page header controls (category + split button)
-        updatePageHeaderControls(filePath);
+        updatePageHeaderControls(urlSlugPath);
 
         // Update right sidebar (table of contents)
         updateTableOfContents(dynamicContent);
@@ -459,10 +425,13 @@ async function loadMarkdownFile(filePath) {
         window.scrollTo(0, 0);
 
         // Store current file path
-        currentFile = filePath;
+        currentFile = urlSlugPath;
+
+        // Update active state in sidebar
+        updateSidebarActiveState(urlSlugPath);
 
         // Track analytics for markdown file view
-        trackMarkdownView(filePath);
+        trackMarkdownView(urlSlugPath);
 
     } catch (error) {
         console.error('Error loading markdown file:', error);
@@ -476,15 +445,25 @@ async function loadMarkdownFile(filePath) {
     }
 }
 
+// Update active state in sidebar
+function updateSidebarActiveState(filePath) {
+    const sidebar = document.querySelector('.sidebar-left');
+    if (!sidebar) return;
+
+    // Remove active class from all links
+    sidebar.querySelectorAll('.file-link').forEach(link => link.classList.remove('active'));
+
+    // Find and activate the link matching the current file path
+    const activeLink = sidebar.querySelector(`.file-link[data-path="${filePath}"]`);
+    if (activeLink) {
+        activeLink.classList.add('active');
+    }
+}
+
 // Track markdown file view in analytics
 async function trackMarkdownView(filePath) {
     try {
-        // Convert file path to URL format: quantom/01-Getting-Started/Installation.md -> /docs/quantom/getting-started/installation
-        const pathParts = filePath.replace('.md', '').split('/');
-        const cleanPath = pathParts.map(part =>
-            part.split('-').map(word => word.toLowerCase()).join('-')
-        ).join('/');
-        const trackPath = `/docs/${cleanPath}`;
+        const trackPath = `/docs/${currentProduct}/${filePath}`;
 
         // Send analytics tracking request (no auth required for tracking)
         await fetch('/api/analytics/track', {
@@ -540,6 +519,13 @@ function formatFileName(fileName) {
     return fileName
         .replace('.md', '')
         .replace(/-/g, ' ');
+}
+
+// Escape HTML to prevent XSS
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
 }
 
 // Update table of contents in right sidebar
@@ -693,21 +679,6 @@ function updateActiveHeading(headingId) {
     activeLinks.forEach(link => link.classList.add('active'));
 }
 
-// Set active sidebar link for the currently loaded file
-function setActiveSidebarLink(filePath) {
-    const sidebar = document.querySelector('.sidebar-left');
-    if (!sidebar) return;
-
-    // Remove active class from all links
-    sidebar.querySelectorAll('a').forEach(link => link.classList.remove('active'));
-
-    // Find and activate the link matching the current file path
-    const activeLink = sidebar.querySelector(`a[data-file-path="${filePath}"]`);
-    if (activeLink) {
-        activeLink.classList.add('active');
-    }
-}
-
 // Update page header controls (category display + split button)
 function updatePageHeaderControls(filePath) {
     const pageHeaderControls = document.getElementById('page-header-controls');
@@ -717,12 +688,16 @@ function updatePageHeaderControls(filePath) {
     if (!pageHeaderControls || !categoryNameElement) return;
 
     try {
-        // Parse file path: productId/categoryName/fileName.md
+        // Parse file path: path/to/file
         const pathParts = filePath.split('/');
-        const categoryName = pathParts[2];
-        const markdownName = pathParts[3];
 
-        // Format category name for display
+        // Get category name (first part of path or "Documentation")
+        const categoryName = pathParts.length > 1 ? pathParts[0] : 'Documentation';
+
+        // Get markdown name (last part of path)
+        const markdownName = pathParts[pathParts.length - 1];
+
+        // Format names for display
         const categoryDisplayName = formatCategoryName(categoryName);
         const markdownDisplayName = formatCategoryName(markdownName);
 
@@ -741,8 +716,6 @@ function updatePageHeaderControls(filePath) {
         pageHeaderControls.style.display = 'none';
     }
 }
-
-// Note: addCopyButtonListeners is defined in docs.js and will be called from there
 
 // Mobile Product Selector Functions
 async function initMobileProductSelector() {
