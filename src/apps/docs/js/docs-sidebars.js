@@ -1,6 +1,7 @@
 /**
  * Docs Sidebars Module
  * Manages both left and right sidebars functionality
+ * @module DocsSidebars
  */
 
 // Constants
@@ -14,26 +15,78 @@ const BREAKPOINTS = {
 };
 
 const TIMING = {
-    RESIZE_DEBOUNCE: 100
+    RESIZE_DEBOUNCE: 100,
+    ANIMATION_DURATION: 300
 };
 
-// State management
+const ERROR_MESSAGES = {
+    INIT_FAILED: 'Failed to initialize docs sidebars',
+    STORAGE_ACCESS: 'Failed to access localStorage',
+    DOM_ACCESS: 'Failed to access DOM elements',
+    EVENT_BINDING: 'Failed to bind event listeners'
+};
+
+// Logger utility
+const Logger = {
+    error(message, error) {
+        console.error(`[DocsSidebars] ${message}:`, error);
+    },
+
+    warn(message) {
+        console.warn(`[DocsSidebars] ${message}`);
+    },
+
+    info(message) {
+        console.info(`[DocsSidebars] ${message}`);
+    }
+};
+
+// Safe localStorage wrapper
+const Storage = {
+    get(key, defaultValue = null) {
+        try {
+            const value = localStorage.getItem(key);
+            return value !== null ? value : defaultValue;
+        } catch (error) {
+            Logger.error(ERROR_MESSAGES.STORAGE_ACCESS, error);
+            return defaultValue;
+        }
+    },
+
+    set(key, value) {
+        try {
+            localStorage.setItem(key, value);
+            return true;
+        } catch (error) {
+            Logger.error(ERROR_MESSAGES.STORAGE_ACCESS, error);
+            return false;
+        }
+    }
+};
+
+// State management with error handling
 const SidebarState = {
     isCollapsed: false,
     isMobile: false,
 
     load() {
-        this.isCollapsed = localStorage.getItem(STORAGE_KEYS.SIDEBAR_COLLAPSED) === 'true';
-        this.isMobile = window.innerWidth <= BREAKPOINTS.MOBILE;
+        try {
+            this.isCollapsed = Storage.get(STORAGE_KEYS.SIDEBAR_COLLAPSED) === 'true';
+            this.isMobile = window.innerWidth <= BREAKPOINTS.MOBILE;
+        } catch (error) {
+            Logger.error('Failed to load sidebar state', error);
+            this.isCollapsed = false;
+            this.isMobile = false;
+        }
     },
 
     save() {
-        localStorage.setItem(STORAGE_KEYS.SIDEBAR_COLLAPSED, this.isCollapsed.toString());
+        return Storage.set(STORAGE_KEYS.SIDEBAR_COLLAPSED, this.isCollapsed.toString());
     },
 
     toggle() {
         this.isCollapsed = !this.isCollapsed;
-        this.save();
+        return this.save();
     }
 };
 
@@ -184,14 +237,15 @@ function setupEventListeners() {
 }
 
 /**
- * Handle window resize events
+ * Handle window resize events with performance optimization
  */
 function handleResize() {
     let resizeTimer;
+    let rafId;
+    let isResizing = false;
 
-    window.addEventListener('resize', () => {
-        clearTimeout(resizeTimer);
-        resizeTimer = setTimeout(() => {
+    const performResize = () => {
+        try {
             const isDesktopNow = window.innerWidth > BREAKPOINTS.MOBILE;
             const showHeader = window.docsHeaderConfig?.general?.showHeader !== false;
 
@@ -213,15 +267,40 @@ function handleResize() {
                 // On desktop with header disabled: restore saved state
                 applySidebarState(SidebarState.isCollapsed);
             }
-        }, TIMING.RESIZE_DEBOUNCE);
-    });
+
+            isResizing = false;
+        } catch (error) {
+            Logger.error('Resize handler failed', error);
+            isResizing = false;
+        }
+    };
+
+    const onResize = () => {
+        // Cancel any pending animation frame
+        if (rafId) {
+            cancelAnimationFrame(rafId);
+        }
+
+        // Clear existing timer
+        clearTimeout(resizeTimer);
+
+        // Use requestAnimationFrame for smooth updates
+        if (!isResizing) {
+            isResizing = true;
+            rafId = requestAnimationFrame(() => {
+                resizeTimer = setTimeout(performResize, TIMING.RESIZE_DEBOUNCE);
+            });
+        }
+    };
+
+    window.addEventListener('resize', onResize, { passive: true });
 }
 
 /**
  * Initialize left sidebar functionality
  */
 function initLeftSidebar() {
-    // Load state
+    // Load state FIRST before any DOM manipulation
     SidebarState.load();
 
     // Get configuration
@@ -247,8 +326,8 @@ function initLeftSidebar() {
 
     // Setup functionality only on desktop when header is disabled
     if (!showHeader && isDesktop) {
-        // Apply saved state
-        applySidebarState(SidebarState.isCollapsed);
+        // Apply saved state IMMEDIATELY without transition to prevent flickering
+        applySidebarStateWithoutTransition(SidebarState.isCollapsed);
 
         // Setup event listeners
         setupEventListeners();
