@@ -97,21 +97,14 @@ body.no-scroll {
     padding: clamp(50px, 5vh, 100px) clamp(10px, 5vw, 20px) clamp(10px, 5vh, 30px) clamp(00px, 5vw, 00px);
 }
 
-/* Remove padding when header is hidden on desktop */
-body.docs-header-hidden .docs-container {
-    padding-top: 0;
-    margin-top: 0;
-}
-
+/* Desktop layout (> 1024px) */
 @media (min-width: 1025px) {
+    /* Remove padding when header is hidden on desktop */
     body.docs-header-hidden .docs-container {
         padding-top: 0;
         margin-top: 0;
     }
-}
 
-/* Desktop layout (> 1024px) */
-@media (min-width: 1025px) {
     .docs-container {
         display: flex;
     }
@@ -125,7 +118,33 @@ body.docs-header-hidden .docs-container {
     }
 
     .sidebar-left {
-        padding: 15px;
+        align-self: flex-start;
+        height: 100vh;
+        overflow-y: auto;
+        padding: clamp(15px, 2vw, 20px);
+        width: 18rem;
+        flex-shrink: 0;
+        background-color: var(--bg-tertiary);
+        border-right: solid 1px var(--border-color);
+        transition: transform 0.3s ease-in-out;
+    }
+
+    .content-columns {
+        gap: var(--spacing-xl);
+    }
+
+    /* Always show logo and collapse button on mobile */
+    .sidebar-header-controls {
+        display: flex !important;
+    }
+
+    /* Hide collapse button on mobile (will be in header) - Desktop shows it */
+    .sidebar-header-controls .sidebar-collapse-btn {
+        display: flex;
+    }
+
+    .sidebar-collapsed-box {
+        display: none;
     }
 }
 
@@ -147,6 +166,41 @@ body.docs-header-hidden .docs-container {
 
     .main-content {
         width: 1000px;
+    }
+}
+
+/* Common Mobile Styles (applies to all mobile/tablet) */
+@media (max-width: 1024px) {
+    #mobile-sidebar-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.6);
+        z-index: 101;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+    }
+
+    #mobile-sidebar-overlay.active {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .sidebar-collapsed-box {
+        display: none !important;
+    }
+
+    /* Always show sidebar header controls on mobile */
+    .sidebar-header-controls {
+        display: flex !important;
+    }
+
+    /* Hide collapse button on mobile (will be in header) */
+    .sidebar-header-controls .sidebar-collapse-btn {
+        display: none !important;
     }
 }
 
@@ -205,24 +259,6 @@ body.docs-header-hidden .docs-container {
         overflow-y: visible;
     }
 
-    #mobile-sidebar-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0, 0, 0, 0.6);
-        z-index: 101;
-        opacity: 0;
-        visibility: hidden;
-        transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
-    }
-
-    #mobile-sidebar-overlay.active {
-        opacity: 1;
-        visibility: visible;
-    }
-
     .mobile-product-selector {
         display: block !important;
         margin-bottom: 20px;
@@ -276,24 +312,6 @@ body.docs-header-hidden .docs-container {
         display: none !important;
     }
 
-    #mobile-sidebar-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0, 0, 0, 0.6);
-        z-index: 101;
-        opacity: 0;
-        visibility: hidden;
-        transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
-    }
-
-    #mobile-sidebar-overlay.active {
-        opacity: 1;
-        visibility: visible;
-    }
-
     .main-content {
         width: 100% !important;
         max-width: 100%;
@@ -341,13 +359,6 @@ body.docs-header-hidden .docs-container {
     justify-content: center;
 }
 
-/* Desktop layout for content-columns */
-@media (min-width: 1025px) {
-    .content-columns {
-        gap: var(--spacing-xl);
-    }
-}
-
 /* Hide sidebar-right under 1200px */
 @media (max-width: 1199px) {
     .sidebar-right {
@@ -369,8 +380,8 @@ body.docs-header-hidden .docs-container {
     display: flex;
     align-items: center;
     gap: var(--spacing-sm);
-    background: var(--bg-primary);
-    border: 2px solid var(--border-tertiary);
+    background: var(--bg-tertiary);
+    border: 2px solid var(--border-primary);
     border-radius: var(--radius-lg);
     color: var(--text-secondary);
     font-size: 1rem;
@@ -415,6 +426,7 @@ body.docs-header-hidden .docs-container {
     width: 100%;
     display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: var(--spacing-sm);
     background: var(--bg-tertiary);
     border: 2px solid var(--border-primary);
@@ -460,10 +472,12 @@ body.docs-header-hidden .docs-container {
     max-height: 300px;
     padding: var(--spacing-xs);
     overflow-y: auto;
-    z-index: 1000;
     display: none;
+    z-index: 1000;
     will-change: transform;
     animation: var(--animate-fd-popover-in);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
 }
 
 .super-category-dropdown.show {
@@ -491,20 +505,6 @@ body.docs-header-hidden .docs-container {
     background: var(--accent-hover-color);
     color: var(--accent-color);
     font-weight: 600;
-}
-
-/* Desktop sidebar styles (> 1024px) */
-@media (min-width: 1025px) {
-    .sidebar-left {
-        align-self: flex-start;
-        height: 100vh;
-        overflow-y: auto;
-        padding: clamp(15px, 2vw, 20px);
-        width: 18rem;
-        flex-shrink: 0;
-        background-color: var(--bg-tertiary);
-        border-right: solid 1px var(--border-color);
-    }
 }
 
 /* Sidebar Header Controls (Logo + Collapse Button) */
@@ -607,30 +607,6 @@ body.docs-header-hidden .docs-container {
 /* Sidebar collapsed state */
 .sidebar-left.collapsed {
     transform: translateX(-100%);
-}
-
-/* Add smooth transition for sidebar collapse */
-@media (min-width: 1025px) {
-    .sidebar-left {
-        transition: transform 0.3s ease-in-out;
-    }
-}
-
-/* Mobile Adjustments - Always show logo and collapse button */
-@media (max-width: 1024px) {
-    .sidebar-collapsed-box {
-        display: none !important;
-    }
-
-    /* Always show sidebar header controls on mobile */
-    .sidebar-header-controls {
-        display: flex !important;
-    }
-
-    /* Hide collapse button on mobile (will be in header) */
-    .sidebar-header-controls .sidebar-collapse-btn {
-        display: none !important;
-    }
 }
 
 .sidebar-left .logo-section {

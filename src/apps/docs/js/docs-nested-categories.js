@@ -472,14 +472,16 @@ function initializeSuperCategorySelector(productId, tree) {
             const dropdown = document.getElementById('super-category-dropdown');
             if (!dropdown) return;
 
-            const isOpen = dropdown.classList.contains('open');
+            const isOpen = dropdown.classList.contains('show');
 
             if (isOpen) {
-                dropdown.classList.remove('open');
+                dropdown.classList.remove('show');
+                selectorBtn.classList.remove('open');
                 const icon = selectorBtn.querySelector('.super-category-icon');
                 if (icon) icon.style.transform = 'rotate(0deg)';
             } else {
-                dropdown.classList.add('open');
+                dropdown.classList.add('show');
+                selectorBtn.classList.add('open');
                 const icon = selectorBtn.querySelector('.super-category-icon');
                 if (icon) icon.style.transform = 'rotate(180deg)';
             }
@@ -512,7 +514,8 @@ function initializeSuperCategorySelector(productId, tree) {
             renderSidebarTree(tree, productId);
 
             // Close dropdown
-            dropdown.classList.remove('open');
+            dropdown.classList.remove('show');
+            selectorBtn.classList.remove('open');
             const icon = selectorBtn.querySelector('.super-category-icon');
             if (icon) icon.style.transform = 'rotate(0deg)';
         });
@@ -523,8 +526,9 @@ function initializeSuperCategorySelector(productId, tree) {
                 const dropdown = document.getElementById('super-category-dropdown');
                 const selectorBtn = document.getElementById('super-category-btn');
                 if (dropdown) {
-                    dropdown.classList.remove('open');
+                    dropdown.classList.remove('show');
                     if (selectorBtn) {
+                        selectorBtn.classList.remove('open');
                         const icon = selectorBtn.querySelector('.super-category-icon');
                         if (icon) icon.style.transform = 'rotate(0deg)';
                     }
