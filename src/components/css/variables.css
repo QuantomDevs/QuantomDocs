@@ -45,11 +45,11 @@
        Theme Colors (Dark Theme - Default)
        =========================== */
    --bg-primary: #121212; /* Main background */
-   --bg-secondary: #101112; /* For cards and elevated surfaces */
+   --bg-secondary: #101112; /* For cards and elevated surfaces - Left sidebar(docs), header*/
    --bg-tertiary: #191919; /* For cards and elevated surfaces */
-   --bg-quaternary: var(--bg-primary); /* For markdown background  - old: #0b0e0e  */
-   --bg-soft: lab(100% 0 0/.05);
-   --markdown-background: var(--bg-quaternary);
+   --bg-markdown: var(--bg-primary); /* For markdown background  - old: #0b0e0e  */
+   --bg-hover: lab(100% 0 0/.05);
+   --markdown-background: var(--bg-markdown);
    --color-canvas-default: #0A0D0D;
    --border-primary: #404040;
    --border-secondary: #333333;
@@ -83,6 +83,27 @@
     --warning-color: var(--text-warning);
     --warning-color-dark: #ea580c;
     --info-color: var(--text-info);
+
+
+      /* ===========================
+         Animation
+       =========================== */
+      --animate-fd-popover-in: fd-popover-in .1s ease;
+      --animate-fd-popover-out: fd-popover-out .1s ease;
+      --animate-fd-collapsible-down: fd-collapsible-down .15s cubic-bezier(.45,0,.55,1);
+      --animate-fd-collapsible-up: fd-collapsible-up .15s cubic-bezier(.45,0,.55,1);
+      --animate-fd-accordion-down: fd-accordion-down .2s ease-out;
+      --animate-fd-accordion-up: fd-accordion-up .2s ease-out;
+      --animate-fd-nav-menu-in: fd-nav-menu-in .2s ease;
+      --animate-fd-nav-menu-out: fd-nav-menu-out .2s ease;
+      --animate-fd-enterFromLeft: fd-enterFromLeft .25s ease;
+      --animate-fd-enterFromRight: fd-enterFromRight .25s ease;
+      --animate-fd-sidebar-in: fd-sidebar-in .25s ease;
+      --animate-fd-sidebar-out: fd-sidebar-out .25s ease;
+      --animate-fd-exitToLeft: fd-exitToLeft .25s ease;
+      --animate-fd-exitToRight: fd-exitToRight .25s ease;
+
+      
 
     /* ===========================
        Spacing Variables
@@ -194,7 +215,7 @@ html[data-theme="light"] {
     --bg-primary: #ffffff;
     --bg-secondary: #f8f9fa;
     --bg-tertiary: #e9ecef;
-    --bg-quaternary: #dee2e6;
+    --bg-markdown: #dee2e6;
     --border-primary: #d4d4d8;
     --border-secondary: #e4e4e7;
     --border-tertiary: #f4f4f5;

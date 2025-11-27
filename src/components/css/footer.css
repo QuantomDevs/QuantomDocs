@@ -78,7 +78,7 @@
 
 .footer-socials a:hover {
     color: var(--text-primary);
-    background: var(--bg-soft);
+    background: var(--bg-hover);
     transform: translateY(-2px);
 }
 

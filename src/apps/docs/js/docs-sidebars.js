@@ -127,7 +127,7 @@ function injectSidebarHeaderControls() {
                 <span class="sidebar-logo-text"><strong>Quantom Docs</strong></span>
             </a>
             <button id="sidebar-collapse-btn" class="sidebar-collapse-btn" title="Collapse sidebar">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2"/>
                     <path d="M9 3v18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
                 </svg>
@@ -149,13 +149,13 @@ function injectCollapsedSidebarBox() {
     const collapsedBoxHTML = `
         <div class="sidebar-collapsed-box">
             <button id="sidebar-expand-btn" class="sidebar-mini-btn" title="Expand sidebar">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2"/>
                     <path d="M9 3v18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
                 </svg>
             </button>
             <button id="sidebar-search-mini-btn" class="sidebar-mini-btn" title="Search">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M21 21L15 15M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
             </button>
@@ -193,6 +193,51 @@ function applySidebarState(isCollapsed) {
     } else {
         DOMElements.sidebarLeft.classList.remove('collapsed');
         DOMElements.sidebarCollapsedBox.classList.remove('visible');
+    }
+}
+
+/**
+ * Apply sidebar collapsed state without transition (for initial load)
+ * Prevents flickering by disabling transitions temporarily
+ */
+function applySidebarStateWithoutTransition(isCollapsed) {
+    if (!DOMElements.sidebarLeft) {
+        return;
+    }
+
+    try {
+        // Disable transitions temporarily
+        const originalTransition = DOMElements.sidebarLeft.style.transition;
+        DOMElements.sidebarLeft.style.transition = 'none';
+
+        // Apply state
+        if (isCollapsed) {
+            DOMElements.sidebarLeft.classList.add('collapsed');
+            if (DOMElements.sidebarCollapsedBox) {
+                DOMElements.sidebarCollapsedBox.classList.add('visible');
+            }
+        } else {
+            DOMElements.sidebarLeft.classList.remove('collapsed');
+            if (DOMElements.sidebarCollapsedBox) {
+                DOMElements.sidebarCollapsedBox.classList.remove('visible');
+            }
+        }
+
+        // Force reflow to ensure the change is applied
+        void DOMElements.sidebarLeft.offsetHeight;
+
+        // Re-enable transitions after a short delay
+        requestAnimationFrame(() => {
+            setTimeout(() => {
+                if (DOMElements.sidebarLeft) {
+                    DOMElements.sidebarLeft.style.transition = originalTransition;
+                }
+            }, 50);
+        });
+    } catch (error) {
+        Logger.error('Failed to apply sidebar state without transition', error);
+        // Fallback to regular state application
+        applySidebarState(isCollapsed);
     }
 }
 

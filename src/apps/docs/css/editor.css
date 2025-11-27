@@ -103,7 +103,7 @@ body {
 }
 
 .btn-secondary:hover {
-    background-color: var(--bg-quaternary);
+    background-color: var(--bg-markdown);
     border-color: var(--border-secondary);
 }
 
@@ -145,7 +145,7 @@ body {
 .editor-select,
 .editor-input {
     padding: 0.5rem 0.75rem;
-    background-color: var(--bg-quaternary);
+    background-color: var(--bg-markdown);
     border: 1px solid var(--border-primary);
     border-radius: var(--radius-md);
     color: var(--text-primary);
@@ -224,7 +224,7 @@ body {
    =========================== */
 
 #wysiwyg-container {
-    background-color: var(--bg-quaternary);
+    background-color: var(--bg-markdown);
 }
 
 .quill-editor {
@@ -314,7 +314,7 @@ body {
    =========================== */
 
 #markdown-container {
-    background-color: var(--bg-quaternary);
+    background-color: var(--bg-markdown);
 }
 
 .markdown-toolbar {
@@ -337,7 +337,7 @@ body {
 }
 
 .toolbar-btn:hover {
-    background-color: var(--bg-quaternary);
+    background-color: var(--bg-markdown);
     color: var(--accent-color);
     border-color: var(--accent-color);
 }
@@ -365,7 +365,7 @@ body {
 
 .preview-pane {
     border-left: 1px solid var(--border-primary);
-    background-color: var(--bg-quaternary);
+    background-color: var(--bg-markdown);
     max-width: 50%;
 }
 

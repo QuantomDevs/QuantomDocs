@@ -50,7 +50,7 @@
 
 .docs-social-link:hover {
     color: var(--text-primary);
-    background: var(--bg-soft);
+    background: var(--bg-hover);
 }
 
 .docs-social-link svg {

@@ -331,7 +331,7 @@ body.docs-header-hidden .docs-container {
     flex-direction: column;
     flex: 1;
     overflow-y: auto;
-    max-height: calc(100vh - 100px); /* Use min-height to ensure it's at least viewport height */
+    max-height: calc(100vh - 10px); /* Use min-height to ensure it's at least viewport height */
 }
 
 /* Content Columns - Wraps main-content and sidebar-right */
@@ -369,15 +369,15 @@ body.docs-header-hidden .docs-container {
     display: flex;
     align-items: center;
     gap: var(--spacing-sm);
-    padding: var(--spacing-sm) var(--spacing-md);
     background: var(--bg-primary);
-    border: 1px solid var(--border-primary);
-    border-radius: var(--radius-xl);
+    border: 2px solid var(--border-tertiary);
+    border-radius: var(--radius-lg);
     color: var(--text-secondary);
-    font-size: 0.9rem;
+    font-size: 1rem;
     cursor: pointer;
     transition: all 0.2s ease;
     margin-bottom: var(--spacing-md);
+    padding: var(--spacing-sm);
 }
 
 .docs-search-button-sidebar:hover {
@@ -413,20 +413,21 @@ body.docs-header-hidden .docs-container {
 
 .super-category-button {
     width: 100%;
-    height: 44px;
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    padding: 0 var(--spacing-md);
-    background: var(--bg-primary);
-    border: 1px solid var(--border-primary);
-    border-radius: var(--radius-xl);
+    gap: var(--spacing-sm);
+    background: var(--bg-tertiary);
+    border: 2px solid var(--border-primary);
+    border-radius: var(--radius-lg);
+    color: var(--text-secondary);
+    font-size: 1rem;
     cursor: pointer;
     transition: all 0.2s ease;
+    margin-bottom: var(--spacing-md);
+    padding: var(--spacing-sm);
 }
 
 .super-category-button:hover {
-    background: var(--bg-secondary);
     border-color: var(--border-accent);
 }
 
@@ -452,14 +453,17 @@ body.docs-header-hidden .docs-container {
     top: calc(100% + 8px);
     left: 0;
     right: 0;
-    background: var(--bg-secondary);
+    background-color: color-mix(in oklab,var(--bg-tertiary)60%,transparent);
     border: 1px solid var(--border-primary);
     border-radius: var(--radius-lg);
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
     max-height: 300px;
+    padding: var(--spacing-xs);
     overflow-y: auto;
     z-index: 1000;
     display: none;
+    will-change: transform;
+    
 }
 
 .super-category-dropdown.show {
@@ -471,7 +475,8 @@ body.docs-header-hidden .docs-container {
     cursor: pointer;
     transition: background 0.2s ease;
     color: var(--text-primary);
-    border-bottom: 1px solid var(--border-secondary);
+    border: 1px solid transparent;
+    border-radius: var(--radius-md);
 }
 
 .super-category-option:last-child {
@@ -479,7 +484,7 @@ body.docs-header-hidden .docs-container {
 }
 
 .super-category-option:hover {
-    background: var(--bg-tertiary);
+    background: var(--bg-hover);
 }
 
 .super-category-option.active {
@@ -492,7 +497,7 @@ body.docs-header-hidden .docs-container {
 @media (min-width: 1025px) {
     .sidebar-left {
         align-self: flex-start;
-        height: 100%;
+        height: 100vh;
         overflow-y: auto;
         padding: clamp(15px, 2vw, 20px);
         width: 18rem;
@@ -566,12 +571,12 @@ body.docs-header-hidden .docs-container {
     left: 20px;
     display: none;
     flex-direction: row;
-    gap: 10px;
+    gap: 4px;
     z-index: 1001;
-    background: var(--background-color);
+    background: var(--bg-tertiary);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-lg);
-    padding: 10px;
+    padding: 4px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
@@ -586,7 +591,7 @@ body.docs-header-hidden .docs-container {
     width: 40px;
     height: 40px;
     background: transparent;
-    border: 1px solid var(--border-color);
+    border: 1px solid transparent;
     border-radius: var(--radius-md);
     color: var(--secondary-text-color);
     cursor: pointer;
@@ -769,29 +774,29 @@ body.docs-header-hidden .docs-container {
 
 /* Nested Categories Styles */
 .sidebar-category-item {
-    margin: 4px 0;
+    margin: 0;
 }
 
 .sidebar-category-button {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
     width: 100%;
-    padding: 10px 15px;
     background: transparent;
     border: none;
-    border-radius: 8px;
-    color: var(--text-color);
-    font-size: clamp(0.95rem, 1.1vw, 1.05rem);
     font-weight: 500;
     cursor: pointer;
-    transition: all 0.2s ease-in-out;
     text-align: left;
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 15px;
+    color: var(--secondary-text-color);
+    text-decoration: none;
+    border-radius: 6px;
+    font-size: clamp(0.95rem, 1.1vw, 1.05rem);
+    transition: all 0.2s ease-in-out;
 }
 
 .sidebar-category-button:hover {
     background-color: var(--card-background-color);
-    color: var(--accent-color);
+    color: var(--text-primary);
 }
 
 .sidebar-category-button.active {
@@ -1666,15 +1671,11 @@ body.docs-header-hidden .docs-container {
 
 .category-name {
     font-size: 1.4em;
-    color: var(--accent-color);
-    font-weight: 600;
-    font-family: var(--font-primary);
-    text-transform: uppercase;
+    font-weight: 400;
     letter-spacing: 0.02rem;
     font-size: .875rem;
     line-height: 1.25rem;
     height: 1.25rem;
-    margin-bottom: var(--spacing-sm);
 }
 
 .markdown-name {
