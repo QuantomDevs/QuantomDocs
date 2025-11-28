@@ -2087,6 +2087,11 @@ app.get('/settings', (req, res) => {
     res.sendFile(path.join(__dirname, '..', 'apps', 'docs', 'settings.html'));
 });
 
+// Redirect /download to /downloads for backward compatibility
+app.get('/download', (req, res) => {
+    res.redirect('/downloads');
+});
+
 // Dynamic routing for all apps in src/apps directory
 const appsPath = path.join(__dirname, '..', 'apps');
 const appFolders = fs.readdirSync(appsPath, { withFileTypes: true })

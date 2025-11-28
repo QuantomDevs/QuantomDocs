@@ -650,19 +650,34 @@ function initScrollSpy(headings) {
         window.headingObserver.disconnect();
     }
 
+    // Set to track currently visible headings
+    if (!window.visibleHeadings) {
+        window.visibleHeadings = new Set();
+    } else {
+        window.visibleHeadings.clear();
+    }
+
     // Intersection Observer options
+    // Adjusted to detect when headings are actually visible in viewport
     const observerOptions = {
-        rootMargin: '-80px 0px -70% 0px', // Trigger when heading is near top of viewport
-        threshold: 0
+        rootMargin: '-80px 0px -20% 0px', // More flexible detection zone
+        threshold: [0, 0.25, 0.5, 0.75, 1.0] // Multiple thresholds for better detection
     };
 
     // Create observer
     window.headingObserver = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
-                updateActiveHeading(entry.target.id);
+                // Add to visible headings set
+                window.visibleHeadings.add(entry.target.id);
+            } else {
+                // Remove from visible headings set
+                window.visibleHeadings.delete(entry.target.id);
             }
         });
+
+        // Update active state for all visible headings
+        updateActiveHeadings();
     }, observerOptions);
 
     // Observe all headings
@@ -671,15 +686,30 @@ function initScrollSpy(headings) {
     });
 }
 
-// Update active heading in table of contents
-function updateActiveHeading(headingId) {
+// Update active headings in table of contents (supports multiple active headings)
+function updateActiveHeadings() {
     // Remove active class from all TOC links
     const allLinks = document.querySelectorAll('.sidebar-right a, .mobile-right-sidebar-content a');
     allLinks.forEach(link => link.classList.remove('active'));
 
-    // Add active class to current heading's link
-    const activeLinks = document.querySelectorAll(`a[data-heading-id="${headingId}"]`);
-    activeLinks.forEach(link => link.classList.add('active'));
+    // Add active class to all currently visible headings
+    if (window.visibleHeadings && window.visibleHeadings.size > 0) {
+        window.visibleHeadings.forEach(headingId => {
+            const activeLinks = document.querySelectorAll(`a[data-heading-id="${headingId}"]`);
+            activeLinks.forEach(link => link.classList.add('active'));
+        });
+    }
+}
+
+// Legacy function - now calls the new multi-active version
+function updateActiveHeading(headingId) {
+    // For backward compatibility, update the set and call updateActiveHeadings
+    if (!window.visibleHeadings) {
+        window.visibleHeadings = new Set();
+    }
+    window.visibleHeadings.clear();
+    window.visibleHeadings.add(headingId);
+    updateActiveHeadings();
 }
 
 // Set active sidebar link for the currently loaded file
