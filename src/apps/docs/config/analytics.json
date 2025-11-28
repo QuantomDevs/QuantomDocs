@@ -35,7 +35,7 @@
       }
     },
     "2025-11": {
-      "totalVisits": 492,
+      "totalVisits": 508,
       "pages": {
         "/main": 52,
         "/docs": 32,
@@ -82,20 +82,20 @@
         "/docs/quantom/01-documentation/04-reference/preset-motd": 1,
         "/docs/quantom/documentation/getting-started/about-quantom": 1,
         "/docs/docs/documentation/getting-started/features-overview": 4,
-        "/docs/docs/documentation/getting-started/about-quantom": 90,
+        "/docs/docs/documentation/getting-started/about-quantom": 92,
         "/docs/docs/api-reference/getting-started/about-quantom": 6,
         "/docs/docs/documentation/getting-started/nested/markdown-features-demo": 1,
         "/docs/docs/documentation/getting-started/nested/configuration-basics": 2,
         "/docs/docs/documentation/getting-started/nested/syntax-highlighting-test": 1,
-        "/docs/docs/documentation/getting-started/first-steps": 11
+        "/docs/docs/documentation/getting-started/first-steps": 25
       }
     }
   },
   "allTime": {
-    "totalVisits": 942,
+    "totalVisits": 958,
     "totalPages": 26,
     "totalMarkdownFiles": 36,
     "firstVisit": "2025-10-10T17:09:48.577Z",
-    "lastVisit": "2025-11-27T17:18:59.328Z"
+    "lastVisit": "2025-11-28T05:03:26.113Z"
   }
 }

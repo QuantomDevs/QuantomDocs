@@ -1128,12 +1128,24 @@ body.no-scroll {
 .sidebar-right ul {
     list-style: none;
     padding: 0;
+    position: relative;
+    padding-left: 15px; /* Space for the vertical line */
+}
+
+/* Großer durchgehender Strich an der Seite der gesamten Liste */
+.sidebar-right ul::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background-color: var(--border-color);
 }
 
 .sidebar-right ul li {
     margin-bottom: 8px;
     position: relative;
-    padding-left: 15px; /* Space for the vertical line */
 }
 
 /* Add spacing above h1 headings (major sections) */
@@ -1149,17 +1161,6 @@ body.no-scroll {
 /* First item should not have top margin */
 .sidebar-right ul li:first-child {
     margin-top: 0 !important;
-}
-
-.sidebar-right ul li::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 2px;
-    height: 100%; /* Full height of the line item */
-    background-color: var(--border-color); /* Default line color */
 }
 
 .sidebar-right ul li a {
@@ -1183,11 +1184,6 @@ body.no-scroll {
 .sidebar-right ul li a.active {
     color: var(--accent-color);
     font-weight: 600;
-}
-
-.sidebar-right ul li:has(a.active)::before {
-    background-color: var(--accent-color);
-    width: 3px;
 }
 
 .mobile-right-sidebar-content ul li a.active {

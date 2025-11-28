@@ -123,7 +123,7 @@ function injectSidebarHeaderControls() {
     const headerControlsHTML = `
         <div class="sidebar-header-controls">
             <a href="/main" class="sidebar-logo-container">
-                <img src="/components/images/favicon/favicon.png" alt="Quantom Logo" class="sidebar-logo-img">
+                <img src="/images/favicon/favicon.png" alt="Quantom Logo" class="sidebar-logo-img">
                 <span class="sidebar-logo-text"><strong>Quantom Docs</strong></span>
             </a>
             <button id="sidebar-collapse-btn" class="sidebar-collapse-btn" title="Collapse sidebar">

@@ -157,6 +157,9 @@ app.use('/main', express.static(path.join(__dirname, '..', 'apps', 'main')));
 app.use('/docs', express.static(path.join(__dirname, '..', 'apps', 'docs')));
 app.use('/downloads', express.static(path.join(__dirname, '..', 'apps', 'downloads')));
 
+// Serve public directory (images, etc.)
+app.use(express.static(path.join(__dirname, '..', '..', 'public')));
+
 
 // Rate limiting
 const authLimiter = rateLimit({

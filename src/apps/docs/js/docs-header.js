@@ -101,7 +101,7 @@ function generateHeaderHTML() {
             <div class="docs-header-inner">
                 <!-- Logo Section -->
                 <a href="/main" class="logo-container">
-                <img src="/components/images/favicon/favicon.png" alt="Quantom Logo" class="logo-img">
+                <img src="/images/favicon/favicon.png" alt="Quantom Logo" class="logo-img">
                 <span class="logo-text"><strong>Quantom Docs</strong></span>
             </a>
 

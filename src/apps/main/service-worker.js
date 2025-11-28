@@ -25,7 +25,7 @@ const STATIC_ASSETS = [
     '/docs/js/docs.js',
     '/docs/js/docs-search.js',
     '/docs/js/marked-extension.js',
-    '/components/images/favicon/favicon.png'
+    '/images/favicon/favicon.png'
 ];
 
 // Install event - cache static assets
