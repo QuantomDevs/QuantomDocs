@@ -2082,30 +2082,33 @@ app.get('/', (req, res) => {
     res.redirect('/main');
 });
 
-// Main section routes (without .html extension)
-app.get('/main', (req, res) => {
-    res.sendFile(path.join(__dirname, '..', 'apps', 'main', 'index.html'));
-});
-
-
+// Special settings route (in docs folder but accessed via /settings)
 app.get('/settings', (req, res) => {
     res.sendFile(path.join(__dirname, '..', 'apps', 'docs', 'settings.html'));
 });
 
-// Downloads section
-app.get('/download', (req, res) => {
-    res.sendFile(path.join(__dirname, '..', 'apps', 'downloads', 'index.html'));
-});
+// Dynamic routing for all apps in src/apps directory
+const appsPath = path.join(__dirname, '..', 'apps');
+const appFolders = fs.readdirSync(appsPath, { withFileTypes: true })
+    .filter(dirent => dirent.isDirectory())
+    .map(dirent => dirent.name);
 
-// Docs section - main entry point
-app.get('/docs', (req, res) => {
-    res.sendFile(path.join(__dirname, '..', 'apps', 'docs', 'index.html'));
-});
+// Create routes for each app folder
+appFolders.forEach(appName => {
+    const indexPath = path.join(appsPath, appName, 'index.html');
 
-// Docs section - all nested routes (e.g., /docs/quantom/getting-started/installation)
-// The docs/index.html handles client-side routing based on the URL path
-app.get('/docs/*', (req, res) => {
-    res.sendFile(path.join(__dirname, '..', 'apps', 'docs', 'index.html'));
+    // Check if index.html exists in this folder
+    if (fs.existsSync(indexPath)) {
+        // Main route for the app
+        app.get(`/${appName}`, (req, res) => {
+            res.sendFile(indexPath);
+        });
+
+        // Catch-all route for nested paths (e.g., /docs/*)
+        app.get(`/${appName}/*`, (req, res) => {
+            res.sendFile(indexPath);
+        });
+    }
 });
 
 // 404 handler for all unmatched routes
