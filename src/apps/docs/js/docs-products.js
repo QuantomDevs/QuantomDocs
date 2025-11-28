@@ -421,8 +421,18 @@ async function loadMarkdownFile(filePath) {
 
         // Parse JSON response
         const data = await response.json();
-        const markdown = data.content;
-        const html = marked.parse(markdown);
+        const content = data.content;
+        const fileType = data.fileType || 'md';  // Default to markdown if not specified
+
+        // Parse content based on file type
+        let html;
+        if (fileType === 'mdx' && typeof parseMDX === 'function') {
+            // Use MDX parser for .mdx files
+            html = parseMDX(content, MDX_COMPONENTS);
+        } else {
+            // Use regular markdown parser for .md files
+            html = marked.parse(content);
+        }
 
         // Hide static getting started content
         const staticContent = document.getElementById('static-getting-started');
@@ -450,8 +460,7 @@ async function loadMarkdownFile(filePath) {
         // Store current file path
         currentFile = filePath;
 
-        // Track analytics for markdown file view
-        trackMarkdownView(filePath);
+        // Analytics tracking removed (Task 1.10.6)
 
     } catch (error) {
         console.error('Error loading markdown file:', error);
@@ -465,32 +474,7 @@ async function loadMarkdownFile(filePath) {
     }
 }
 
-// Track markdown file view in analytics
-async function trackMarkdownView(filePath) {
-    try {
-        // Convert file path to URL format: quantom/01-Getting-Started/Installation.md -> /docs/quantom/getting-started/installation
-        const pathParts = filePath.replace('.md', '').split('/');
-        const cleanPath = pathParts.map(part =>
-            part.split('-').map(word => word.toLowerCase()).join('-')
-        ).join('/');
-        const trackPath = `/docs/${cleanPath}`;
-
-        // Send analytics tracking request (no auth required for tracking)
-        await fetch('/api/analytics/track', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                path: trackPath,
-                type: 'markdown'
-            })
-        });
-    } catch (error) {
-        // Silently fail - don't interrupt user experience for analytics
-        console.debug('Analytics tracking failed:', error);
-    }
-}
+// Analytics tracking function removed (Task 1.10.6)
 
 // Show loading skeleton while content is being fetched
 function showLoadingSkeleton() {

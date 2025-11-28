@@ -347,9 +347,20 @@ async function loadCategoryIndex(productId, categoryPath) {
 
         const data = await response.json();
 
-        // Render markdown
+        // Render markdown or MDX based on file type
         const dynamicContent = document.getElementById('dynamic-content-area');
-        dynamicContent.innerHTML = marked.parse(data.content);
+        const content = data.content;
+        const fileType = data.fileType || 'md';
+
+        // Parse content based on file type
+        let html;
+        if (fileType === 'mdx' && typeof parseMDX === 'function') {
+            html = parseMDX(content, MDX_COMPONENTS);
+        } else {
+            html = marked.parse(content);
+        }
+
+        dynamicContent.innerHTML = html;
         dynamicContent.style.display = 'block';
 
         // Update page header
@@ -366,8 +377,7 @@ async function loadCategoryIndex(productId, categoryPath) {
         // Scroll to top
         window.scrollTo(0, 0);
 
-        // Track analytics
-        trackMarkdownView(`${productId}/${categoryPath}/index`);
+        // Analytics tracking removed (Task 1.10.6)
 
     } catch (error) {
         console.error('Error loading category index:', error);
@@ -398,9 +408,20 @@ async function loadMarkdownFileByPath(productId, filePath) {
 
         const data = await response.json();
 
-        // Render markdown
+        // Render markdown or MDX based on file type
         const dynamicContent = document.getElementById('dynamic-content-area');
-        dynamicContent.innerHTML = marked.parse(data.content);
+        const content = data.content;
+        const fileType = data.fileType || 'md';
+
+        // Parse content based on file type
+        let html;
+        if (fileType === 'mdx' && typeof parseMDX === 'function') {
+            html = parseMDX(content, MDX_COMPONENTS);
+        } else {
+            html = marked.parse(content);
+        }
+
+        dynamicContent.innerHTML = html;
         dynamicContent.style.display = 'block';
 
         // Update page header
@@ -417,8 +438,7 @@ async function loadMarkdownFileByPath(productId, filePath) {
         // Scroll to top
         window.scrollTo(0, 0);
 
-        // Track analytics
-        trackMarkdownView(`${productId}/${filePath}`);
+        // Analytics tracking removed (Task 1.10.6)
 
     } catch (error) {
         console.error('Error loading markdown file:', error);

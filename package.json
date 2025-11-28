@@ -6,8 +6,7 @@
   "scripts": {
     "start": "node src/backend/server.js",
     "dev": "nodemon src/backend/server.js",
-    "build": "node build.js",
-    "setup": "node hash_password.js"
+    "build": "node build.js"
   },
   "keywords": [
     "documentation",
@@ -18,6 +17,8 @@
   "author": "Snenjih",
   "license": "MIT",
   "dependencies": {
+    "@mdx-js/mdx": "^3.1.1",
+    "@mdx-js/react": "^3.1.1",
     "@tiptap/core": "^3.10.7",
     "@tiptap/extension-code-block-lowlight": "^3.10.7",
     "@tiptap/extension-image": "^3.10.7",

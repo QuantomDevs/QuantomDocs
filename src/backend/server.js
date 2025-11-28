@@ -128,33 +128,14 @@ const JWT_SECRET = 'quantom_secret_key_2025'; // In production, use environment 
 app.use(cors());
 app.use(express.json());
 
-// Analytics tracking middleware (runs for all requests)
-app.use((req, res, next) => {
-    // Only track GET requests to actual pages (not assets like CSS, JS, images)
-    if (req.method === 'GET' && !req.path.match(/\.(css|js|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot|json)$/i)) {
-        // Track page visits (exclude API endpoints)
-        if (!req.path.startsWith('/api/') && !req.path.startsWith('/shared/') && !req.path.startsWith('/main/') && !req.path.startsWith('/docs/')) {
-            // Determine if this is a markdown file request (docs pages)
-            const isDocsPage = req.path.startsWith('/docs/') && req.path !== '/docs' && req.path !== '/docs/';
-
-            // Normalize the path
-            let trackPath = req.path;
-            if (trackPath === '/') trackPath = '/main';
-
-            // Track asynchronously to avoid blocking the request
-            setImmediate(() => {
-                trackVisit(trackPath, isDocsPage);
-            });
-        }
-    }
-    next();
-});
+// Analytics middleware removed (Task 1.10.6)
 
 // Serve static files from new structure
 app.use('/components', express.static(path.join(__dirname, '..', 'components')));
 app.use('/shared', express.static(path.join(__dirname, '..', 'components'))); // Keep /shared for backward compatibility
 app.use('/main', express.static(path.join(__dirname, '..', 'apps', 'main')));
 app.use('/docs', express.static(path.join(__dirname, '..', 'apps', 'docs')));
+app.use('/editor', express.static(path.join(__dirname, '..', 'apps', 'editor')));
 app.use('/downloads', express.static(path.join(__dirname, '..', 'apps', 'downloads')));
 
 // Serve public directory (images, etc.)
@@ -210,108 +191,7 @@ const writeJsonFile = (filePath, data) => {
     }
 };
 
-// Analytics helper functions
-const analyticsPath = path.join(__dirname, '..', 'apps', 'docs', 'config', 'analytics.json');
-
-const readAnalytics = () => {
-    try {
-        if (fs.existsSync(analyticsPath)) {
-            const data = fs.readFileSync(analyticsPath, 'utf8');
-            return JSON.parse(data);
-        }
-        // Return default structure if file doesn't exist
-        return {
-            months: {},
-            allTime: {
-                totalVisits: 0,
-                totalPages: 0,
-                totalMarkdownFiles: 0,
-                firstVisit: null,
-                lastVisit: null
-            }
-        };
-    } catch (error) {
-        console.error('Error reading analytics:', error);
-        return null;
-    }
-};
-
-const writeAnalytics = (data) => {
-    try {
-        fs.writeFileSync(analyticsPath, JSON.stringify(data, null, 2));
-        return true;
-    } catch (error) {
-        console.error('Error writing analytics:', error);
-        return false;
-    }
-};
-
-const trackVisit = (urlPath, isMarkdownFile = false) => {
-    try {
-        const analytics = readAnalytics();
-        if (!analytics) return;
-
-        const now = new Date();
-        const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-        const timestamp = now.toISOString();
-
-        // Initialize month if it doesn't exist
-        if (!analytics.months[monthKey]) {
-            analytics.months[monthKey] = {
-                totalVisits: 0,
-                pages: {},
-                markdownFiles: {}
-            };
-        }
-
-        const monthData = analytics.months[monthKey];
-
-        // Track the visit
-        monthData.totalVisits++;
-
-        if (isMarkdownFile) {
-            // Track markdown file visit
-            if (!monthData.markdownFiles[urlPath]) {
-                monthData.markdownFiles[urlPath] = 0;
-            }
-            monthData.markdownFiles[urlPath]++;
-
-            // Update all-time markdown files count
-            analytics.allTime.totalMarkdownFiles = Object.keys(
-                Object.values(analytics.months).reduce((acc, month) => {
-                    Object.keys(month.markdownFiles).forEach(file => acc[file] = true);
-                    return acc;
-                }, {})
-            ).length;
-        } else {
-            // Track page visit
-            if (!monthData.pages[urlPath]) {
-                monthData.pages[urlPath] = 0;
-            }
-            monthData.pages[urlPath]++;
-
-            // Update all-time pages count
-            analytics.allTime.totalPages = Object.keys(
-                Object.values(analytics.months).reduce((acc, month) => {
-                    Object.keys(month.pages).forEach(page => acc[page] = true);
-                    return acc;
-                }, {})
-            ).length;
-        }
-
-        // Update all-time statistics
-        analytics.allTime.totalVisits++;
-        if (!analytics.allTime.firstVisit) {
-            analytics.allTime.firstVisit = timestamp;
-        }
-        analytics.allTime.lastVisit = timestamp;
-
-        // Write back to file
-        writeAnalytics(analytics);
-    } catch (error) {
-        console.error('Error tracking visit:', error);
-    }
-};
+// Analytics helper functions removed (Task 1.10.6)
 
 // Token blacklist helper functions
 const tokenBlacklistPath = path.join(__dirname, '..', 'apps', 'docs', 'config', 'token-blacklist.json');
@@ -864,8 +744,8 @@ app.get('/api/docs/:product/:superCategory/categories', (req, res) => {
  * @returns {string} URL-friendly slug (e.g., "getting-started")
  */
 function formatUrlPath(name) {
-    // Remove file extension if present
-    let cleaned = name.replace(/\.md$/, '');
+    // Remove file extension if present (.md or .mdx)
+    let cleaned = name.replace(/\.(md|mdx)$/, '');
 
     // Remove number prefix (e.g., "01-", "02-", etc.)
     cleaned = cleaned.replace(/^\d+-/, '');
@@ -941,9 +821,10 @@ function buildCategoryTree(dirPath, relativePath = '') {
                 const cleanName = match ? match[2] : entry.name;
                 const urlSlug = formatUrlPath(entry.name);
 
-                // Check if this category has an index.md file
-                const indexPath = path.join(itemPath, 'index.md');
-                const hasIndex = fs.existsSync(indexPath);
+                // Check if this category has an index.md or index.mdx file
+                const indexMdPath = path.join(itemPath, 'index.md');
+                const indexMdxPath = path.join(itemPath, 'index.mdx');
+                const hasIndex = fs.existsSync(indexMdPath) || fs.existsSync(indexMdxPath);
 
                 // Recursively build subtree
                 const children = buildCategoryTree(itemPath, itemRelativePath);
@@ -961,24 +842,28 @@ function buildCategoryTree(dirPath, relativePath = '') {
                     hasIndex: hasIndex  // NEW: Indicates if category has index.md
                 });
 
-            } else if (entry.isFile() && entry.name.endsWith('.md')) {
-                // Skip index.md files (they're represented by the category itself)
-                if (entry.name === 'index.md') continue;
+            } else if (entry.isFile() && (entry.name.endsWith('.md') || entry.name.endsWith('.mdx'))) {
+                // Skip index.md/index.mdx files (they're represented by the category itself)
+                if (entry.name === 'index.md' || entry.name === 'index.mdx') continue;
 
-                // Markdown file
-                const match = entry.name.match(/^(\d+)-(.+)\.md$/);
+                // Markdown or MDX file
+                const fileExt = entry.name.endsWith('.mdx') ? '.mdx' : '.md';
+                const fileType = entry.name.endsWith('.mdx') ? 'mdx' : 'md';
+                const nameWithoutExt = entry.name.replace(/\.(md|mdx)$/, '');
+                const match = nameWithoutExt.match(/^(\d+)-(.+)$/);
                 const order = match ? parseInt(match[1], 10) : 999;
-                const cleanName = match ? match[2] : entry.name.replace('.md', '');
+                const cleanName = match ? match[2] : nameWithoutExt;
                 const urlSlug = formatUrlPath(entry.name);
 
                 items.push({
                     type: 'file',
-                    id: entry.name.replace('.md', ''),
+                    id: nameWithoutExt,
                     name: cleanName,
                     urlSlug: urlSlug,
                     order: order,
                     path: itemRelativePath,
-                    fileName: entry.name
+                    fileName: entry.name,
+                    fileType: fileType  // NEW: Indicates file type (md or mdx)
                 });
             }
         }
@@ -1072,10 +957,25 @@ app.get('/api/docs/:product/*', (req, res) => {
         }
 
         // Check if the resolved path is a file or directory
+        let fileType = 'md';  // Default to markdown
         if (!fs.existsSync(currentPath)) {
-            // Try adding .md extension
-            currentPath += '.md';
-            resolvedSegments[resolvedSegments.length - 1] += '.md';
+            // Try adding .mdx extension first
+            const mdxPath = currentPath + '.mdx';
+            if (fs.existsSync(mdxPath)) {
+                currentPath = mdxPath;
+                resolvedSegments[resolvedSegments.length - 1] += '.mdx';
+                fileType = 'mdx';
+            } else {
+                // Try adding .md extension
+                currentPath += '.md';
+                resolvedSegments[resolvedSegments.length - 1] += '.md';
+                fileType = 'md';
+            }
+        } else {
+            // File exists, detect type from extension
+            if (currentPath.endsWith('.mdx')) {
+                fileType = 'mdx';
+            }
         }
 
         const stats = fs.statSync(currentPath);
@@ -1104,6 +1004,7 @@ app.get('/api/docs/:product/*', (req, res) => {
 
         res.json({
             content,
+            fileType: fileType,  // NEW: File type indicator (md or mdx)
             path: urlPath,
             resolvedPath: filePath,
             metadata: {
@@ -1285,56 +1186,7 @@ app.post('/api/docs/save', verifyToken, (req, res) => {
     }
 });
 
-// Search analytics endpoint
-app.post('/api/analytics/search', (req, res) => {
-    try {
-        const { query, resultsCount } = req.body;
-
-        if (!query) {
-            return res.status(400).json({ error: 'Query is required' });
-        }
-
-        const analyticsDir = path.join(__dirname, '..', '..', 'data', 'analytics');
-        const searchLogPath = path.join(analyticsDir, 'search-queries.json');
-
-        // Ensure directory exists
-        if (!fs.existsSync(analyticsDir)) {
-            fs.mkdirSync(analyticsDir, { recursive: true });
-        }
-
-        // Load existing data or create new
-        let searchData = { queries: [] };
-        if (fs.existsSync(searchLogPath)) {
-            try {
-                searchData = JSON.parse(fs.readFileSync(searchLogPath, 'utf-8'));
-            } catch (error) {
-                console.error('Error reading search log:', error);
-            }
-        }
-
-        // Add new query
-        searchData.queries.push({
-            query,
-            resultsCount: resultsCount || 0,
-            timestamp: new Date().toISOString(),
-            ip: req.ip
-        });
-
-        // Keep only last 10000 queries
-        if (searchData.queries.length > 10000) {
-            searchData.queries = searchData.queries.slice(-10000);
-        }
-
-        // Save back to file
-        fs.writeFileSync(searchLogPath, JSON.stringify(searchData, null, 2), 'utf-8');
-
-        res.json({ success: true });
-
-    } catch (error) {
-        console.error('Search analytics error:', error);
-        res.status(500).json({ error: 'Failed to log search query' });
-    }
-});
+// Search analytics endpoint removed (Task 1.10.6)
 
 // User Management Routes
 app.get('/api/users', verifyToken, (req, res) => {
@@ -1565,70 +1417,7 @@ app.put('/api/config/docs', verifyToken, (req, res) => {
     }
 });
 
-// Analytics Routes
-app.get('/api/analytics', verifyToken, (req, res) => {
-    try {
-        const analytics = readAnalytics();
-
-        if (!analytics) {
-            return res.status(500).json({ error: 'Could not load analytics data' });
-        }
-
-        // Calculate additional statistics for response
-        const currentMonth = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
-        const currentMonthData = analytics.months[currentMonth] || {
-            totalVisits: 0,
-            pages: {},
-            markdownFiles: {}
-        };
-
-        // Get top 10 most visited markdown files across all months
-        const allMarkdownFiles = {};
-        Object.values(analytics.months).forEach(month => {
-            Object.entries(month.markdownFiles).forEach(([file, count]) => {
-                allMarkdownFiles[file] = (allMarkdownFiles[file] || 0) + count;
-            });
-        });
-
-        const topMarkdownFiles = Object.entries(allMarkdownFiles)
-            .sort((a, b) => b[1] - a[1])
-            .slice(0, 10)
-            .map(([path, visits]) => ({ path, visits }));
-
-        res.json({
-            allTime: analytics.allTime,
-            currentMonth: {
-                key: currentMonth,
-                ...currentMonthData
-            },
-            months: analytics.months,
-            topMarkdownFiles
-        });
-    } catch (error) {
-        console.error('Get analytics error:', error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-});
-
-// Track markdown file view (called from client-side)
-app.post('/api/analytics/track', (req, res) => {
-    try {
-        const { path: filePath, type } = req.body;
-
-        if (!filePath) {
-            return res.status(400).json({ error: 'Path is required' });
-        }
-
-        // Track the visit
-        const isMarkdownFile = type === 'markdown' || filePath.includes('/docs/');
-        trackVisit(filePath, isMarkdownFile);
-
-        res.json({ success: true });
-    } catch (error) {
-        console.error('Track analytics error:', error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-});
+// Analytics routes removed (Task 1.10.6)
 
 // ==================== File Management Routes ====================
 
@@ -1717,8 +1506,12 @@ app.get('/api/files/:product/content', verifyToken, (req, res) => {
         const content = fs.readFileSync(validation.resolvedPath, 'utf8');
         const stats = fs.statSync(validation.resolvedPath);
 
+        // Detect file type from extension
+        const fileType = validation.resolvedPath.endsWith('.mdx') ? 'mdx' : 'md';
+
         res.json({
             content,
+            fileType: fileType,  // NEW: File type indicator
             path: filePath,
             size: stats.size,
             modified: stats.mtime
@@ -2087,6 +1880,11 @@ app.get('/settings', (req, res) => {
     res.sendFile(path.join(__dirname, '..', 'apps', 'docs', 'settings.html'));
 });
 
+// Editor route (standalone editor application)
+app.get('/editor', (req, res) => {
+    res.sendFile(path.join(__dirname, '..', 'apps', 'editor', 'index.html'));
+});
+
 // Redirect /download to /downloads for backward compatibility
 app.get('/download', (req, res) => {
     res.redirect('/downloads');
@@ -2142,7 +1940,7 @@ app.listen(PORT, HOST, () => {
     // Check if users.json exists
     const usersPath = path.join(__dirname, '..', 'apps', 'docs', 'config', 'users.json');
     if (!fs.existsSync(usersPath)) {
-        console.log('⚠ users.json not found. Run: node hash_password.js');
+        console.log('⚠ users.json not found. Please create users manually.');
     } else {
         console.log('✓ User database loaded');
     }
