@@ -1,6 +1,22 @@
 /**
  * Markdown Caching Module for QuantomDocs
  * Implements LRU cache for parsed markdown to improve performance
+ *
+ * ==========================================
+ * DEPRECATED: This module is no longer used
+ * ==========================================
+ *
+ * The backend has been refactored to use server-side markdown rendering.
+ * The server now provides pre-rendered HTML in the API responses, eliminating
+ * the need for client-side caching of parsed markdown.
+ *
+ * This file is kept for backward compatibility but should not be used in new code.
+ * Consider removing this file in future versions after confirming no dependencies exist.
+ *
+ * Migration Note:
+ * - Use server-side pre-rendered HTML from /api/docs/* endpoints
+ * - Server provides response.content with ready-to-inject HTML
+ * - Client-side markdown parsing (marked.parse) is no longer needed
  */
 
 class MarkdownCache {

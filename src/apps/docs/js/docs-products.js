@@ -1,5 +1,11 @@
 // Dynamic Multi-Product Documentation System
 // Handles product overview, dynamic loading, and navigation
+//
+// UPDATED: Now uses server-side pre-rendered HTML instead of client-side markdown parsing
+// The server endpoint /api/docs/:product/* returns pre-rendered HTML in the 'content' field
+
+// Import component orchestrator for initializing interactive components
+import { initializeComponentScripts } from './component-orchestrator.js';
 
 let currentProduct = null;
 let currentCategory = null;
@@ -421,18 +427,25 @@ async function loadMarkdownFile(filePath) {
 
         // Parse JSON response
         const data = await response.json();
-        const content = data.content;
+
+        // Response now includes pre-rendered HTML from the server:
+        // - content: pre-rendered HTML (ready to inject)
+        // - rawContent: raw markdown (for editing)
+        // - fileType: 'md' or 'mdx'
+        // - metadata.lastModified: timestamp
+        // - metadata.size: file size
+
+        // Use pre-rendered HTML directly from server
+        const html = data.content;
         const fileType = data.fileType || 'md';  // Default to markdown if not specified
 
-        // Parse content based on file type
-        let html;
-        if (fileType === 'mdx' && typeof parseMDX === 'function') {
-            // Use MDX parser for .mdx files
-            html = parseMDX(content, MDX_COMPONENTS);
-        } else {
-            // Use regular markdown parser for .md files
-            html = marked.parse(content);
-        }
+        // Client-side markdown parsing is now disabled - server provides pre-rendered HTML
+        // Legacy code (commented out):
+        // if (fileType === 'mdx' && typeof parseMDX === 'function') {
+        //     html = parseMDX(content, MDX_COMPONENTS);
+        // } else {
+        //     html = marked.parse(content);
+        // }
 
         // Hide static getting started content
         const staticContent = document.getElementById('static-getting-started');
@@ -440,9 +453,13 @@ async function loadMarkdownFile(filePath) {
             staticContent.style.display = 'none';
         }
 
-        // Show dynamic content area with loaded content
+        // Inject pre-rendered HTML directly
         dynamicContent.innerHTML = html;
         dynamicContent.style.display = 'block';
+
+        // Initialize interactive components (Tabs, Accordions, CodeGroups, etc.)
+        // This must be called AFTER innerHTML is set
+        initializeComponentScripts();
 
         // Update page header controls (category + split button)
         updatePageHeaderControls(filePath);

@@ -1,16 +1,18 @@
 /**
  * DOCS SEARCH FUNCTIONALITY
  * Search through documentation content
+ *
+ * UPDATED: Now uses server-side search API instead of client-side indexing
  */
 
 // ===========================
 // GLOBALE VARIABLEN
 // ===========================
 
-/** @type {Array<Object>} All searchable doc entries */
+/** @type {Array<Object>} All searchable doc entries - DEPRECATED: Now using server-side search */
 let allDocsEntries = [];
 
-/** @type {boolean} Whether search index is loaded */
+/** @type {boolean} Whether search index is loaded - DEPRECATED: Now using server-side search */
 let searchIndexLoaded = false;
 
 /** @type {number} Currently selected result index (-1 = none selected) */
@@ -31,6 +33,7 @@ const docsSearchResults = document.getElementById('docs-search-results');
 
 /**
  * Initialize docs search
+ * UPDATED: Removed client-side index building - now uses server-side search API
  */
 function initDocsSearch() {
     console.log('[Search] Initializing search module...');
@@ -39,7 +42,8 @@ function initDocsSearch() {
     if (docsSearchBtn) {
         console.log('[Search] Search button found, registering listeners...');
         registerDocsSearchListeners(docsSearchBtn);
-        buildSearchIndex();
+        // Client-side index building removed - now using server-side search API
+        searchIndexLoaded = true; // Mark as loaded for UI compatibility
     } else {
         console.error('[Search] Search button not found!');
         // Retry after a delay
@@ -48,7 +52,7 @@ function initDocsSearch() {
             if (retryBtn) {
                 console.log('[Search] Search button found on retry');
                 registerDocsSearchListeners(retryBtn);
-                buildSearchIndex();
+                searchIndexLoaded = true; // Mark as loaded for UI compatibility
             }
         }, 500);
     }
@@ -184,9 +188,19 @@ function closeDocsSearchPopup() {
 // ===========================
 
 /**
- * Build search index from docs-config.json and markdown files
+ * DEPRECATED: Build search index from docs-config.json and markdown files
+ * This function is no longer used - search now uses server-side API
+ * Kept for reference only
  */
 async function buildSearchIndex() {
+    // DEPRECATED: Client-side indexing is disabled
+    // Search now uses server-side API at /api/search
+    console.log('[Search] Client-side indexing is deprecated - using server-side search API');
+    searchIndexLoaded = true;
+    return;
+
+    // Legacy code below (kept for reference, never executed):
+    /* eslint-disable no-unreachable */
     try {
         // Load docs configuration (new product-based structure)
         const configUrl = '/docs/config/docs-config.json';
@@ -276,11 +290,13 @@ async function buildSearchIndex() {
         console.error('Failed to build search index:', error);
         searchIndexLoaded = false;
     }
+    /* eslint-enable no-unreachable */
 }
 
 /**
- * Extract plain text from markdown
+ * DEPRECATED: Extract plain text from markdown
  * Removes markdown syntax for better search results
+ * This function is no longer used - search now uses server-side API
  */
 function extractTextFromMarkdown(markdown) {
     return markdown
@@ -304,11 +320,14 @@ function extractTextFromMarkdown(markdown) {
 }
 
 // ===========================
-// SEARCH FUNCTIONALITY
+// SEARCH FUNCTIONALITY (DEPRECATED - Client-side search logic)
+// These functions are kept for reference but are no longer used
+// Search now uses server-side API at /api/search
 // ===========================
 
 /**
- * Parse search query for boolean operators
+ * DEPRECATED: Parse search query for boolean operators
+ * This function is no longer used - search now uses server-side API
  * @param {string} query - Raw search query
  * @returns {Object} Parsed query object
  */
@@ -549,60 +568,108 @@ function getSpellingSuggestions(query) {
 
 /**
  * Handle search input and display results
+ * UPDATED: Now uses server-side search API instead of client-side filtering
  */
-function handleDocsSearch() {
+async function handleDocsSearch() {
     const query = docsSearchInput.value.trim();
 
     console.log('[Search] Query:', query);
-    console.log('[Search] Index loaded:', searchIndexLoaded);
-    console.log('[Search] Total entries:', allDocsEntries.length);
 
     if (!query) {
-        // Show all docs when search is empty
-        console.log('[Search] Empty query, showing all entries');
-        displayDocsResults(allDocsEntries, query);
-        docsSearchPopup.classList.add('expanded');
-        docsSearchResults.classList.add('visible');
-        return;
-    }
-
-    // Parse query for boolean operators
-    const searchExpression = parseSearchQuery(query);
-
-    // Filter docs entries using advanced matching
-    const filteredEntries = allDocsEntries.filter(entry => {
-        return matchSearchExpression(entry, searchExpression);
-    });
-
-    console.log('[Search] Filtered results:', filteredEntries.length);
-
-    // Track search analytics
-    if (window.searchAnalytics) {
-        window.searchAnalytics.trackQuery(query, filteredEntries.length);
-    }
-
-    // Display filtered results
-    displayDocsResults(filteredEntries, query);
-
-    // Update UI states
-    if (filteredEntries.length > 0 || query) {
-        docsSearchPopup.classList.add('expanded');
-        docsSearchResults.classList.add('visible');
-
-        // Auto-select first result
-        selectedResultIndex = filteredEntries.length > 0 ? 0 : -1;
-
-        // Apply active class to first result after DOM update
-        setTimeout(() => {
-            const resultItems = document.querySelectorAll('.docs-result-item');
-            if (resultItems.length > 0 && selectedResultIndex === 0) {
-                resultItems[0].classList.add('active');
-            }
-        }, 10);
-    } else {
+        // Clear results when search is empty
+        console.log('[Search] Empty query, clearing results');
+        docsSearchResults.innerHTML = '';
         docsSearchPopup.classList.remove('expanded');
         docsSearchResults.classList.remove('visible');
         selectedResultIndex = -1;
+        return;
+    }
+
+    try {
+        // Call server-side search API
+        const apiUrl = `/api/search?q=${encodeURIComponent(query)}&limit=50`;
+        console.log('[Search] Fetching from:', apiUrl);
+
+        const response = await fetch(apiUrl);
+
+        if (!response.ok) {
+            throw new Error(`Search API failed: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        // Response format:
+        // {
+        //   query: "search term",
+        //   results: [
+        //     {
+        //       score: 0.1,
+        //       title: "Page Title",
+        //       content: "Preview text...",
+        //       path: "product/category/file.md",
+        //       urlSlug: "url-slug",
+        //       category: "category-name",
+        //       productId: "product-id"
+        //     }
+        //   ],
+        //   count: 10
+        // }
+
+        console.log('[Search] Server results:', data.count);
+
+        // Track search analytics
+        if (window.searchAnalytics) {
+            window.searchAnalytics.trackQuery(query, data.count);
+        }
+
+        // Convert server results to our display format
+        const displayResults = data.results.map(result => ({
+            productId: result.productId,
+            productName: result.productId, // Could be enhanced with product name lookup
+            name: result.title,
+            category: result.category,
+            content: result.content,
+            file: result.path,
+            urlSlug: result.urlSlug,
+            type: 'md'
+        }));
+
+        // Display results
+        displayDocsResults(displayResults, query);
+
+        // Update UI states
+        if (displayResults.length > 0) {
+            docsSearchPopup.classList.add('expanded');
+            docsSearchResults.classList.add('visible');
+
+            // Auto-select first result
+            selectedResultIndex = 0;
+
+            // Apply active class to first result after DOM update
+            setTimeout(() => {
+                const resultItems = document.querySelectorAll('.docs-result-item');
+                if (resultItems.length > 0 && selectedResultIndex === 0) {
+                    resultItems[0].classList.add('active');
+                }
+            }, 10);
+        } else {
+            docsSearchPopup.classList.add('expanded');
+            docsSearchResults.classList.add('visible');
+            selectedResultIndex = -1;
+        }
+    } catch (error) {
+        console.error('[Search] Error querying server:', error);
+
+        // Show error state
+        docsSearchResults.innerHTML = `
+            <div class="docs-empty-state">
+                <div class="docs-empty-state-icon">⚠️</div>
+                <div class="docs-empty-state-text">Search Error</div>
+                <div class="docs-empty-state-hint">Failed to search. Please try again.</div>
+            </div>
+        `;
+        docsSearchPopup.classList.add('expanded');
+        docsSearchResults.classList.add('visible');
     }
 }
 

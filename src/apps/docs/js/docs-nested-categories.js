@@ -1,5 +1,10 @@
 // Nested Categories Rendering System
 // Handles recursive tree rendering with expand/collapse functionality
+//
+// UPDATED: Now uses server-side pre-rendered HTML instead of client-side markdown parsing
+
+// Import component orchestrator for initializing interactive components
+import { initializeComponentScripts } from './component-orchestrator.js';
 
 // Global variable to store super categories and current selection
 let availableSuperCategories = [];
@@ -347,21 +352,31 @@ async function loadCategoryIndex(productId, categoryPath) {
 
         const data = await response.json();
 
-        // Render markdown or MDX based on file type
+        // Response now includes pre-rendered HTML from the server:
+        // - content: pre-rendered HTML (ready to inject)
+        // - rawContent: raw markdown (for editing)
+        // - fileType: 'md' or 'mdx'
+        // - metadata.lastModified: timestamp
+        // - metadata.size: file size
+
         const dynamicContent = document.getElementById('dynamic-content-area');
-        const content = data.content;
+        const html = data.content; // Use pre-rendered HTML directly
         const fileType = data.fileType || 'md';
 
-        // Parse content based on file type
-        let html;
-        if (fileType === 'mdx' && typeof parseMDX === 'function') {
-            html = parseMDX(content, MDX_COMPONENTS);
-        } else {
-            html = marked.parse(content);
-        }
+        // Client-side markdown parsing is now disabled - server provides pre-rendered HTML
+        // Legacy code (commented out):
+        // if (fileType === 'mdx' && typeof parseMDX === 'function') {
+        //     html = parseMDX(content, MDX_COMPONENTS);
+        // } else {
+        //     html = marked.parse(content);
+        // }
 
+        // Inject pre-rendered HTML directly
         dynamicContent.innerHTML = html;
         dynamicContent.style.display = 'block';
+
+        // Initialize interactive components (Tabs, Accordions, CodeGroups, etc.)
+        initializeComponentScripts();
 
         // Update page header
         updatePageHeaderControls(categoryPath);
@@ -408,21 +423,31 @@ async function loadMarkdownFileByPath(productId, filePath) {
 
         const data = await response.json();
 
-        // Render markdown or MDX based on file type
+        // Response now includes pre-rendered HTML from the server:
+        // - content: pre-rendered HTML (ready to inject)
+        // - rawContent: raw markdown (for editing)
+        // - fileType: 'md' or 'mdx'
+        // - metadata.lastModified: timestamp
+        // - metadata.size: file size
+
         const dynamicContent = document.getElementById('dynamic-content-area');
-        const content = data.content;
+        const html = data.content; // Use pre-rendered HTML directly
         const fileType = data.fileType || 'md';
 
-        // Parse content based on file type
-        let html;
-        if (fileType === 'mdx' && typeof parseMDX === 'function') {
-            html = parseMDX(content, MDX_COMPONENTS);
-        } else {
-            html = marked.parse(content);
-        }
+        // Client-side markdown parsing is now disabled - server provides pre-rendered HTML
+        // Legacy code (commented out):
+        // if (fileType === 'mdx' && typeof parseMDX === 'function') {
+        //     html = parseMDX(content, MDX_COMPONENTS);
+        // } else {
+        //     html = marked.parse(content);
+        // }
 
+        // Inject pre-rendered HTML directly
         dynamicContent.innerHTML = html;
         dynamicContent.style.display = 'block';
+
+        // Initialize interactive components (Tabs, Accordions, CodeGroups, etc.)
+        initializeComponentScripts();
 
         // Update page header
         updatePageHeaderControls(filePath);
