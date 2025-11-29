@@ -38,3 +38,7 @@ export function initializeComponentScriptsWithDelay(delay = 100) {
         initializeComponentScripts();
     }, delay);
 }
+
+// Make functions available globally for non-module scripts
+window.initializeComponentScripts = initializeComponentScripts;
+window.initializeComponentScriptsWithDelay = initializeComponentScriptsWithDelay;
