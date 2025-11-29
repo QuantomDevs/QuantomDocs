@@ -15,7 +15,11 @@ async function initializeSearchIndex() {
     try {
         console.log('[Server] Building search index...');
         const count = await searchService.buildIndex();
-        console.log(`[Server] ✓ Search index built: ${count} documents indexed`);
+        if (count === 0) {
+            console.log('[Server] ℹ Search index ready (no documents found - add .md files to /content)');
+        } else {
+            console.log(`[Server] ✓ Search index ready: ${count} document(s) indexed`);
+        }
     } catch (error) {
         console.error('[Server] ✗ Failed to build search index:', error.message);
         console.error('[Server] Server will start but search functionality may be limited');

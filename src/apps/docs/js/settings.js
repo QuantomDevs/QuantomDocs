@@ -2497,11 +2497,13 @@ function renderPreview(markdown) {
         preview.innerHTML = html;
         preview.dataset.rawContent = markdown; // Store for switching back
 
-        // Initialize component interactions
-        if (window.switchTab) window.switchTab;
-        if (window.toggleAccordion) window.toggleAccordion;
-        if (window.toggleExpandable) window.toggleExpandable;
-        if (window.switchCodeBlock) window.switchCodeBlock;
+        // Initialize component interactions using component-orchestrator
+        // Wait a short time for DOM to be fully updated
+        setTimeout(() => {
+            if (typeof initializeComponentScripts === 'function') {
+                initializeComponentScripts();
+            }
+        }, 50);
     } catch (error) {
         console.error('Preview render error:', error);
         preview.innerHTML = `

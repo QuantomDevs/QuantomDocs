@@ -110,6 +110,7 @@ async function buildProductIndex(productId) {
         const files = collectFilesFromTree(productTree.tree, productId);
 
         const indexedDocs = [];
+        const errors = [];
 
         for (const file of files) {
             try {
@@ -136,8 +137,14 @@ async function buildProductIndex(productId) {
                     productId: productId
                 });
             } catch (error) {
-                console.error(`Error indexing file ${file.path}:`, error.message);
+                // Collect errors silently instead of logging each one
+                errors.push(file.path);
             }
+        }
+
+        // Log summary instead of individual errors
+        if (errors.length > 0) {
+            console.log(`[SearchService] ⚠ Skipped ${errors.length} missing file(s) in product: ${productId}`);
         }
 
         return indexedDocs;
@@ -166,7 +173,7 @@ async function buildIndex() {
             .filter(dirent => !dirent.name.startsWith('.'))
             .map(dirent => dirent.name);
 
-        console.log(`[SearchService] Found ${products.length} products to index`);
+        console.log(`[SearchService] Found ${products.length} product(s) to index`);
 
         // Index each product
         for (const productId of products) {
@@ -177,7 +184,11 @@ async function buildIndex() {
         // Initialize Fuse with the index
         fuse = new Fuse(searchIndex, fuseOptions);
 
-        console.log(`[SearchService] Index build complete: ${searchIndex.length} documents`);
+        if (searchIndex.length === 0) {
+            console.log(`[SearchService] ⚠ Index build complete: No documents indexed (empty content directory)`);
+        } else {
+            console.log(`[SearchService] ✓ Index build complete: ${searchIndex.length} document(s) indexed`);
+        }
 
         return searchIndex.length;
 

@@ -15,9 +15,10 @@ const loadedResources = {
  * Lädt ein externes Script dynamisch
  * @param {string} src - URL des Scripts
  * @param {string} id - Eindeutige ID für das Script-Element
+ * @param {boolean} isModule - Ob das Script als ES6 Modul geladen werden soll
  * @returns {Promise} Promise die resolved wenn das Script geladen ist
  */
-function loadScript(src, id) {
+function loadScript(src, id, isModule = false) {
     return new Promise((resolve, reject) => {
         // Prüfen ob Script bereits existiert
         if (document.getElementById(id)) {
@@ -30,8 +31,13 @@ function loadScript(src, id) {
         script.id = id;
         script.async = true;
 
+        // Set type="module" if specified
+        if (isModule) {
+            script.type = 'module';
+        }
+
         script.onload = () => {
-            console.log(`✓ Loaded: ${id}`);
+            console.log(`✓ Loaded: ${id}${isModule ? ' (module)' : ''}`);
             resolve();
         };
 
@@ -158,9 +164,10 @@ async function loadDocsModules() {
         // Absolute Pfade von der Root
         await Promise.all([
             loadScript('/docs/js/docs.js', 'docs-js'),
-            loadScript('/docs/js/marked-extension.js', 'marked-extension-js'),
-            loadScript('/docs/js/docs-nested-categories.js', 'docs-nested-categories-js'),
-            loadScript('/docs/js/docs-products.js', 'docs-products-js'),
+            loadScript('/docs/js/marked-extension.js', 'marked-extension-js', true), // Load as ES6 module (now uses imports)
+            loadScript('/docs/js/component-orchestrator.js', 'component-orchestrator-js', true), // Load as ES6 module
+            loadScript('/docs/js/docs-nested-categories.js', 'docs-nested-categories-js', true), // Load as ES6 module
+            loadScript('/docs/js/docs-products.js', 'docs-products-js', true), // Load as ES6 module
             loadScript('/docs/js/docs-page-actions.js', 'docs-page-actions-js')
         ]);
 
