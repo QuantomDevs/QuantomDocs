@@ -5,11 +5,14 @@ WORKDIR /usr/src/app
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
+# Install ALL dependencies (including devDependencies for build tools)
 RUN npm install
 
-# Copy application files
+# Copy source code
 COPY . .
+
+# Run build script (generates dist/ directory)
+RUN npm run build
 
 # Production Stage
 FROM node:lts-slim AS production
@@ -27,14 +30,22 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# Copy application files from build stage
+# Copy package files
 COPY --from=build /usr/src/app/package*.json ./
-COPY --from=build /usr/src/app/src ./src
+
+# Install ONLY production dependencies
+RUN npm install --omit=dev
+
+# Copy ONLY the built dist directory (NOT src!)
+# This prevents source code exposure in production
+COPY --from=build /usr/src/app/dist ./dist
+
+# Copy content and data directories
 COPY --from=build /usr/src/app/content ./content
 COPY --from=build /usr/src/app/data ./data
 
-# Install production dependencies only
-RUN npm install --omit=dev
+# Copy public directory
+COPY --from=build /usr/src/app/public ./public
 
-# Start the application (NEW PATH)
-CMD ["node", "src/backend/server.js"]
+# Set entry point to built server
+CMD ["node", "dist/backend/server.js"]

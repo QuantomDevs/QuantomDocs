@@ -1,0 +1,46 @@
+# DEVELOPMENT DOCKER COMPOSE OVERRIDE
+# This file extends docker-compose.yml with development-specific configurations
+#
+# Usage:
+#   docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
+#
+# This file provides:
+#   - Source code mounts for live development
+#   - Config file mounts for testing configuration changes
+#   - Environment variable overrides for development
+
+---
+services:
+  quantomdocs:
+    # Override image to use local build instead of pulling from registry
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+
+    environment:
+      # Override NODE_ENV for development
+      - NODE_ENV=development
+
+    volumes:
+      # DEVELOPMENT SOURCE MOUNTS
+      # These mounts expose source code for live editing
+      # WARNING: Only use in development, never in production!
+
+      # Mount source code for live editing
+      - ./src:/app/src
+
+      # Mount config files for live updates
+      - ./src/apps/docs/config:/app/dist/apps/docs/config
+      - ./src/apps/downloads/config:/app/dist/apps/downloads/config
+
+      # Mount downloads directory
+      - ./src/apps/main/downloads:/app/dist/apps/main/downloads
+
+      # Production mounts (inherited from docker-compose.yml)
+      # - ./content:/app/content
+      # - ./data:/app/data
+
+    # Override command to use nodemon for auto-restart on file changes
+    # Uncomment the following to enable nodemon in development:
+    # command: npx nodemon src/backend/server.js

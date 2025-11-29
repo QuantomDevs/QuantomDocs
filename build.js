@@ -81,6 +81,7 @@ async function processJavaScript() {
             const outPath = path.join(DIST_DIR, relativePath);
             const outDir = path.dirname(outPath);
 
+            // Ensure directory structure is preserved (especially for backend subdirectories)
             await ensureDir(outDir);
             await fs.writeFile(outPath, result.code);
 
