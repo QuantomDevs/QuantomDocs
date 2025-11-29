@@ -1,122 +1,179 @@
 /**
  * DOCUMENTATION EDITOR
- * WYSIWYG and Markdown editor for QuantomDocs
+ * Complete editor implementation with file management, markdown editing, and preview
  */
 
 class DocumentEditor {
     constructor() {
-        this.quill = null;
-        this.currentMode = 'wysiwyg'; // 'wysiwyg' or 'markdown'
-        this.currentProduct = null;
-        this.currentSuperCategory = null;
-        this.currentCategory = null;
-        this.currentFileName = null;
+        // Editor state
+        this.currentMode = 'markdown'; // 'markdown' or 'preview'
+        this.currentFile = null;
         this.hasUnsavedChanges = false;
-        this.autoSaveInterval = null;
+        this.slashDropdownVisible = false;
+        this.selectedSlashIndex = 0;
 
         // DOM elements
         this.elements = {
-            wysiwygContainer: document.getElementById('wysiwyg-container'),
-            markdownContainer: document.getElementById('markdown-container'),
-            previewContainer: document.getElementById('preview-container'),
+            // Main containers
+            welcomeScreen: document.getElementById('welcome-screen'),
+            editorArea: document.getElementById('editor-area'),
+            editorContent: document.getElementById('editor-content'),
+
+            // Editor panes
+            markdownEditor: document.getElementById('markdown-editor'),
             markdownTextarea: document.getElementById('markdown-textarea'),
+            previewPane: document.getElementById('preview-pane'),
             previewContent: document.getElementById('preview-content'),
-            productSelect: document.getElementById('product-select'),
-            superCategorySelect: document.getElementById('super-category-select'),
-            categorySelect: document.getElementById('category-select'),
-            fileNameInput: document.getElementById('file-name-input'),
+
+            // Toolbar buttons
+            newFileBtn: document.getElementById('new-file-btn'),
+            newFolderBtn: document.getElementById('new-folder-btn'),
+            uploadFileBtn: document.getElementById('upload-file-btn'),
+            renameBtn: document.getElementById('rename-btn'),
+            duplicateBtn: document.getElementById('duplicate-btn'),
+            moveBtn: document.getElementById('move-btn'),
+            deleteBtn: document.getElementById('delete-btn'),
             toggleModeBtn: document.getElementById('toggle-mode-btn'),
-            previewBtn: document.getElementById('preview-btn'),
             saveBtn: document.getElementById('save-btn'),
-            closePreviewBtn: document.getElementById('close-preview-btn'),
-            statusIndicator: document.getElementById('status-indicator'),
-            statusText: document.getElementById('status-text')
+
+            // Status
+            toolbarStatus: document.getElementById('toolbar-status'),
+            statusText: document.getElementById('status-text'),
+
+            // File info in toolbar
+            fileInfoDisplay: document.getElementById('file-info-display'),
+            noFileInfo: document.getElementById('no-file-info'),
+            toolbarFileName: document.getElementById('toolbar-file-name'),
+            toolbarFileTypeBadge: document.getElementById('toolbar-file-type-badge'),
+            toolbarWordCount: document.getElementById('toolbar-word-count'),
+
+            // Slash dropdown
+            slashDropdown: document.getElementById('slash-dropdown'),
+
+            // Modals
+            newFileModal: document.getElementById('new-file-modal'),
+            deleteModal: document.getElementById('delete-modal'),
+            renameModal: document.getElementById('rename-modal'),
+
+            // Welcome screen
+            welcomeNewFile: document.getElementById('welcome-new-file')
         };
 
-        this.initializeEditor();
-        this.loadProducts();
-        this.setupEventListeners();
-        this.startAutoSave();
+        this.init();
     }
 
     /**
-     * Initialize Quill editor
+     * Initialize the editor
      */
-    initializeEditor() {
-        this.quill = new Quill('#editor', {
-            theme: 'snow',
-            modules: {
-                toolbar: [
-                    [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
-                    ['bold', 'italic', 'underline', 'strike'],
-                    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-                    [{ 'indent': '-1'}, { 'indent': '+1' }],
-                    ['blockquote', 'code-block'],
-                    [{ 'color': [] }, { 'background': [] }],
-                    [{ 'align': [] }],
-                    ['link', 'image'],
-                    ['clean']
-                ]
-            },
-            placeholder: 'Start writing your documentation...'
-        });
+    init() {
+        // Check authentication
+        if (!checkAuth()) {
+            return;
+        }
 
-        // Track changes
-        this.quill.on('text-change', () => {
-            this.markAsUnsaved();
-            if (this.currentMode === 'wysiwyg') {
-                this.syncToMarkdown();
-                this.updatePreview();
-            }
-        });
+        // Hide loading screen and show editor
+        document.getElementById('loading-screen').style.display = 'none';
+        document.getElementById('editor-app').style.display = 'flex';
+
+        // Setup event listeners
+        this.setupEventListeners();
+
+        // Configure marked for markdown rendering
+        this.configureMarked();
+    }
+
+    /**
+     * Configure marked.js for markdown rendering
+     */
+    configureMarked() {
+        if (typeof marked !== 'undefined') {
+            marked.setOptions({
+                highlight: function(code, lang) {
+                    if (lang && hljs.getLanguage(lang)) {
+                        try {
+                            return hljs.highlight(code, { language: lang }).value;
+                        } catch (err) {}
+                    }
+                    return hljs.highlightAuto(code).value;
+                },
+                breaks: true,
+                gfm: true
+            });
+        }
     }
 
     /**
      * Setup all event listeners
      */
     setupEventListeners() {
-        // Mode toggle
+        // Toolbar buttons
+        this.elements.newFileBtn.addEventListener('click', () => this.showNewFileModal());
+        this.elements.uploadFileBtn.addEventListener('click', () => this.uploadFiles());
+        this.elements.renameBtn.addEventListener('click', () => this.renameSelectedItem());
+        this.elements.duplicateBtn.addEventListener('click', () => this.duplicateSelectedItem());
+        this.elements.deleteBtn.addEventListener('click', () => this.deleteSelectedItem());
         this.elements.toggleModeBtn.addEventListener('click', () => this.toggleMode());
+        this.elements.saveBtn.addEventListener('click', () => this.saveFile());
 
-        // Preview toggle
-        this.elements.previewBtn.addEventListener('click', () => this.togglePreview());
-        this.elements.closePreviewBtn.addEventListener('click', () => this.togglePreview());
+        // Welcome screen
+        if (this.elements.welcomeNewFile) {
+            this.elements.welcomeNewFile.addEventListener('click', () => this.showNewFileModal());
+        }
 
-        // Save button
-        this.elements.saveBtn.addEventListener('click', () => this.saveDocument());
-
-        // Product/Category selection
-        this.elements.productSelect.addEventListener('change', () => this.onProductChange());
-        this.elements.superCategorySelect.addEventListener('change', () => this.onSuperCategoryChange());
-        this.elements.categorySelect.addEventListener('change', () => this.onCategoryChange());
-
-        // File name input
-        this.elements.fileNameInput.addEventListener('input', () => this.markAsUnsaved());
-
-        // Markdown textarea
+        // Markdown textarea events
         this.elements.markdownTextarea.addEventListener('input', () => {
             this.markAsUnsaved();
-            if (this.currentMode === 'markdown') {
+            this.updateWordCount();
+
+            // Update preview if in preview mode
+            if (this.currentMode === 'preview') {
                 this.updatePreview();
             }
         });
 
-        // Markdown toolbar buttons
-        document.querySelectorAll('.markdown-toolbar .toolbar-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const insert = btn.dataset.insert;
-                const wrap = btn.dataset.wrap;
-                this.insertMarkdown(insert, wrap);
+        // Slash command handling
+        this.elements.markdownTextarea.addEventListener('keydown', (e) => this.handleKeyDown(e));
+        this.elements.markdownTextarea.addEventListener('input', (e) => this.handleSlashCommand(e));
+
+        // Click outside to close slash dropdown
+        document.addEventListener('click', (e) => {
+            if (this.slashDropdownVisible &&
+                !this.elements.slashDropdown.contains(e.target) &&
+                e.target !== this.elements.markdownTextarea) {
+                this.hideSlashDropdown();
+            }
+        });
+
+        // Slash dropdown item click
+        document.querySelectorAll('.slash-dropdown-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const component = item.dataset.component;
+                this.insertComponent(component);
             });
         });
 
-        // Prevent accidental navigation with unsaved changes
-        window.addEventListener('beforeunload', (e) => {
-            if (this.hasUnsavedChanges) {
-                e.preventDefault();
-                e.returnValue = '';
-                return '';
-            }
+        // New file modal
+        document.getElementById('close-new-file-modal').addEventListener('click', () => this.hideModal('newFileModal'));
+        document.getElementById('cancel-new-file').addEventListener('click', () => this.hideModal('newFileModal'));
+        document.getElementById('create-new-file').addEventListener('click', () => this.createNewFile());
+
+        // Delete modal
+        document.getElementById('close-delete-modal').addEventListener('click', () => this.hideModal('deleteModal'));
+        document.getElementById('cancel-delete').addEventListener('click', () => this.hideModal('deleteModal'));
+        document.getElementById('confirm-delete').addEventListener('click', () => this.confirmDelete());
+
+        // Rename modal
+        document.getElementById('close-rename-modal').addEventListener('click', () => this.hideModal('renameModal'));
+        document.getElementById('cancel-rename').addEventListener('click', () => this.hideModal('renameModal'));
+        document.getElementById('confirm-rename').addEventListener('click', () => this.confirmRename());
+
+        // Modal overlay clicks
+        document.querySelectorAll('.modal-overlay').forEach(overlay => {
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) {
+                    overlay.parentElement.style.display = 'none';
+                }
+            });
         });
 
         // Keyboard shortcuts
@@ -124,12 +181,7 @@ class DocumentEditor {
             // Ctrl/Cmd + S to save
             if ((e.ctrlKey || e.metaKey) && e.key === 's') {
                 e.preventDefault();
-                this.saveDocument();
-            }
-            // Ctrl/Cmd + P to toggle preview
-            if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
-                e.preventDefault();
-                this.togglePreview();
+                this.saveFile();
             }
             // Ctrl/Cmd + M to toggle mode
             if ((e.ctrlKey || e.metaKey) && e.key === 'm') {
@@ -137,264 +189,280 @@ class DocumentEditor {
                 this.toggleMode();
             }
         });
-    }
 
-    /**
-     * Load available products
-     */
-    async loadProducts() {
-        try {
-            const response = await fetch('/docs/config/docs-config.json');
-            const config = await response.json();
-
-            this.elements.productSelect.innerHTML = '<option value="">Select Product...</option>';
-
-            config.products
-                .filter(p => p.showInDocs)
-                .forEach(product => {
-                    const option = document.createElement('option');
-                    option.value = product.id;
-                    option.textContent = product.name;
-                    this.elements.productSelect.appendChild(option);
-                });
-        } catch (error) {
-            console.error('Error loading products:', error);
-            this.showError('Failed to load products');
-        }
-    }
-
-    /**
-     * Handle product selection change
-     */
-    async onProductChange() {
-        const productId = this.elements.productSelect.value;
-
-        if (!productId) {
-            this.elements.superCategorySelect.disabled = true;
-            this.elements.categorySelect.disabled = true;
-            this.elements.fileNameInput.disabled = true;
-            return;
-        }
-
-        this.currentProduct = productId;
-        this.elements.superCategorySelect.disabled = false;
-
-        try {
-            const response = await fetch(`/api/docs/${productId}/super-categories`);
-            const data = await response.json();
-
-            this.elements.superCategorySelect.innerHTML = '<option value="">Select Super Category...</option>';
-
-            data.superCategories.forEach(sc => {
-                const option = document.createElement('option');
-                option.value = sc.fullName;
-                option.textContent = sc.name;
-                this.elements.superCategorySelect.appendChild(option);
-            });
-        } catch (error) {
-            console.error('Error loading super categories:', error);
-            this.showError('Failed to load super categories');
-        }
-    }
-
-    /**
-     * Handle super category selection change
-     */
-    async onSuperCategoryChange() {
-        const superCategory = this.elements.superCategorySelect.value;
-
-        if (!superCategory) {
-            this.elements.categorySelect.disabled = true;
-            this.elements.fileNameInput.disabled = true;
-            return;
-        }
-
-        this.currentSuperCategory = superCategory;
-        this.elements.categorySelect.disabled = false;
-
-        try {
-            const response = await fetch(`/api/docs/${this.currentProduct}/${superCategory}/categories`);
-            const data = await response.json();
-
-            this.elements.categorySelect.innerHTML = '<option value="">Select Category...</option>';
-
-            data.categories.forEach(cat => {
-                const option = document.createElement('option');
-                option.value = cat.id;
-                option.textContent = cat.name;
-                this.elements.categorySelect.appendChild(option);
-            });
-        } catch (error) {
-            console.error('Error loading categories:', error);
-            this.showError('Failed to load categories');
-        }
-    }
-
-    /**
-     * Handle category selection change
-     */
-    onCategoryChange() {
-        const category = this.elements.categorySelect.value;
-
-        if (!category) {
-            this.elements.fileNameInput.disabled = true;
-            return;
-        }
-
-        this.currentCategory = category;
-        this.elements.fileNameInput.disabled = false;
-    }
-
-    /**
-     * Toggle between WYSIWYG and Markdown modes
-     */
-    toggleMode() {
-        if (this.currentMode === 'wysiwyg') {
-            // Switch to markdown
-            this.syncToMarkdown();
-            this.elements.wysiwygContainer.classList.remove('active');
-            this.elements.markdownContainer.classList.add('active');
-            this.currentMode = 'markdown';
-            this.elements.toggleModeBtn.querySelector('span').textContent = 'WYSIWYG Mode';
-        } else {
-            // Switch to WYSIWYG
-            this.syncToWYSIWYG();
-            this.elements.markdownContainer.classList.remove('active');
-            this.elements.wysiwygContainer.classList.add('active');
-            this.currentMode = 'wysiwyg';
-            this.elements.toggleModeBtn.querySelector('span').textContent = 'Markdown Mode';
-        }
-
-        this.updatePreview();
-    }
-
-    /**
-     * Toggle preview pane
-     */
-    togglePreview() {
-        this.elements.previewContainer.classList.toggle('active');
-
-        if (this.elements.previewContainer.classList.contains('active')) {
-            this.updatePreview();
-        }
-    }
-
-    /**
-     * Sync content from WYSIWYG to Markdown
-     */
-    syncToMarkdown() {
-        const html = this.quill.root.innerHTML;
-        const markdown = window.markdownSync.htmlToMarkdown(html);
-        this.elements.markdownTextarea.value = markdown;
-    }
-
-    /**
-     * Sync content from Markdown to WYSIWYG
-     */
-    syncToWYSIWYG() {
-        const markdown = this.elements.markdownTextarea.value;
-        const html = window.markdownSync.markdownToQuillHtml(markdown);
-        this.quill.root.innerHTML = html;
-    }
-
-    /**
-     * Update preview pane
-     */
-    updatePreview() {
-        let markdown;
-
-        if (this.currentMode === 'wysiwyg') {
-            const html = this.quill.root.innerHTML;
-            markdown = window.markdownSync.htmlToMarkdown(html);
-        } else {
-            markdown = this.elements.markdownTextarea.value;
-        }
-
-        const html = window.markdownSync.markdownToHtml(markdown);
-        this.elements.previewContent.innerHTML = html;
-
-        // Apply syntax highlighting to code blocks
-        this.elements.previewContent.querySelectorAll('pre code').forEach(block => {
-            hljs.highlightElement(block);
+        // Warn before leaving with unsaved changes
+        window.addEventListener('beforeunload', (e) => {
+            if (this.hasUnsavedChanges) {
+                e.preventDefault();
+                e.returnValue = '';
+                return '';
+            }
         });
     }
 
     /**
-     * Insert markdown syntax at cursor position
+     * Handle keyboard events in markdown textarea
      */
-    insertMarkdown(insert, wrap) {
-        const textarea = this.elements.markdownTextarea;
-        const start = textarea.selectionStart;
-        const end = textarea.selectionEnd;
-        const selectedText = textarea.value.substring(start, end);
-        const before = textarea.value.substring(0, start);
-        const after = textarea.value.substring(end);
-
-        let newText;
-        let cursorPos;
-
-        if (wrap) {
-            // Wrap selected text (e.g., **bold**)
-            newText = before + wrap + selectedText + wrap + after;
-            cursorPos = wrap ? start + wrap.length : start + insert.length;
-        } else {
-            // Insert at cursor (e.g., # for heading)
-            newText = before + insert + selectedText + after;
-            cursorPos = start + insert.length;
+    handleKeyDown(e) {
+        if (this.slashDropdownVisible) {
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                this.navigateSlashDropdown(1);
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                this.navigateSlashDropdown(-1);
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                const items = document.querySelectorAll('.slash-dropdown-item');
+                if (items[this.selectedSlashIndex]) {
+                    const component = items[this.selectedSlashIndex].dataset.component;
+                    this.insertComponent(component);
+                }
+            } else if (e.key === 'Escape') {
+                e.preventDefault();
+                this.hideSlashDropdown();
+            }
         }
-
-        textarea.value = newText;
-        textarea.focus();
-        textarea.setSelectionRange(cursorPos, cursorPos);
-
-        this.markAsUnsaved();
-        this.updatePreview();
     }
 
     /**
-     * Save document
+     * Handle slash command input
      */
-    async saveDocument() {
-        if (!this.validateInput()) {
-            return;
+    handleSlashCommand(e) {
+        const textarea = this.elements.markdownTextarea;
+        const cursorPos = textarea.selectionStart;
+        const textBeforeCursor = textarea.value.substring(0, cursorPos);
+
+        // Check if we just typed a slash at the beginning of a line or after whitespace
+        const lines = textBeforeCursor.split('\n');
+        const currentLine = lines[lines.length - 1];
+
+        if (currentLine === '/' || (currentLine.endsWith('/') && currentLine[currentLine.length - 2] === ' ')) {
+            this.showSlashDropdown();
+        } else if (this.slashDropdownVisible && !currentLine.includes('/')) {
+            this.hideSlashDropdown();
+        }
+    }
+
+    /**
+     * Show slash command dropdown
+     */
+    showSlashDropdown() {
+        const textarea = this.elements.markdownTextarea;
+        const rect = textarea.getBoundingClientRect();
+
+        this.elements.slashDropdown.style.display = 'block';
+        this.elements.slashDropdown.style.left = `${rect.left + 20}px`;
+        this.elements.slashDropdown.style.top = `${rect.top + 100}px`;
+
+        this.slashDropdownVisible = true;
+        this.selectedSlashIndex = 0;
+        this.updateSlashSelection();
+    }
+
+    /**
+     * Hide slash command dropdown
+     */
+    hideSlashDropdown() {
+        this.elements.slashDropdown.style.display = 'none';
+        this.slashDropdownVisible = false;
+    }
+
+    /**
+     * Navigate slash dropdown with arrow keys
+     */
+    navigateSlashDropdown(direction) {
+        const items = document.querySelectorAll('.slash-dropdown-item');
+        this.selectedSlashIndex = Math.max(0, Math.min(items.length - 1, this.selectedSlashIndex + direction));
+        this.updateSlashSelection();
+    }
+
+    /**
+     * Update visual selection in slash dropdown
+     */
+    updateSlashSelection() {
+        const items = document.querySelectorAll('.slash-dropdown-item');
+        items.forEach((item, index) => {
+            if (index === this.selectedSlashIndex) {
+                item.classList.add('selected');
+                item.scrollIntoView({ block: 'nearest' });
+            } else {
+                item.classList.remove('selected');
+            }
+        });
+    }
+
+    /**
+     * Insert component template at cursor
+     */
+    insertComponent(component) {
+        const textarea = this.elements.markdownTextarea;
+        const cursorPos = textarea.selectionStart;
+        const textBeforeCursor = textarea.value.substring(0, cursorPos);
+        const textAfterCursor = textarea.value.substring(cursorPos);
+
+        // Remove the slash that triggered the dropdown
+        const lastSlashIndex = textBeforeCursor.lastIndexOf('/');
+        const beforeSlash = textBeforeCursor.substring(0, lastSlashIndex);
+
+        let template = '';
+        switch (component) {
+            case 'text':
+                template = '';
+                break;
+            case 'heading1':
+                template = '# ';
+                break;
+            case 'heading2':
+                template = '## ';
+                break;
+            case 'heading3':
+                template = '### ';
+                break;
+            case 'blockquote':
+                template = '> ';
+                break;
+            case 'unordered-list':
+                template = '- Item 1\n- Item 2\n- Item 3\n';
+                break;
+            case 'ordered-list':
+                template = '1. Item 1\n2. Item 2\n3. Item 3\n';
+                break;
+            case 'table':
+                template = '| Column 1 | Column 2 | Column 3 |\n| -------- | -------- | -------- |\n| Cell 1   | Cell 2   | Cell 3   |\n';
+                break;
+            case 'code-block':
+                template = '```javascript\n// Your code here\n```\n';
+                break;
+            case 'inline-code':
+                template = '`code`';
+                break;
         }
 
-        const fileName = this.elements.fileNameInput.value.trim();
-        let markdown;
+        textarea.value = beforeSlash + template + textAfterCursor;
+        textarea.focus();
+        textarea.selectionStart = textarea.selectionEnd = beforeSlash.length + template.length;
 
-        if (this.currentMode === 'wysiwyg') {
-            const html = this.quill.root.innerHTML;
-            markdown = window.markdownSync.htmlToMarkdown(html);
+        this.hideSlashDropdown();
+        this.markAsUnsaved();
+        this.updateWordCount();
+    }
+
+    /**
+     * Toggle between markdown and preview modes
+     */
+    toggleMode() {
+        if (this.currentMode === 'markdown') {
+            // Switch to preview
+            this.currentMode = 'preview';
+            this.elements.markdownEditor.classList.remove('active');
+            this.elements.previewPane.classList.add('active');
+            this.elements.toggleModeBtn.querySelector('span').textContent = 'Edit';
+            this.elements.toggleModeBtn.querySelector('i').className = 'fas fa-edit';
+            this.updatePreview();
         } else {
-            markdown = this.elements.markdownTextarea.value;
+            // Switch to markdown
+            this.currentMode = 'markdown';
+            this.elements.previewPane.classList.remove('active');
+            this.elements.markdownEditor.classList.add('active');
+            this.elements.toggleModeBtn.querySelector('span').textContent = 'Preview';
+            this.elements.toggleModeBtn.querySelector('i').className = 'fas fa-eye';
+        }
+    }
+
+    /**
+     * Update preview content
+     */
+    updatePreview() {
+        const markdown = this.elements.markdownTextarea.value;
+
+        if (typeof marked !== 'undefined') {
+            const html = marked.parse(markdown);
+            this.elements.previewContent.innerHTML = html;
+
+            // Apply syntax highlighting to code blocks
+            this.elements.previewContent.querySelectorAll('pre code').forEach(block => {
+                if (typeof hljs !== 'undefined') {
+                    hljs.highlightElement(block);
+                }
+            });
+        }
+    }
+
+    /**
+     * Update word count
+     */
+    updateWordCount() {
+        const text = this.elements.markdownTextarea.value;
+        const words = text.trim().split(/\s+/).filter(word => word.length > 0).length;
+        if (this.elements.toolbarWordCount) {
+            this.elements.toolbarWordCount.textContent = `${words} word${words !== 1 ? 's' : ''}`;
+        }
+    }
+
+    /**
+     * Load file content into editor
+     */
+    loadFile(file, content) {
+        this.currentFile = file;
+        this.elements.markdownTextarea.value = content;
+
+        // Update UI
+        this.elements.welcomeScreen.style.display = 'none';
+        this.elements.editorArea.style.display = 'flex';
+
+        // Update file info in toolbar
+        if (this.elements.fileInfoDisplay && this.elements.noFileInfo) {
+            this.elements.fileInfoDisplay.style.display = 'flex';
+            this.elements.noFileInfo.style.display = 'none';
         }
 
-        // Validate and sanitize markdown
-        const validation = window.markdownSync.validateMarkdown(markdown);
-        if (!validation.valid) {
-            this.showError('Markdown validation failed: ' + validation.errors.join(', '));
+        if (this.elements.toolbarFileName) {
+            this.elements.toolbarFileName.textContent = file.name;
+        }
+
+        // Set file type badge
+        const extension = file.path.split('.').pop().toUpperCase();
+        if (this.elements.toolbarFileTypeBadge) {
+            this.elements.toolbarFileTypeBadge.textContent = extension;
+        }
+
+        // Enable save button
+        this.elements.saveBtn.disabled = false;
+
+        // Reset state
+        this.markAsSaved();
+        this.updateWordCount();
+        this.updateStatus('saved', 'All changes saved');
+
+        // Focus editor
+        this.elements.markdownTextarea.focus();
+    }
+
+    /**
+     * Save current file
+     */
+    async saveFile() {
+        if (!this.currentFile) {
+            alert('No file is currently open.');
             return;
         }
-
-        markdown = window.markdownSync.sanitizeMarkdown(markdown);
-        markdown = window.markdownSync.formatMarkdown(markdown);
-
-        const filePath = `${this.currentProduct}/${this.currentSuperCategory}/${this.currentCategory}/${fileName}`;
 
         try {
             this.updateStatus('saving', 'Saving...');
 
-            const response = await fetch('/api/docs/save', {
+            const content = this.elements.markdownTextarea.value;
+            const token = getAuthToken();
+
+            const response = await fetch('/api/files/save', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
                 },
                 body: JSON.stringify({
-                    product: this.currentProduct,
-                    superCategory: this.currentSuperCategory,
-                    category: this.currentCategory,
-                    fileName: fileName,
-                    content: markdown
+                    path: this.currentFile.path,
+                    content: content
                 })
             });
 
@@ -402,11 +470,8 @@ class DocumentEditor {
                 throw new Error('Save failed');
             }
 
-            const result = await response.json();
-
             this.markAsSaved();
             this.updateStatus('saved', 'Saved successfully');
-            this.currentFileName = fileName;
 
             // Clear status after 3 seconds
             setTimeout(() => {
@@ -417,43 +482,175 @@ class DocumentEditor {
 
         } catch (error) {
             console.error('Save error:', error);
-            this.showError('Failed to save document');
+            alert('Failed to save file. Please try again.');
             this.updateStatus('error', 'Save failed');
         }
     }
 
     /**
-     * Validate input before saving
+     * Show new file modal
      */
-    validateInput() {
-        if (!this.currentProduct) {
-            this.showError('Please select a product');
-            return false;
-        }
+    showNewFileModal() {
+        this.showModal('newFileModal');
+        document.getElementById('new-file-name').focus();
+    }
 
-        if (!this.currentSuperCategory) {
-            this.showError('Please select a super category');
-            return false;
-        }
+    /**
+     * Create new file
+     */
+    async createNewFile() {
+        const fileName = document.getElementById('new-file-name').value.trim();
+        const fileType = document.getElementById('new-file-type').value;
 
-        if (!this.currentCategory) {
-            this.showError('Please select a category');
-            return false;
-        }
-
-        const fileName = this.elements.fileNameInput.value.trim();
         if (!fileName) {
-            this.showError('Please enter a file name');
-            return false;
+            alert('Please enter a file name.');
+            return;
         }
 
-        // Validate file name (alphanumeric, hyphens, underscores only)
+        // Validate file name
         if (!/^[a-z0-9-_]+$/.test(fileName)) {
-            this.showError('File name can only contain lowercase letters, numbers, hyphens, and underscores');
-            return false;
+            alert('File name can only contain lowercase letters, numbers, hyphens, and underscores.');
+            return;
         }
 
-        return true;
+        try {
+            const fullFileName = `${fileName}.${fileType}`;
+            const token = getAuthToken();
+            const selectedProduct = getSelectedProduct();
+
+            if (!selectedProduct) {
+                alert('Please select a product first.');
+                return;
+            }
+
+            const response = await fetch('/api/files/create', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    product: selectedProduct,
+                    fileName: fullFileName,
+                    content: ''
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to create file');
+            }
+
+            const result = await response.json();
+
+            // Hide modal and reload file tree
+            this.hideModal('newFileModal');
+            document.getElementById('new-file-name').value = '';
+
+            // Reload file tree
+            if (typeof loadFileTree === 'function') {
+                loadFileTree(selectedProduct);
+            }
+
+        } catch (error) {
+            console.error('Create file error:', error);
+            alert('Failed to create file. Please try again.');
+        }
+    }
+
+    /**
+     * Rename selected item
+     */
+    renameSelectedItem() {
+        // This would be called from the file tree
+        this.showModal('renameModal');
+    }
+
+    /**
+     * Confirm rename
+     */
+    confirmRename() {
+        // Implement rename logic
+        this.hideModal('renameModal');
+    }
+
+    /**
+     * Duplicate selected item
+     */
+    duplicateSelectedItem() {
+        // Implement duplicate logic
+        alert('Duplicate functionality coming soon.');
+    }
+
+    /**
+     * Delete selected item
+     */
+    deleteSelectedItem() {
+        this.showModal('deleteModal');
+        document.getElementById('delete-item-name').textContent = 'selected item';
+    }
+
+    /**
+     * Confirm delete
+     */
+    async confirmDelete() {
+        // Implement delete logic
+        this.hideModal('deleteModal');
+    }
+
+    /**
+     * Upload files
+     */
+    uploadFiles() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.multiple = true;
+        input.accept = '.md,.mdx,.json';
+
+        input.onchange = async (e) => {
+            const files = Array.from(e.target.files);
+
+            for (const file of files) {
+                try {
+                    const content = await file.text();
+                    const token = getAuthToken();
+                    const selectedProduct = getSelectedProduct();
+
+                    if (!selectedProduct) {
+                        alert('Please select a product first.');
+                        return;
+                    }
+
+                    const response = await fetch('/api/files/upload', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({
+                            product: selectedProduct,
+                            fileName: file.name,
+                            content: content
+                        })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`Failed to upload ${file.name}`);
+                    }
+
+                } catch (error) {
+                    console.error('Upload error:', error);
+                    alert(`Failed to upload ${file.name}`);
+                }
+            }
+
+            // Reload file tree
+            const selectedProduct = getSelectedProduct();
+            if (typeof loadFileTree === 'function' && selectedProduct) {
+                loadFileTree(selectedProduct);
+            }
+        };
+
+        input.click();
     }
 
     /**
@@ -475,38 +672,37 @@ class DocumentEditor {
      * Update status indicator
      */
     updateStatus(state, text) {
-        this.elements.statusIndicator.className = 'status-indicator ' + state;
+        this.elements.toolbarStatus.className = 'toolbar-status ' + state;
         this.elements.statusText.textContent = text;
     }
 
     /**
-     * Show error message
+     * Show modal
      */
-    showError(message) {
-        alert(message); // TODO: Replace with toast notification
-    }
-
-    /**
-     * Start auto-save interval
-     */
-    startAutoSave() {
-        // Auto-save every 2 minutes if there are unsaved changes
-        this.autoSaveInterval = setInterval(() => {
-            if (this.hasUnsavedChanges && this.validateInput()) {
-                console.log('Auto-saving...');
-                this.saveDocument();
-            }
-        }, 120000); // 2 minutes
-    }
-
-    /**
-     * Stop auto-save interval
-     */
-    stopAutoSave() {
-        if (this.autoSaveInterval) {
-            clearInterval(this.autoSaveInterval);
-            this.autoSaveInterval = null;
+    showModal(modalName) {
+        const modal = this.elements[modalName];
+        if (modal) {
+            modal.style.display = 'flex';
         }
+    }
+
+    /**
+     * Hide modal
+     */
+    hideModal(modalName) {
+        const modal = this.elements[modalName];
+        if (modal) {
+            modal.style.display = 'none';
+        }
+    }
+}
+
+/**
+ * Load file content into editor (called from file-tree.js)
+ */
+function loadFileContent(content, file, fileType) {
+    if (window.documentEditor) {
+        window.documentEditor.loadFile(file, content);
     }
 }
 

@@ -1,10 +1,10 @@
 /**
  * File Tree Module for Editor
- * Handles file tree loading and navigation
+ * Handles file tree loading, navigation, and file management
  */
 
 let currentFileTree = null;
-let selectedProduct = null;
+let selectedItem = null; // Currently selected file or folder
 
 // Initialize file tree on page load
 document.addEventListener('DOMContentLoaded', () => {
@@ -15,79 +15,263 @@ document.addEventListener('DOMContentLoaded', () => {
  * Initialize file tree functionality
  */
 function initializeFileTree() {
-    const productSelect = document.getElementById('product-select');
+    const fileTreeContainer = document.getElementById('file-tree-container');
     const refreshBtn = document.getElementById('refresh-tree-btn');
 
-    if (productSelect) {
-        productSelect.addEventListener('change', handleProductChange);
-        loadProducts();
+    // Setup drag and drop
+    if (fileTreeContainer) {
+        setupDragAndDrop(fileTreeContainer);
     }
 
+    // Setup context menu
+    setupContextMenu();
+
+    // Refresh button
     if (refreshBtn) {
         refreshBtn.addEventListener('click', () => {
-            if (selectedProduct) {
-                loadFileTree(selectedProduct);
-            }
+            loadFileTree();
         });
+    }
+
+    // Click outside to close context menu
+    document.addEventListener('click', () => {
+        hideContextMenu();
+    });
+
+    // Load file tree immediately
+    loadFileTree();
+}
+
+/**
+ * Setup drag and drop for file upload
+ */
+function setupDragAndDrop(container) {
+    container.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        container.classList.add('drag-over');
+    });
+
+    container.addEventListener('dragleave', (e) => {
+        e.preventDefault();
+        container.classList.remove('drag-over');
+    });
+
+    container.addEventListener('drop', async (e) => {
+        e.preventDefault();
+        container.classList.remove('drag-over');
+
+        const files = Array.from(e.dataTransfer.files);
+
+        for (const file of files) {
+            // Only accept markdown and json files
+            if (!file.name.match(/\.(md|mdx|json)$/)) {
+                alert(`Skipping ${file.name}: Only .md, .mdx, and .json files are allowed.`);
+                continue;
+            }
+
+            try {
+                const content = await file.text();
+                const token = getAuthToken();
+
+                const response = await fetch('/api/files/upload', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        fileName: file.name,
+                        content: content
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Failed to upload ${file.name}`);
+                }
+
+            } catch (error) {
+                console.error('Upload error:', error);
+                alert(`Failed to upload ${file.name}`);
+            }
+        }
+
+        // Reload file tree
+        loadFileTree();
+    });
+}
+
+/**
+ * Setup context menu
+ */
+function setupContextMenu() {
+    const contextMenu = document.getElementById('context-menu');
+
+    if (!contextMenu) return;
+
+    // Context menu actions
+    const menuItems = contextMenu.querySelectorAll('.context-menu-item');
+    menuItems.forEach(item => {
+        item.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const action = item.dataset.action;
+            handleContextMenuAction(action);
+            hideContextMenu();
+        });
+    });
+}
+
+/**
+ * Show context menu
+ */
+function showContextMenu(x, y, item) {
+    const contextMenu = document.getElementById('context-menu');
+    if (!contextMenu) return;
+
+    selectedItem = item;
+
+    // Position the context menu
+    contextMenu.style.left = `${x}px`;
+    contextMenu.style.top = `${y}px`;
+    contextMenu.style.display = 'block';
+
+    // Update toolbar buttons
+    updateToolbarButtons(true);
+}
+
+/**
+ * Hide context menu
+ */
+function hideContextMenu() {
+    const contextMenu = document.getElementById('context-menu');
+    if (contextMenu) {
+        contextMenu.style.display = 'none';
     }
 }
 
 /**
- * Load available products
+ * Handle context menu action
  */
-async function loadProducts() {
-    try {
-        const response = await fetch('/docs/config/docs-config.json');
-        const config = await response.json();
+function handleContextMenuAction(action) {
+    if (!selectedItem) return;
 
-        const productSelect = document.getElementById('product-select');
-        const modalProductSelect = document.getElementById('modal-product-select');
-
-        // Clear existing options (keep placeholder)
-        [productSelect, modalProductSelect].forEach(select => {
-            if (select) {
-                while (select.options.length > 1) {
-                    select.remove(1);
-                }
+    switch (action) {
+        case 'open':
+            if (selectedItem.type === 'file') {
+                openFile(selectedItem);
             }
+            break;
+        case 'rename':
+            renameItem(selectedItem);
+            break;
+        case 'duplicate':
+            duplicateItem(selectedItem);
+            break;
+        case 'move':
+            moveItem(selectedItem);
+            break;
+        case 'delete':
+            deleteItem(selectedItem);
+            break;
+    }
+}
+
+/**
+ * Rename item
+ */
+function renameItem(item) {
+    const modal = document.getElementById('rename-modal');
+    const input = document.getElementById('rename-input');
+
+    if (modal && input) {
+        input.value = item.name;
+        modal.style.display = 'flex';
+        input.focus();
+        input.select();
+
+        // Store item to rename
+        modal.dataset.itemPath = item.path;
+        modal.dataset.itemType = item.type;
+    }
+}
+
+/**
+ * Duplicate item
+ */
+async function duplicateItem(item) {
+    try {
+        const token = getAuthToken();
+        const response = await fetch('/api/files/duplicate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                path: item.path,
+                type: item.type
+            })
         });
 
-        // Add products
-        config.products.forEach(product => {
-            const option1 = document.createElement('option');
-            option1.value = product.id;
-            option1.textContent = product.name;
+        if (!response.ok) {
+            throw new Error('Failed to duplicate');
+        }
 
-            const option2 = option1.cloneNode(true);
-
-            if (productSelect) productSelect.appendChild(option1);
-            if (modalProductSelect) modalProductSelect.appendChild(option2);
-        });
+        // Reload file tree
+        loadFileTree();
 
     } catch (error) {
-        console.error('Error loading products:', error);
+        console.error('Duplicate error:', error);
+        alert('Failed to duplicate item.');
     }
 }
 
 /**
- * Handle product selection change
+ * Move item
  */
-async function handleProductChange(event) {
-    const productId = event.target.value;
-
-    if (!productId) {
-        clearFileTree();
-        return;
-    }
-
-    selectedProduct = productId;
-    await loadFileTree(productId);
+function moveItem(item) {
+    // Show move dialog (to be implemented)
+    alert('Move functionality coming soon.');
 }
 
 /**
- * Load file tree for a product
+ * Delete item
  */
-async function loadFileTree(productId) {
+function deleteItem(item) {
+    const modal = document.getElementById('delete-modal');
+    const itemNameSpan = document.getElementById('delete-item-name');
+
+    if (modal && itemNameSpan) {
+        itemNameSpan.textContent = item.name;
+        modal.style.display = 'flex';
+
+        // Store item to delete
+        modal.dataset.itemPath = item.path;
+        modal.dataset.itemType = item.type;
+    }
+}
+
+/**
+ * Update toolbar buttons based on selection
+ */
+function updateToolbarButtons(enabled) {
+    const buttons = [
+        document.getElementById('rename-btn'),
+        document.getElementById('duplicate-btn'),
+        document.getElementById('move-btn'),
+        document.getElementById('delete-btn')
+    ];
+
+    buttons.forEach(btn => {
+        if (btn) {
+            btn.disabled = !enabled;
+        }
+    });
+}
+
+/**
+ * Load file tree (loads the entire content folder)
+ */
+async function loadFileTree() {
     const container = document.getElementById('file-tree-container');
 
     try {
@@ -95,7 +279,7 @@ async function loadFileTree(productId) {
         container.innerHTML = '<div class="file-tree-empty"><i class="fas fa-spinner fa-spin"></i><p>Loading files...</p></div>';
 
         const token = getAuthToken();
-        const response = await fetch(`/api/files/${productId}/tree`, {
+        const response = await fetch('/api/files/tree', {
             headers: {
                 'Authorization': `Bearer ${token}`
             }
@@ -113,12 +297,30 @@ async function loadFileTree(productId) {
 
     } catch (error) {
         console.error('Error loading file tree:', error);
-        container.innerHTML = `
-            <div class="file-tree-empty">
-                <i class="fas fa-exclamation-triangle"></i>
-                <p>Failed to load files</p>
-            </div>
-        `;
+        showErrorState(container, 'Failed to load files. Please check your connection and try again.');
+    }
+}
+
+/**
+ * Show error state
+ */
+function showErrorState(container, message) {
+    container.innerHTML = `
+        <div class="file-tree-error">
+            <i class="fas fa-exclamation-triangle"></i>
+            <p class="error-title">Error</p>
+            <p class="error-message">${message}</p>
+            <button id="retry-load-btn" class="btn-retry">
+                <i class="fas fa-sync-alt"></i>
+                Retry
+            </button>
+        </div>
+    `;
+
+    // Add retry functionality
+    const retryBtn = container.querySelector('#retry-load-btn');
+    if (retryBtn) {
+        retryBtn.addEventListener('click', () => loadFileTree());
     }
 }
 
@@ -167,9 +369,23 @@ function renderFolderItem(folder, container, level = 0) {
     contents.className = 'folder-contents';
 
     // Toggle folder on click
-    header.addEventListener('click', () => {
-        header.classList.toggle('collapsed');
-        contents.classList.toggle('collapsed');
+    header.addEventListener('click', (e) => {
+        if (e.target.closest('.folder-header') === header) {
+            header.classList.toggle('collapsed');
+            contents.classList.toggle('collapsed');
+        }
+    });
+
+    // Right-click context menu
+    header.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        showContextMenu(e.pageX, e.pageY, folder);
+
+        // Visual selection
+        document.querySelectorAll('.folder-header.selected, .file-tree-item.selected').forEach(el => {
+            el.classList.remove('selected');
+        });
+        header.classList.add('selected');
     });
 
     folderDiv.appendChild(header);
@@ -197,9 +413,14 @@ function renderFileItem(file, container, level = 0) {
     fileDiv.style.marginLeft = `${level * 12}px`;
 
     // Determine file icon based on extension
-    const icon = file.extension === '.md' || file.extension === '.mdx'
-        ? 'fa-file-lines'
-        : 'fa-file';
+    const extension = file.path.split('.').pop();
+    let icon = 'fa-file';
+
+    if (extension === 'md' || extension === 'mdx') {
+        icon = 'fa-file-lines';
+    } else if (extension === 'json') {
+        icon = 'fa-file-code';
+    }
 
     fileDiv.innerHTML = `
         <i class="fas ${icon}"></i>
@@ -208,7 +429,28 @@ function renderFileItem(file, container, level = 0) {
 
     // Click to open file
     fileDiv.addEventListener('click', () => {
+        // Remove active class from all items
+        document.querySelectorAll('.file-tree-item').forEach(item => {
+            item.classList.remove('active');
+        });
+
+        // Add active class to clicked item
+        fileDiv.classList.add('active');
+
+        // Open file
         openFile(file);
+    });
+
+    // Right-click context menu
+    fileDiv.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        showContextMenu(e.pageX, e.pageY, file);
+
+        // Visual selection
+        document.querySelectorAll('.folder-header.selected, .file-tree-item.selected').forEach(el => {
+            el.classList.remove('selected');
+        });
+        fileDiv.classList.add('selected');
     });
 
     container.appendChild(fileDiv);
@@ -219,17 +461,9 @@ function renderFileItem(file, container, level = 0) {
  */
 async function openFile(file) {
     try {
-        // Remove active class from all items
-        document.querySelectorAll('.file-tree-item').forEach(item => {
-            item.classList.remove('active');
-        });
-
-        // Add active class to clicked item
-        event.target.closest('.file-tree-item')?.classList.add('active');
-
         // Load file content
         const token = getAuthToken();
-        const response = await fetch(`/api/files/${selectedProduct}/content?filePath=${encodeURIComponent(file.path)}`, {
+        const response = await fetch(`/api/files/content?filePath=${encodeURIComponent(file.path)}`, {
             headers: {
                 'Authorization': `Bearer ${token}`
             }
@@ -248,27 +482,13 @@ async function openFile(file) {
 
     } catch (error) {
         console.error('Error opening file:', error);
-        alert('Failed to open file. Please try again.');
+        alert(`Failed to load file: ${file.name}\n\nPlease ensure the backend server is running.`);
     }
 }
 
 /**
- * Clear file tree
- */
-function clearFileTree() {
-    const container = document.getElementById('file-tree-container');
-    container.innerHTML = `
-        <div class="file-tree-empty">
-            <i class="fas fa-folder-open"></i>
-            <p>Select a product to view files</p>
-        </div>
-    `;
-    currentFileTree = null;
-}
-
-/**
- * Get selected product
+ * Get selected product (not used anymore, kept for compatibility)
  */
 function getSelectedProduct() {
-    return selectedProduct;
+    return null;
 }

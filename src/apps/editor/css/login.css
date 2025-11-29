@@ -1,0 +1,398 @@
+/* ===========================
+   LOGIN PAGE STYLES
+
+   Diese CSS-Datei enthält alle Styles für die Login-Seite des Editors.
+
+   HINWEIS FÜR ZUKÜNFTIGE ENTWICKLUNG:
+   - Diese Styles können später erweitert werden für:
+     * Registrierungsformular
+     * Passwort vergessen Funktion
+     * 2-Faktor-Authentifizierung
+     * OAuth Integration (Google, GitHub, etc.)
+
+   =========================== */
+
+/* Import centralized variables */
+@import url('/components/css/variables.css');
+
+/* ===========================
+   GLOBAL STYLES
+   =========================== */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: var(--font-secondary);
+    background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+    color: var(--text-primary);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-md);
+}
+
+/* ===========================
+   LOGIN CONTAINER
+   =========================== */
+
+.login-container {
+    width: 100%;
+    max-width: 450px;
+    animation: fadeInUp 0.5s ease;
+}
+
+/* ===========================
+   LOGIN CARD
+   =========================== */
+
+.login-card {
+    background-color: var(--bg-secondary);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-xl);
+    padding: var(--spacing-2xl);
+    border: 1px solid var(--border-primary);
+}
+
+/* ===========================
+   LOGIN HEADER
+   =========================== */
+
+.login-header {
+    text-align: center;
+    margin-bottom: var(--spacing-2xl);
+}
+
+.login-logo {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, var(--accent-color) 0%, var(--accent-color-dark) 100%);
+    border-radius: var(--radius-xl);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto var(--spacing-lg);
+    box-shadow: 0 8px 16px rgba(38, 189, 108, 0.3);
+}
+
+.login-logo i {
+    font-size: 2.5rem;
+    color: var(--bg-primary);
+}
+
+.login-header h1 {
+    font-size: var(--font-size-2xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-xs);
+}
+
+.login-header p {
+    color: var(--text-secondary);
+    font-size: var(--font-size-md);
+}
+
+/* ===========================
+   LOGIN FORM
+   =========================== */
+
+.login-form {
+    margin-bottom: var(--spacing-lg);
+}
+
+.form-group {
+    margin-bottom: var(--spacing-lg);
+}
+
+.form-group label {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    margin-bottom: var(--spacing-sm);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--text-primary);
+}
+
+.form-group label i {
+    color: var(--accent-color);
+}
+
+/* Input Wrapper für Password Toggle Button */
+.input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.form-input {
+    width: 100%;
+    padding: var(--spacing-md);
+    padding-right: 48px; /* Platz für Toggle Button */
+    background-color: var(--bg-primary);
+    border: 2px solid var(--border-primary);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    font-size: var(--font-size-md);
+    transition: all var(--transition-fast);
+    font-family: var(--font-secondary);
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 3px var(--accent-hover-color);
+}
+
+.form-input::placeholder {
+    color: var(--text-tertiary);
+}
+
+/* Password Toggle Button */
+.toggle-password {
+    position: absolute;
+    right: var(--spacing-sm);
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: var(--spacing-xs);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color var(--transition-fast);
+}
+
+.toggle-password:hover {
+    color: var(--accent-color);
+}
+
+.toggle-password i {
+    font-size: 1.125rem;
+}
+
+/* ===========================
+   ERROR MESSAGE
+
+   HINWEIS: Kann später erweitert werden für verschiedene Error-Typen:
+   - .error-message.warning
+   - .error-message.info
+   - .error-message.success
+   =========================== */
+
+.error-message {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-md);
+    background-color: rgba(248, 81, 73, 0.1);
+    border: 1px solid var(--text-error);
+    border-radius: var(--radius-md);
+    color: var(--text-error);
+    font-size: var(--font-size-sm);
+    margin-bottom: var(--spacing-lg);
+    animation: shake 0.3s ease;
+}
+
+.error-message i {
+    font-size: 1.25rem;
+}
+
+/* ===========================
+   LOGIN BUTTON
+   =========================== */
+
+.btn-login {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-md) var(--spacing-lg);
+    background: linear-gradient(135deg, var(--accent-color) 0%, var(--accent-color-dark) 100%);
+    color: var(--bg-primary);
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-semibold);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    box-shadow: 0 4px 12px rgba(38, 189, 108, 0.3);
+}
+
+.btn-login:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(38, 189, 108, 0.4);
+}
+
+.btn-login:active {
+    transform: translateY(0);
+}
+
+.btn-login i {
+    font-size: 1.125rem;
+}
+
+/* Loading State für Button (für zukünftige API-Calls) */
+.btn-login.loading {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.btn-login.loading i {
+    animation: spin 1s linear infinite;
+}
+
+/* ===========================
+   INFO BOX
+
+   HINWEIS: Diese Box ist für die Demo-Version.
+   Kann später entfernt oder für andere Hinweise verwendet werden.
+   =========================== */
+
+.info-box {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-md);
+    background-color: rgba(38, 189, 108, 0.1);
+    border: 1px solid var(--accent-color);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--spacing-lg);
+}
+
+.info-box i {
+    color: var(--accent-color);
+    font-size: 1.25rem;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.info-box p {
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+    line-height: 1.5;
+}
+
+.info-box strong {
+    color: var(--text-primary);
+}
+
+/* ===========================
+   LOGIN FOOTER
+   =========================== */
+
+.login-footer {
+    text-align: center;
+    padding-top: var(--spacing-lg);
+    border-top: 1px solid var(--border-primary);
+}
+
+.login-footer p {
+    color: var(--text-tertiary);
+    font-size: var(--font-size-sm);
+    margin-bottom: var(--spacing-xs);
+}
+
+.footer-note {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-xs);
+    color: var(--text-tertiary);
+    font-size: 0.75rem;
+    line-height: 1.4;
+    margin-top: var(--spacing-sm);
+}
+
+.footer-note i {
+    flex-shrink: 0;
+}
+
+/* ===========================
+   ANIMATIONS
+   =========================== */
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+    20%, 40%, 60%, 80% { transform: translateX(5px); }
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* ===========================
+   RESPONSIVE DESIGN
+   =========================== */
+
+@media (max-width: 768px) {
+    .login-card {
+        padding: var(--spacing-xl);
+    }
+
+    .login-logo {
+        width: 64px;
+        height: 64px;
+    }
+
+    .login-logo i {
+        font-size: 2rem;
+    }
+
+    .login-header h1 {
+        font-size: var(--font-size-xl);
+    }
+
+    .info-box {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .footer-note {
+        flex-direction: column;
+    }
+}
+
+/* ===========================
+   PLATZHALTER FÜR ZUKÜNFTIGE FEATURES
+
+   Beispiele für zukünftige Erweiterungen:
+
+   1. Registrierung:
+   .register-link { }
+   .register-form { }
+
+   2. Passwort vergessen:
+   .forgot-password { }
+   .reset-password-form { }
+
+   3. Social Login:
+   .social-login-container { }
+   .social-login-button { }
+
+   4. 2FA:
+   .two-factor-form { }
+   .verification-code-input { }
+
+   5. Remember Me:
+   .remember-me-checkbox { }
+
+   =========================== */

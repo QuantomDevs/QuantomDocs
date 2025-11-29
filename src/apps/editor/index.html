@@ -9,9 +9,6 @@
     <!-- Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    <!-- Quill CSS -->
-    <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
-
     <!-- Highlight.js for code syntax highlighting in preview -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
 
@@ -42,159 +39,85 @@
 
     <!-- Main Editor Container -->
     <div id="editor-app" class="editor-container" style="display: none;">
-        <!-- Header -->
-        <header class="editor-header">
-            <div class="editor-header-left">
-                <div class="editor-logo">
-                    <i class="fas fa-edit"></i>
-                    <h1 class="editor-title">Documentation Editor</h1>
+        <!-- Toolbar -->
+        <div class="editor-toolbar">
+            <!-- File Info (Left Side) -->
+            <div class="toolbar-section toolbar-file-info">
+                <div class="file-info-display" id="file-info-display" style="display: none;">
+                    <i class="fas fa-file-lines"></i>
+                    <span class="file-name" id="toolbar-file-name">Untitled</span>
+                    <span class="file-type-badge" id="toolbar-file-type-badge">MD</span>
+                    <span class="word-count-display" id="toolbar-word-count">0 words</span>
                 </div>
-                <div class="editor-breadcrumb" id="editor-breadcrumb">
-                    <span class="breadcrumb-item">No file selected</span>
+                <div class="no-file-info" id="no-file-info">
+                    <i class="fas fa-folder-open"></i>
+                    <span>No file selected</span>
                 </div>
             </div>
 
-            <div class="editor-header-right">
-                <div class="editor-actions">
-                    <button id="new-file-btn" class="btn btn-secondary" title="Create new file">
-                        <i class="fas fa-file-plus"></i>
-                        <span>New File</span>
-                    </button>
-                    <button id="toggle-mode-btn" class="btn btn-secondary" title="Switch between WYSIWYG and Markdown">
-                        <i class="fas fa-exchange-alt"></i>
-                        <span>Markdown Mode</span>
-                    </button>
-                    <button id="preview-btn" class="btn btn-secondary" title="Toggle preview pane">
-                        <i class="fas fa-eye"></i>
-                        <span>Preview</span>
-                    </button>
-                    <button id="save-btn" class="btn btn-primary" title="Save document (Ctrl+S)" disabled>
-                        <i class="fas fa-save"></i>
-                        <span>Save</span>
-                    </button>
-                </div>
-                <div class="editor-user">
-                    <span id="user-name" class="user-name"></span>
-                    <button id="logout-btn" class="btn btn-icon" title="Logout">
-                        <i class="fas fa-sign-out-alt"></i>
-                    </button>
+            <!-- Editor Actions (Right Side) -->
+            <div class="toolbar-section toolbar-editor-actions">
+                <button id="toggle-mode-btn" class="toolbar-btn" title="Toggle between Markdown and Preview (Ctrl+M)">
+                    <i class="fas fa-code"></i>
+                    <span>Markdown</span>
+                </button>
+                <button id="save-btn" class="toolbar-btn toolbar-btn-primary" title="Save (Ctrl+S)" disabled>
+                    <i class="fas fa-save"></i>
+                    <span>Save</span>
+                </button>
+                <div class="toolbar-status" id="toolbar-status">
+                    <i class="fas fa-circle"></i>
+                    <span id="status-text">Not saved</span>
                 </div>
             </div>
-        </header>
+        </div>
 
         <!-- Main Content Area -->
         <div class="editor-main">
-            <!-- Sidebar - File Tree -->
+            <!-- Sidebar - File Browser -->
             <aside class="editor-sidebar" id="editor-sidebar">
                 <div class="sidebar-header">
-                    <h3>Files</h3>
-                    <button id="toggle-sidebar-btn" class="btn-icon" title="Toggle sidebar">
-                        <i class="fas fa-bars"></i>
-                    </button>
-                </div>
-
-                <div class="sidebar-toolbar">
-                    <select id="product-select" class="editor-select">
-                        <option value="">Select Product...</option>
-                    </select>
-                    <button id="refresh-tree-btn" class="btn-icon" title="Refresh file tree">
-                        <i class="fas fa-sync-alt"></i>
-                    </button>
+                    <div class="sidebar-title">
+                        <i class="fas fa-folder"></i>
+                        <h3>Files</h3>
+                    </div>
+                    <div class="sidebar-actions">
+                        <button id="new-file-btn" class="btn-icon" title="New File">
+                            <i class="fas fa-file-plus"></i>
+                        </button>
+                        <button id="new-folder-btn" class="btn-icon" title="New Folder">
+                            <i class="fas fa-folder-plus"></i>
+                        </button>
+                        <button id="upload-file-btn" class="btn-icon" title="Upload">
+                            <i class="fas fa-upload"></i>
+                        </button>
+                        <div class="sidebar-divider"></div>
+                        <button id="rename-btn" class="btn-icon" title="Rename" disabled>
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button id="duplicate-btn" class="btn-icon" title="Duplicate" disabled>
+                            <i class="fas fa-copy"></i>
+                        </button>
+                        <button id="delete-btn" class="btn-icon" title="Delete" disabled>
+                            <i class="fas fa-trash"></i>
+                        </button>
+                        <div class="sidebar-divider"></div>
+                        <button id="refresh-tree-btn" class="btn-icon" title="Refresh">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                    </div>
                 </div>
 
                 <div class="file-tree-container" id="file-tree-container">
                     <div class="file-tree-empty">
-                        <i class="fas fa-folder-open"></i>
-                        <p>Select a product to view files</p>
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <p>Loading files...</p>
                     </div>
                 </div>
             </aside>
 
             <!-- Editor Workspace -->
             <div class="editor-workspace">
-                <!-- File Info Bar -->
-                <div class="editor-info-bar" id="editor-info-bar" style="display: none;">
-                    <div class="file-info">
-                        <span class="file-name" id="current-file-name">Untitled</span>
-                        <span class="file-type-badge" id="file-type-badge">MD</span>
-                    </div>
-                    <div class="editor-status">
-                        <span id="status-indicator" class="status-indicator">
-                            <i class="fas fa-circle"></i>
-                            <span id="status-text">Not saved</span>
-                        </span>
-                        <span class="word-count" id="word-count">0 words</span>
-                    </div>
-                </div>
-
-                <!-- Editor Panes -->
-                <div class="editor-panes">
-                    <!-- WYSIWYG Editor -->
-                    <div id="wysiwyg-container" class="editor-pane active">
-                        <div id="toolbar-container" class="ql-toolbar-custom">
-                            <!-- Quill toolbar will be injected here -->
-                        </div>
-                        <div id="editor" class="quill-editor"></div>
-                    </div>
-
-                    <!-- Markdown Editor -->
-                    <div id="markdown-container" class="editor-pane">
-                        <div class="markdown-toolbar">
-                            <button class="toolbar-btn" data-insert="# " title="Heading 1">
-                                <i class="fas fa-heading"></i>1
-                            </button>
-                            <button class="toolbar-btn" data-insert="## " title="Heading 2">
-                                <i class="fas fa-heading"></i>2
-                            </button>
-                            <button class="toolbar-btn" data-insert="### " title="Heading 3">
-                                <i class="fas fa-heading"></i>3
-                            </button>
-                            <span class="toolbar-divider"></span>
-                            <button class="toolbar-btn" data-insert="**" data-wrap="**" title="Bold">
-                                <i class="fas fa-bold"></i>
-                            </button>
-                            <button class="toolbar-btn" data-insert="*" data-wrap="*" title="Italic">
-                                <i class="fas fa-italic"></i>
-                            </button>
-                            <button class="toolbar-btn" data-insert="`" data-wrap="`" title="Inline Code">
-                                <i class="fas fa-code"></i>
-                            </button>
-                            <span class="toolbar-divider"></span>
-                            <button class="toolbar-btn" data-insert="[]()" title="Link">
-                                <i class="fas fa-link"></i>
-                            </button>
-                            <button class="toolbar-btn" data-insert="![]()" title="Image">
-                                <i class="fas fa-image"></i>
-                            </button>
-                            <span class="toolbar-divider"></span>
-                            <button class="toolbar-btn" data-insert="- " title="Unordered List">
-                                <i class="fas fa-list-ul"></i>
-                            </button>
-                            <button class="toolbar-btn" data-insert="1. " title="Ordered List">
-                                <i class="fas fa-list-ol"></i>
-                            </button>
-                            <button class="toolbar-btn" data-insert="> " title="Blockquote">
-                                <i class="fas fa-quote-right"></i>
-                            </button>
-                            <button class="toolbar-btn" data-insert="```\n\n```" title="Code Block">
-                                <i class="fas fa-file-code"></i>
-                            </button>
-                        </div>
-                        <textarea id="markdown-textarea" class="markdown-textarea" placeholder="Write markdown here..."></textarea>
-                    </div>
-
-                    <!-- Preview Pane -->
-                    <div id="preview-container" class="editor-pane preview-pane">
-                        <div class="preview-header">
-                            <h3><i class="fas fa-eye"></i> Preview</h3>
-                            <button id="close-preview-btn" class="btn-icon" title="Close preview">
-                                <i class="fas fa-times"></i>
-                            </button>
-                        </div>
-                        <div id="preview-content" class="preview-content markdown-body"></div>
-                    </div>
-                </div>
-
                 <!-- Welcome Screen -->
                 <div class="welcome-screen" id="welcome-screen">
                     <div class="welcome-content">
@@ -211,10 +134,25 @@
                             <h3>Keyboard Shortcuts</h3>
                             <ul>
                                 <li><kbd>Ctrl</kbd> + <kbd>S</kbd> - Save file</li>
-                                <li><kbd>Ctrl</kbd> + <kbd>P</kbd> - Toggle preview</li>
-                                <li><kbd>Ctrl</kbd> + <kbd>M</kbd> - Toggle markdown mode</li>
-                                <li><kbd>Ctrl</kbd> + <kbd>N</kbd> - New file</li>
+                                <li><kbd>/</kbd> - Insert component</li>
+                                <li><kbd>Ctrl</kbd> + <kbd>M</kbd> - Toggle markdown/preview mode</li>
                             </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Editor Area -->
+                <div class="editor-area" id="editor-area" style="display: none;">
+                    <!-- Editor Content -->
+                    <div class="editor-content" id="editor-content">
+                        <!-- Markdown Editor -->
+                        <div id="markdown-editor" class="editor-pane active">
+                            <textarea id="markdown-textarea" class="markdown-textarea" placeholder="Start writing your documentation...&#10;&#10;Type / to insert components"></textarea>
+                        </div>
+
+                        <!-- Preview Pane -->
+                        <div id="preview-pane" class="editor-pane">
+                            <div id="preview-content" class="preview-content markdown-body"></div>
                         </div>
                     </div>
                 </div>
@@ -222,52 +160,184 @@
         </div>
     </div>
 
+    <!-- Context Menu -->
+    <div id="context-menu" class="context-menu" style="display: none;">
+        <div class="context-menu-item" data-action="open">
+            <i class="fas fa-folder-open"></i>
+            <span>Open</span>
+        </div>
+        <div class="context-menu-item" data-action="rename">
+            <i class="fas fa-edit"></i>
+            <span>Rename</span>
+        </div>
+        <div class="context-menu-item" data-action="duplicate">
+            <i class="fas fa-copy"></i>
+            <span>Duplicate</span>
+        </div>
+        <div class="context-menu-item" data-action="move">
+            <i class="fas fa-arrows-alt"></i>
+            <span>Move</span>
+        </div>
+        <div class="context-menu-divider"></div>
+        <div class="context-menu-item context-menu-item-danger" data-action="delete">
+            <i class="fas fa-trash"></i>
+            <span>Delete</span>
+        </div>
+    </div>
+
+    <!-- Slash Command Dropdown -->
+    <div id="slash-dropdown" class="slash-dropdown" style="display: none;">
+        <div class="slash-dropdown-header">Basic Blocks</div>
+        <div class="slash-dropdown-item" data-component="text">
+            <div class="slash-icon"><i class="fas fa-align-left"></i></div>
+            <div class="slash-content">
+                <div class="slash-title">Text</div>
+                <div class="slash-description">Just start with writing plain text</div>
+            </div>
+        </div>
+        <div class="slash-dropdown-item" data-component="heading1">
+            <div class="slash-icon">H1</div>
+            <div class="slash-content">
+                <div class="slash-title">Heading 1</div>
+                <div class="slash-description">Big section heading</div>
+            </div>
+        </div>
+        <div class="slash-dropdown-item" data-component="heading2">
+            <div class="slash-icon">H2</div>
+            <div class="slash-content">
+                <div class="slash-title">Heading 2</div>
+                <div class="slash-description">Medium section heading</div>
+            </div>
+        </div>
+        <div class="slash-dropdown-item" data-component="heading3">
+            <div class="slash-icon">H3</div>
+            <div class="slash-content">
+                <div class="slash-title">Heading 3</div>
+                <div class="slash-description">Small section heading</div>
+            </div>
+        </div>
+        <div class="slash-dropdown-item" data-component="blockquote">
+            <div class="slash-icon"><i class="fas fa-quote-right"></i></div>
+            <div class="slash-content">
+                <div class="slash-title">Blockquote</div>
+                <div class="slash-description">Create a block quote</div>
+            </div>
+        </div>
+        <div class="slash-dropdown-header">List and Tables</div>
+        <div class="slash-dropdown-item" data-component="unordered-list">
+            <div class="slash-icon"><i class="fas fa-list-ul"></i></div>
+            <div class="slash-content">
+                <div class="slash-title">Unordered List</div>
+                <div class="slash-description">Create a simple bullet list</div>
+            </div>
+        </div>
+        <div class="slash-dropdown-item" data-component="ordered-list">
+            <div class="slash-icon"><i class="fas fa-list-ol"></i></div>
+            <div class="slash-content">
+                <div class="slash-title">Numbered List</div>
+                <div class="slash-description">Create a numbered list</div>
+            </div>
+        </div>
+        <div class="slash-dropdown-item" data-component="table">
+            <div class="slash-icon"><i class="fas fa-table"></i></div>
+            <div class="slash-content">
+                <div class="slash-title">Table</div>
+                <div class="slash-description">Create a simple table</div>
+            </div>
+        </div>
+        <div class="slash-dropdown-header">Code</div>
+        <div class="slash-dropdown-item" data-component="code-block">
+            <div class="slash-icon"><i class="fas fa-code"></i></div>
+            <div class="slash-content">
+                <div class="slash-title">Code Block</div>
+                <div class="slash-description">Create a code block with syntax highlighting</div>
+            </div>
+        </div>
+        <div class="slash-dropdown-item" data-component="inline-code">
+            <div class="slash-icon"><i class="fas fa-terminal"></i></div>
+            <div class="slash-content">
+                <div class="slash-title">Inline Code</div>
+                <div class="slash-description">Add inline code</div>
+            </div>
+        </div>
+    </div>
+
     <!-- New File Modal -->
     <div id="new-file-modal" class="modal" style="display: none;">
+        <div class="modal-overlay"></div>
         <div class="modal-content">
             <div class="modal-header">
                 <h2>Create New File</h2>
-                <button class="modal-close" onclick="closeNewFileModal()">
+                <button class="modal-close" id="close-new-file-modal">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
             <div class="modal-body">
                 <div class="form-group">
-                    <label for="modal-product-select">Product</label>
-                    <select id="modal-product-select" class="form-control">
-                        <option value="">Select Product...</option>
-                    </select>
+                    <label for="new-file-name">File Name</label>
+                    <input type="text" id="new-file-name" class="form-control" placeholder="e.g., getting-started">
                 </div>
                 <div class="form-group">
-                    <label for="modal-category-path">Category Path (optional)</label>
-                    <input type="text" id="modal-category-path" class="form-control" placeholder="e.g., Getting-Started/Installation">
-                </div>
-                <div class="form-group">
-                    <label for="modal-file-name">File Name</label>
-                    <input type="text" id="modal-file-name" class="form-control" placeholder="e.g., overview">
-                </div>
-                <div class="form-group">
-                    <label for="modal-file-type">File Type</label>
-                    <select id="modal-file-type" class="form-control">
+                    <label for="new-file-type">File Type</label>
+                    <select id="new-file-type" class="form-control">
                         <option value="md">Markdown (.md)</option>
                         <option value="mdx">MDX (.mdx)</option>
+                        <option value="json">JSON (.json)</option>
                     </select>
                 </div>
             </div>
             <div class="modal-footer">
-                <button onclick="closeNewFileModal()" class="btn btn-secondary">Cancel</button>
-                <button onclick="createNewFile()" class="btn btn-primary">Create File</button>
+                <button id="cancel-new-file" class="btn btn-secondary">Cancel</button>
+                <button id="create-new-file" class="btn btn-primary">Create File</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="delete-modal" class="modal" style="display: none;">
+        <div class="modal-overlay"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Confirm Delete</h2>
+                <button class="modal-close" id="close-delete-modal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete <strong id="delete-item-name"></strong>?</p>
+                <p class="text-warning">This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button id="cancel-delete" class="btn btn-secondary">Cancel</button>
+                <button id="confirm-delete" class="btn btn-danger">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rename Modal -->
+    <div id="rename-modal" class="modal" style="display: none;">
+        <div class="modal-overlay"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Rename</h2>
+                <button class="modal-close" id="close-rename-modal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="rename-input">New Name</label>
+                    <input type="text" id="rename-input" class="form-control" placeholder="Enter new name">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="cancel-rename" class="btn btn-secondary">Cancel</button>
+                <button id="confirm-rename" class="btn btn-primary">Rename</button>
             </div>
         </div>
     </div>
 
     <!-- Scripts -->
-    <!-- Quill JS -->
-    <script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
-
-    <!-- Turndown for HTML to Markdown conversion -->
-    <script src="https://unpkg.com/turndown@7.1.2/dist/turndown.js"></script>
-
     <!-- Marked for Markdown to HTML conversion -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
@@ -277,7 +347,6 @@
     <!-- Editor scripts -->
     <script src="/editor/js/auth.js"></script>
     <script src="/editor/js/file-tree.js"></script>
-    <script src="/editor/js/markdown-sync.js"></script>
     <script src="/editor/js/editor.js"></script>
 </body>
 </html>

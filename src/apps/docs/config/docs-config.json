@@ -19,5 +19,14 @@
         "external": false
       }
     ]
-  }
+  },
+  "products": [
+    {
+      "id": "quantom",
+      "name": "Quantom",
+      "description": "Quantom Documentation",
+      "showInDocs": true,
+      "icon": "fa-cube"
+    }
+  ]
 }

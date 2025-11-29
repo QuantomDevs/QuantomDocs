@@ -1421,6 +1421,316 @@ app.put('/api/config/docs', verifyToken, (req, res) => {
 
 // ==================== File Management Routes ====================
 
+// ==================== Editor-Specific Routes (No Product Parameter) ====================
+
+// Get complete file tree (all content folder)
+app.get('/api/files/tree', verifyToken, (req, res) => {
+    try {
+        const contentPath = path.join(__dirname, '..', '..', 'content');
+
+        if (!fs.existsSync(contentPath)) {
+            return res.status(404).json({ error: 'Content directory not found' });
+        }
+
+        const buildFileTree = (dirPath, relativePath = '') => {
+            const items = fs.readdirSync(dirPath, { withFileTypes: true })
+                .filter(item => !item.name.startsWith('.')) // Ignore hidden files
+                .map(item => {
+                    const itemPath = path.join(dirPath, item.name);
+                    const itemRelativePath = relativePath ? `${relativePath}/${item.name}` : item.name;
+
+                    if (item.isDirectory()) {
+                        return {
+                            name: item.name,
+                            type: 'folder',
+                            path: itemRelativePath,
+                            children: buildFileTree(itemPath, itemRelativePath)
+                        };
+                    } else {
+                        const stats = fs.statSync(itemPath);
+                        return {
+                            name: item.name,
+                            type: 'file',
+                            path: itemRelativePath,
+                            extension: path.extname(item.name),
+                            size: stats.size,
+                            modified: stats.mtime
+                        };
+                    }
+                });
+
+            return items.sort((a, b) => {
+                // Folders first, then files, then alphabetically
+                if (a.type === b.type) {
+                    return a.name.localeCompare(b.name);
+                }
+                return a.type === 'folder' ? -1 : 1;
+            });
+        };
+
+        const tree = buildFileTree(contentPath);
+
+        res.json({ tree });
+    } catch (error) {
+        console.error('Get file tree error:', error);
+        res.status(500).json({ error: 'Failed to load file tree' });
+    }
+});
+
+// Read file content (without product parameter)
+app.get('/api/files/content', verifyToken, (req, res) => {
+    try {
+        const { filePath } = req.query;
+
+        if (!filePath) {
+            return res.status(400).json({ error: 'File path is required' });
+        }
+
+        const validation = validatePath(filePath, 'content');
+
+        if (!validation.valid) {
+            logSecurityEvent('Unauthorized file read attempt', {
+                filePath,
+                ip: req.ip,
+                user: req.user?.username,
+                error: validation.error
+            });
+            return res.status(403).json({ error: 'Access denied' });
+        }
+
+        if (!fs.existsSync(validation.resolvedPath)) {
+            return res.status(404).json({ error: 'File not found' });
+        }
+
+        const content = fs.readFileSync(validation.resolvedPath, 'utf8');
+        const stats = fs.statSync(validation.resolvedPath);
+
+        // Detect file type from extension
+        const fileType = validation.resolvedPath.endsWith('.mdx') ? 'mdx' :
+                        validation.resolvedPath.endsWith('.json') ? 'json' : 'md';
+
+        res.json({
+            content,
+            fileType: fileType,
+            path: filePath,
+            size: stats.size,
+            modified: stats.mtime
+        });
+    } catch (error) {
+        console.error('Read file error:', error);
+        res.status(500).json({ error: 'Failed to load file' });
+    }
+});
+
+// Save file content
+app.post('/api/files/save', verifyToken, (req, res) => {
+    try {
+        const { path: filePath, content } = req.body;
+
+        if (!filePath || content === undefined) {
+            return res.status(400).json({ error: 'File path and content are required' });
+        }
+
+        const validation = validatePath(filePath, 'content');
+
+        if (!validation.valid) {
+            logSecurityEvent('Unauthorized file save attempt', {
+                filePath,
+                ip: req.ip,
+                user: req.user?.username,
+                error: validation.error
+            });
+            return res.status(403).json({ error: 'Access denied' });
+        }
+
+        // Ensure directory exists
+        const dir = path.dirname(validation.resolvedPath);
+        if (!fs.existsSync(dir)) {
+            fs.mkdirSync(dir, { recursive: true });
+        }
+
+        fs.writeFileSync(validation.resolvedPath, content, 'utf8');
+
+        res.json({
+            success: true,
+            message: 'File saved successfully',
+            path: filePath
+        });
+    } catch (error) {
+        console.error('Save file error:', error);
+        res.status(500).json({ error: 'Failed to save file' });
+    }
+});
+
+// Create new file
+app.post('/api/files/create', verifyToken, (req, res) => {
+    try {
+        const { fileName, content, product } = req.body;
+
+        if (!fileName) {
+            return res.status(400).json({ error: 'File name is required' });
+        }
+
+        // Use provided product or default to 'content' root
+        const basePath = product
+            ? path.join(__dirname, '..', '..', 'content', product)
+            : path.join(__dirname, '..', '..', 'content');
+
+        const filePath = path.join(basePath, fileName);
+
+        // Security check
+        if (!filePath.startsWith(path.join(__dirname, '..', '..', 'content'))) {
+            return res.status(403).json({ error: 'Access denied' });
+        }
+
+        if (fs.existsSync(filePath)) {
+            return res.status(400).json({ error: 'File already exists' });
+        }
+
+        // Ensure directory exists
+        const dir = path.dirname(filePath);
+        if (!fs.existsSync(dir)) {
+            fs.mkdirSync(dir, { recursive: true });
+        }
+
+        fs.writeFileSync(filePath, content || '', 'utf8');
+
+        res.json({
+            success: true,
+            message: 'File created successfully',
+            path: fileName
+        });
+    } catch (error) {
+        console.error('Create file error:', error);
+        res.status(500).json({ error: 'Failed to create file' });
+    }
+});
+
+// Upload file
+app.post('/api/files/upload', verifyToken, uploadLimiter, async (req, res) => {
+    try {
+        const uploadPath = path.join(__dirname, '..', '..', 'content');
+
+        // Ensure directory exists
+        if (!fs.existsSync(uploadPath)) {
+            fs.mkdirSync(uploadPath, { recursive: true });
+        }
+
+        // Configure multer for memory storage
+        const memoryUpload = multer({
+            storage: multer.memoryStorage(),
+            limits: {
+                fileSize: 5 * 1024 * 1024, // 5MB limit
+                files: 1
+            },
+            fileFilter: function (req, file, cb) {
+                const allowedExts = ['.md', '.mdx', '.json'];
+                const ext = path.extname(file.originalname).toLowerCase();
+
+                if (allowedExts.includes(ext)) {
+                    cb(null, true);
+                } else {
+                    cb(new Error('Invalid file type. Only .md, .mdx, and .json files are allowed.'));
+                }
+            }
+        }).single('file');
+
+        memoryUpload(req, res, async function (err) {
+            if (err instanceof multer.MulterError) {
+                return res.status(400).json({ error: err.message });
+            } else if (err) {
+                return res.status(400).json({ error: err.message });
+            }
+
+            if (!req.file) {
+                return res.status(400).json({ error: 'No file uploaded' });
+            }
+
+            try {
+                const fileName = req.file.originalname;
+                const fileContent = req.file.buffer.toString('utf8');
+                const filePath = path.join(uploadPath, fileName);
+
+                // Write file
+                fs.writeFileSync(filePath, fileContent, 'utf8');
+
+                res.json({
+                    success: true,
+                    message: 'File uploaded successfully',
+                    fileName: fileName,
+                    path: fileName
+                });
+            } catch (processingError) {
+                console.error('Upload processing error:', processingError);
+                return res.status(500).json({ error: 'Failed to process uploaded file' });
+            }
+        });
+    } catch (error) {
+        console.error('Upload endpoint error:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Duplicate file or folder
+app.post('/api/files/duplicate', verifyToken, (req, res) => {
+    try {
+        const { path: itemPath, type } = req.body;
+
+        if (!itemPath) {
+            return res.status(400).json({ error: 'Path is required' });
+        }
+
+        const validation = validatePath(itemPath, 'content');
+
+        if (!validation.valid) {
+            logSecurityEvent('Unauthorized duplicate attempt', {
+                itemPath,
+                ip: req.ip,
+                user: req.user?.username,
+                error: validation.error
+            });
+            return res.status(403).json({ error: 'Access denied' });
+        }
+
+        if (!fs.existsSync(validation.resolvedPath)) {
+            return res.status(404).json({ error: 'Item not found' });
+        }
+
+        // Generate new name with " - Copy" suffix
+        const ext = path.extname(validation.resolvedPath);
+        const nameWithoutExt = path.basename(validation.resolvedPath, ext);
+        const dir = path.dirname(validation.resolvedPath);
+
+        let copyNumber = 1;
+        let newPath;
+        do {
+            const suffix = copyNumber === 1 ? ' - Copy' : ` - Copy (${copyNumber})`;
+            newPath = path.join(dir, `${nameWithoutExt}${suffix}${ext}`);
+            copyNumber++;
+        } while (fs.existsSync(newPath));
+
+        // Copy file or folder
+        if (type === 'folder' || fs.statSync(validation.resolvedPath).isDirectory()) {
+            fs.cpSync(validation.resolvedPath, newPath, { recursive: true });
+        } else {
+            fs.copyFileSync(validation.resolvedPath, newPath);
+        }
+
+        const relativePath = path.relative(path.join(__dirname, '..', '..', 'content'), newPath);
+
+        res.json({
+            success: true,
+            message: 'Duplicated successfully',
+            newPath: relativePath
+        });
+    } catch (error) {
+        console.error('Duplicate error:', error);
+        res.status(500).json({ error: 'Failed to duplicate item' });
+    }
+});
+
+// ==================== Product-Specific Routes ====================
+
 // Get file tree for a product
 app.get('/api/files/:product/tree', verifyToken, (req, res) => {
     try {
