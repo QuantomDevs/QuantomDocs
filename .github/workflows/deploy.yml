@@ -1,3 +1,21 @@
+# QUANTOMDOCS DEPLOYMENT WORKFLOW
+# This workflow builds and publishes Docker images for QuantomDocs
+#
+# Triggered by:
+#   - Push to main branch
+#   - Release creation
+#
+# Build Process:
+#   1. Dockerfile runs multi-stage build (build + production stages)
+#   2. Build stage: Installs dependencies and runs `npm run build`
+#   3. Production stage: Copies only dist/ directory (not src/)
+#   4. Image is pushed to GitHub Container Registry
+#
+# Security Notes:
+#   - JWT_SECRET must be set when deploying the container
+#   - Source code is NOT exposed in production image
+#   - Only dist/ directory is included in final image
+
 name: Deploy QuantomDocs
 
 on:
@@ -55,6 +73,11 @@ jobs:
         run: |
           echo "REPO_LOWER=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
 
+      # Build and Push Docker Image
+      # The Dockerfile handles the build process internally:
+      #   - Build stage: npm install + npm run build (generates dist/)
+      #   - Production stage: npm install --omit=dev + copy dist/
+      # No separate npm build step needed here
       - name: Build and Push Docker Image
         uses: docker/build-push-action@v5
         with:
