@@ -40,9 +40,11 @@ RUN npm install --omit=dev
 # This prevents source code exposure in production
 COPY --from=build /usr/src/app/dist ./dist
 
-# Copy content and data directories
+# Copy content directory
 COPY --from=build /usr/src/app/content ./content
-COPY --from=build /usr/src/app/data ./data
+
+# Create data directory (instead of copying)
+RUN mkdir -p ./data
 
 # Copy public directory
 COPY --from=build /usr/src/app/public ./public
