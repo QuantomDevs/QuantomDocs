@@ -590,11 +590,199 @@ function initializeSuperCategorySelector(productId, tree) {
  */
 function showLoadingSkeleton() {
     const dynamicContent = document.getElementById('dynamic-content-area');
-    dynamicContent.innerHTML = `
-        <div class="loading-skeleton">
-            <div class="skeleton-line" style="width: 60%;"></div>
-            <div class="skeleton-line" style="width: 80%;"></div>
-            <div class="skeleton-line" style="width: 70%;"></div>
-        </div>
-    `;
+    if (dynamicContent) {
+        dynamicContent.innerHTML = `
+            <div class="loading-skeleton">
+                <div class="skeleton-line" style="width: 60%;"></div>
+                <div class="skeleton-line" style="width: 80%;"></div>
+                <div class="skeleton-line" style="width: 70%;"></div>
+            </div>
+        `;
+    }
 }
+
+/**
+ * Update page header controls (category display + split button)
+ */
+function updatePageHeaderControls(filePath) {
+    const pageHeaderControls = document.getElementById('page-header-controls');
+    const categoryNameElement = document.getElementById('current-category-name');
+    const markdownNameElement = document.getElementById('current-markdown-name');
+
+    if (!pageHeaderControls || !categoryNameElement) return;
+
+    try {
+        // Parse file path: super-category/category/.../fileName
+        const pathParts = filePath.split('/').filter(p => p);
+
+        if (pathParts.length < 1) {
+            pageHeaderControls.style.display = 'none';
+            return;
+        }
+
+        // Last part is the file name, second-to-last is the immediate category
+        const markdownName = pathParts[pathParts.length - 1];
+        const categoryName = pathParts.length > 1 ? pathParts[pathParts.length - 2] : '';
+
+        // Format names for display
+        const categoryDisplayName = categoryName ? formatCategoryName(categoryName) : '';
+        const markdownDisplayName = markdownName ? formatCategoryName(markdownName).replace(/\.md$/, '') : '';
+
+        // Update category name
+        if (categoryNameElement) categoryNameElement.textContent = categoryDisplayName;
+        if (markdownNameElement) markdownNameElement.textContent = markdownDisplayName;
+
+        // Show page header controls
+        pageHeaderControls.style.display = 'flex';
+    } catch (error) {
+        console.error('Error updating page header controls:', error);
+        pageHeaderControls.style.display = 'none';
+    }
+}
+
+/**
+ * Helper to format category/file names (replace hyphens with spaces, capitalize)
+ */
+function formatCategoryName(name) {
+    if (!name) return '';
+    return name
+        .split('-')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+}
+
+/**
+ * Update table of contents in right sidebar
+ */
+function updateTableOfContents(contentElement) {
+    // Default settings
+    const headerSettings = {
+        mainSectionHeader: true,
+        subSectionHeader: true,
+        subSubSectionHeader: false
+    };
+    const useGap = true;
+
+    // Select headings based on settings
+    let selector = 'h1, h2, h3';
+    const headings = contentElement.querySelectorAll(selector);
+    const sidebarRight = document.querySelector('.sidebar-right ul');
+    const mobileRightSidebar = document.querySelector('.mobile-right-sidebar-content');
+
+    if (!sidebarRight) return;
+
+    sidebarRight.innerHTML = '';
+    if (mobileRightSidebar) {
+        mobileRightSidebar.innerHTML = '';
+    }
+
+    headings.forEach((heading, index) => {
+        // Add ID to heading if it doesn't have one
+        if (!heading.id) {
+            heading.id = `heading-${index}`;
+        }
+
+        const li = document.createElement('li');
+        const a = document.createElement('a');
+        a.href = `#${heading.id}`;
+        a.textContent = heading.textContent;
+        a.className = heading.tagName.toLowerCase();
+        a.dataset.headingId = heading.id;
+
+        // Add gap class if needed (h2 and h3 get indented)
+        if (useGap && (heading.tagName === 'H2' || heading.tagName === 'H3')) {
+            a.classList.add('indented');
+        }
+
+        // Smooth scroll on click
+        a.addEventListener('click', (e) => {
+            e.preventDefault();
+            heading.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            history.pushState(null, null, `#${heading.id}`);
+            updateActiveHeadings();
+        });
+
+        li.appendChild(a);
+        sidebarRight.appendChild(li);
+
+        // Also add to mobile sidebar
+        if (mobileRightSidebar) {
+            const mobileLi = li.cloneNode(true);
+            const mobileLink = mobileLi.querySelector('a');
+            mobileLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                heading.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                const mobileSidebar = document.getElementById('mobile-right-sidebar-menu');
+                if (mobileSidebar) mobileSidebar.classList.remove('active');
+            });
+            mobileRightSidebar.appendChild(mobileLi);
+        }
+    });
+
+    // Initialize scroll spy
+    initScrollSpy(headings);
+}
+
+/**
+ * Initialize scroll spy to track visible headings
+ */
+function initScrollSpy(headings) {
+    if (window.headingObserver) {
+        window.headingObserver.disconnect();
+    }
+
+    if (!window.visibleHeadings) {
+        window.visibleHeadings = new Set();
+    } else {
+        window.visibleHeadings.clear();
+    }
+
+    const observerOptions = {
+        rootMargin: '-80px 0px -20% 0px',
+        threshold: [0, 1.0]
+    };
+
+    window.headingObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                window.visibleHeadings.add(entry.target.id);
+            } else {
+                window.visibleHeadings.delete(entry.target.id);
+            }
+        });
+        updateActiveHeadings();
+    }, observerOptions);
+
+    headings.forEach(heading => {
+        window.headingObserver.observe(heading);
+    });
+}
+
+/**
+ * Update active headings in table of contents
+ */
+function updateActiveHeadings() {
+    const allLinks = document.querySelectorAll('.sidebar-right a, .mobile-right-sidebar-content a');
+    allLinks.forEach(link => link.classList.remove('active'));
+
+    if (window.visibleHeadings && window.visibleHeadings.size > 0) {
+        // Find the first visible heading to mark as active
+        // (You can adapt this logic to highlight all visible headings if preferred)
+        const firstVisibleId = Array.from(window.visibleHeadings)[0];
+        if (firstVisibleId) {
+             const activeLinks = document.querySelectorAll(`a[data-heading-id="${firstVisibleId}"]`);
+             activeLinks.forEach(link => link.classList.add('active'));
+        }
+    }
+}
+
+
+
+export {
+    renderSidebarTree,
+    loadMarkdownFileByPath,
+    loadCategoryIndex,
+    initializeSuperCategorySelector,
+    updatePageHeaderControls,
+    updateTableOfContents
+};

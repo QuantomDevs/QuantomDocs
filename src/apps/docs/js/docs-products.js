@@ -294,40 +294,7 @@ async function loadSuperCategories(productId) {
 // NOTE: This function is deprecated - new code uses initializeSuperCategorySelector from docs-nested-categories.js
 function renderSuperCategorySelector() {
     // Deprecated function - no longer used with new tree system
-    return;
-
-    const btn = document.getElementById('super-category-btn');
-    const dropdown = document.getElementById('super-category-dropdown');
-
-    if (!btn || !dropdown) return;
-
-    // Update button text
-    const selectedCat = [];
-    const nameElement = document.querySelector('.super-category-name');
-    if (nameElement && selectedCat) {
-        nameElement.textContent = selectedCat.name;
-    }
-
-    // Render dropdown options
-    dropdown.innerHTML = availableSuperCategories.map(sc => `
-        <div class="super-category-option ${sc.fullName === currentSuperCategory ? 'active' : ''}"
-             data-super-category="${sc.fullName}">
-            ${sc.name}
-        </div>
-    `).join('');
-
-    // Add event listeners to options
-    dropdown.querySelectorAll('.super-category-option').forEach(option => {
-        option.addEventListener('click', async () => {
-            const newSuperCat = option.dataset.superCategory;
-            if (newSuperCat !== currentSuperCategory) {
-                currentSuperCategory = newSuperCat;
-                renderSuperCategorySelector();
-                await loadCategoriesForSuperCategory(currentProduct, currentSuperCategory);
-                toggleSuperCategoryDropdown(false);
-            }
-        });
-    });
+    return; 
 }
 
 // Toggle super-category dropdown

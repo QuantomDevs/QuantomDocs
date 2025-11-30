@@ -200,7 +200,7 @@ async function loadSearchModule() {
 
         // Lade Search Modul und Analytics parallel mit absoluten Pfaden
         await Promise.all([
-            loadScript('/docs/js/search-analytics.js', 'search-analytics-js'),
+            // loadScript('/docs/js/search-analytics.js', 'search-analytics-js'), // <-- ENTFERNEN oder AUSKOMMENTIEREN
             loadScript('/docs/js/docs-search.js', 'docs-search-js')
         ]);
 

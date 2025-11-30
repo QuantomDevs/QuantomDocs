@@ -235,18 +235,21 @@
 
 
 /* ===========================
-   SCROLLBAR STYLING (from your original CSS)
+   SCROLLBAR STYLING
    =========================== */
 .docs-search-results::-webkit-scrollbar {
     width: 8px;
 }
+
 .docs-search-results::-webkit-scrollbar-track {
     background: transparent;
 }
+
 .docs-search-results::-webkit-scrollbar-thumb {
     background-color: var(--border-primary);
     border-radius: 4px;
 }
+
 .docs-search-results::-webkit-scrollbar-thumb:hover {
     background-color: var(--border-accent);
 }

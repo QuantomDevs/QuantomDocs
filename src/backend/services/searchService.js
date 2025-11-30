@@ -115,7 +115,9 @@ async function buildProductIndex(productId) {
         for (const file of files) {
             try {
                 // getRawContent expects path relative to content directory
-                const rawContent = await fileService.getRawContent(file.path);
+                const path = require('path'); // Falls path oben noch nicht importiert ist
+                const fullPath = path.join(productId, file.path);
+                const rawContent = await fileService.getRawContent(fullPath);
                 const plainText = extractPlainText(rawContent);
 
                 // Extract title from first heading or use file name

@@ -113,3 +113,16 @@ window.addEventListener('headerInjected', () => {
         docsMenuToggle.setAttribute('data-initialized', 'true');
     }
 });
+
+// ... (bestehender Code in docs.js)
+
+// Event Listener für dynamisch geladenen Content
+document.addEventListener('markdownLoaded', () => {
+    // Kurze Verzögerung, damit das DOM sicher bereit ist
+    setTimeout(addCopyButtonListeners, 50);
+});
+
+// Initial call for static content
+document.addEventListener('DOMContentLoaded', () => {
+    addCopyButtonListeners();
+});
