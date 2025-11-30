@@ -1,6 +1,6 @@
 {
   "name": "quantomdocs",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "QuantomDocs - Static documentation website with admin functionality",
   "main": "src/backend/server.js",
   "scripts": {
