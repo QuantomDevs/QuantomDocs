@@ -61,8 +61,34 @@ function renderSidebarTree(tree, productId) {
         </div>
     ` : '';
 
-    // Start building sidebar
-    sidebar.innerHTML = searchButtonHTML + superCategorySelectorHTML;
+    // =========================================================================
+    // FIX START: Header Controls (Logo + Collapse Button) retten
+    // =========================================================================
+    
+    // Prüfen, ob Controls bereits existieren (durch docs-sidebars.js injiziert)
+    const existingHeaderControls = sidebar.querySelector('.sidebar-header-controls');
+    
+    // Sidebar leeren
+    sidebar.innerHTML = '';
+
+    // Wenn Controls existierten, füge sie als erstes wieder ein
+    if (existingHeaderControls) {
+        sidebar.appendChild(existingHeaderControls);
+    }
+    
+    // Neue Navigationselemente anhängen (statt innerHTML zu überschreiben)
+    // Wir erstellen einen temporären Container, um HTML Strings in Nodes zu wandeln
+    const tempContainer = document.createElement('div');
+    tempContainer.innerHTML = searchButtonHTML + superCategorySelectorHTML;
+    
+    // Kinder des tempContainers in die Sidebar verschieben
+    while (tempContainer.firstChild) {
+        sidebar.appendChild(tempContainer.firstChild);
+    }
+
+    // =========================================================================
+    // FIX ENDE
+    // =========================================================================
 
     // Render only the selected super-category
     const selectedSuperCat = availableSuperCategories.find(sc => sc.urlSlug === currentSuperCategory);
@@ -74,6 +100,13 @@ function renderSidebarTree(tree, productId) {
     // Initialize event listeners
     initializeCategoryEventListeners(productId);
     initializeSuperCategorySelector(productId, tree);
+    
+    // Re-initialize Sidebar Events if necessary (z.B. Collapse Button neu binden falls verloren)
+    if (window.DocsSidebars && typeof window.DocsSidebars.init === 'function') {
+        // Falls die Elemente neu erstellt wurden, müssen wir die Listener evtl. neu binden
+        // Da wir das Element aber behalten haben (.appendChild(existingHeaderControls)), 
+        // sollten die Event-Listener noch aktiv sein.
+    }
 }
 
 /**

@@ -127,6 +127,7 @@ body.no-scroll {
         background-color: var(--bg-tertiary);
         border-right: solid 1px var(--border-color);
         transition: transform 0.3s ease-in-out;
+        z-index: 1000;
     }
 
     .content-columns {
