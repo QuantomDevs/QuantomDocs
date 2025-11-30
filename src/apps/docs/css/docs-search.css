@@ -57,9 +57,8 @@
    =========================== */
 .docs-search-input-container {
     position: relative;
-    padding: 0.375rem; /* p-1.5 in Tailwind */
     height: 3.5rem; /* h-14 in Tailwind */
-    border-bottom: 1px solid var(--border-secondary);
+    border-bottom: 1px solid var(--border-primary);
 }
 
 .docs-search-icon {
@@ -76,7 +75,7 @@
 .docs-search-input {
     width: 100%;
     height: 100%;
-    border: 1px solid var(--border-tertiary);
+    border: 1px solid transparent;
     border-radius: 0.75rem; /* rounded-xl in Tailwind */
     background-color: transparent;
     outline: none;
@@ -91,7 +90,7 @@
 }
 
 .docs-search-input:focus {
-    border-color: var(--accent-color);
+    border-color: transparent;
 }
 
 .docs-search-input:focus ~ .docs-search-icon {

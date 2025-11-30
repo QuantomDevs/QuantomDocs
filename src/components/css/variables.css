@@ -45,7 +45,7 @@
        Theme Colors (Dark Theme - Default)
        =========================== */
    --bg-primary: #121212; /* Main background */
-   --bg-secondary: #101112; /* For cards and elevated surfaces - Left sidebar(docs), header*/
+   --bg-secondary: #101112; /* For cards and elevated surfaces - Left sidebar(docs), header - old: #6868684d*/
    --bg-tertiary: #191919; /* For cards and elevated surfaces */
    --bg-markdown: var(--bg-primary); /* For markdown background  - old: #0b0e0e  */
    --bg-hover: lab(100% 0 0/.05);

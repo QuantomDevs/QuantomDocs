@@ -167,6 +167,7 @@ function updateSelectedResult(resultItems) {
  */
 function openDocsSearchPopup() {
     docsSearchOverlay.classList.add('active');
+    document.body.classList.add('no-scroll');
     docsSearchInput.focus();
     selectedResultIndex = -1; // Reset selection
     handleDocsSearch(); // Show initial results
@@ -177,6 +178,7 @@ function openDocsSearchPopup() {
  */
 function closeDocsSearchPopup() {
     docsSearchOverlay.classList.remove('active');
+    document.body.classList.remove('no-scroll'); 
     docsSearchInput.value = '';
     docsSearchResults.innerHTML = '';
     docsSearchResults.classList.remove('visible');
