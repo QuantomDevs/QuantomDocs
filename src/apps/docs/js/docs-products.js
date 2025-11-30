@@ -6,6 +6,8 @@
 
 // Import component orchestrator for initializing interactive components
 import { initializeComponentScripts } from './component-orchestrator.js';
+// Import sidebar rendering functions
+import { renderSidebarTree, loadMarkdownFileByPath, loadCategoryIndex } from './docs-nested-categories.js';
 
 let currentProduct = null;
 let currentCategory = null;
@@ -883,3 +885,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Initialize mobile product selector after docs page loads
     await initMobileProductSelector();
 });
+
+// Export functions for use by other modules and global scope
+export {
+    initDocsPage,
+    loadProductDocs,
+    loadProductOverview,
+    selectProduct
+};
+
+// Also expose to window for backward compatibility with inline scripts
+window.initDocsPage = initDocsPage;
+window.loadProductDocs = loadProductDocs;
+window.selectProduct = selectProduct;
