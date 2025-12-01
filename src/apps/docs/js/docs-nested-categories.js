@@ -411,6 +411,9 @@ async function loadCategoryIndex(productId, categoryPath) {
         // Initialize interactive components (Tabs, Accordions, CodeGroups, etc.)
         initializeComponentScripts();
 
+        const categoryName = categoryPath.split('/').pop();
+        updatePageTitle(categoryName);
+
         // Update page header
         updatePageHeaderControls(categoryPath);
 
@@ -481,6 +484,9 @@ async function loadMarkdownFileByPath(productId, filePath) {
 
         // Initialize interactive components (Tabs, Accordions, CodeGroups, etc.)
         initializeComponentScripts();
+
+        const fileName = filePath.split('/').pop();
+        updatePageTitle(fileName);
 
         // Update page header
         updatePageHeaderControls(filePath);
@@ -810,6 +816,26 @@ function updateActiveHeadings() {
 }
 
 
+/**
+ * Updates the browser tab title
+ * @param {string} titleSegment - The name of the current page/file
+ */
+function updatePageTitle(titleSegment) {
+    if (!titleSegment) {
+        document.title = 'QuantomDocs';
+        return;
+    }
+
+    // Formatierung: "meine-seite.md" -> "Meine Seite"
+    const formattedTitle = titleSegment
+        .replace(/\.md$/, '')      // Entferne .md
+        .replace(/-/g, ' ')        // Ersetze Bindestriche durch Leerzeichen
+        .split(' ')                // Wörter splitten
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1)) // Erstes Zeichen groß
+        .join(' ');
+
+    document.title = `${formattedTitle} | QuantomDocs`;
+}
 
 export {
     renderSidebarTree,
